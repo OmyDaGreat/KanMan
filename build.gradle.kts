@@ -21,12 +21,11 @@ kotlin {
 }
 
 application {
-    mainClass = "xyz.malefic.kanman.DailyMaleficKt"
+    mainClass = "xyz.malefic.kanman.KanManKt"
 }
 
 repositories {
     mavenCentral()
-    maven("https://maven.toastbits.dev")
 }
 
 tasks {
@@ -49,6 +48,7 @@ tasks {
 dependencies {
     implementation(platform(libs.http4k.bom))
     implementation(libs.bundles.http4k)
+    implementation(libs.bundles.storage)
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.bundles.http4k.testing)

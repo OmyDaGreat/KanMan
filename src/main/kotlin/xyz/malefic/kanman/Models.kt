@@ -1,16 +1,19 @@
+@file:OptIn(ExperimentalUuidApi::class)
+
 package xyz.malefic.kanman
 
-import java.util.UUID
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 /**
  * Data class containing a sticky note.
  *
- * @param id Unique identifier for the sticky note.
+ * @param uuid Unique identifier for the sticky note.
  * @param title Title representing the sticky note.
  * @param content Content of the sticky note.
  */
 data class Sticky(
-    val id: Int,
+    val uuid: Uuid,
     val title: String,
     val content: String,
 )
@@ -42,10 +45,27 @@ typealias Stickies = MutableMap<Column, MutableList<Sticky>>
  * @param title Title of the board.
  * @param visibility Visibility of the board.
  * @param columns Columns containing the Sticky's of the board.
+ * @param users Users involved with the board.
  */
 data class Board(
-    val uuid: UUID,
+    val uuid: Uuid,
     val title: String,
     val visibility: Visibility,
     val columns: Stickies,
+    val users: MutableList<User>,
+)
+
+/**
+ * Data class representing a user.
+ *
+ * @param uuid Unique identifier for the user.
+ * @param username Username of the user.
+ * @param password Password for user authentication.
+ * @param boards Boards the user is involved with.
+ */
+data class User(
+    val uuid: Uuid,
+    val username: String,
+    val password: String,
+    val boards: MutableList<Board>,
 )
