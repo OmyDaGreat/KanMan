@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.bundles.http4k)
     implementation(libs.bundles.storage)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.bcrypt)
 
     testImplementation(libs.bundles.http4k.testing)
     testImplementation(libs.junit.jupiter.api)
