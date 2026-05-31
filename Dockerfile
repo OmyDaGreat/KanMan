@@ -7,10 +7,10 @@ RUN mkdir /data
 
 COPY build/distributions/*.zip ./
 RUN unzip *.zip && rm *.zip
-RUN mv DailyMalefic/* . && rmdir DailyMalefic
+RUN mv KanManServer/* . && rmdir KanManServer
 
 EXPOSE 6320
 
 VOLUME ["/data"]
 
-ENTRYPOINT ["bin/DailyMalefic"]
+ENTRYPOINT ["bin/KanManServer"]
