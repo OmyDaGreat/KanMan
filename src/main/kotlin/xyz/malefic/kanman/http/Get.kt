@@ -18,8 +18,8 @@ import xyz.malefic.kanman.util.auth
 
 val get =
     arrayOf(
-        "/api/ping" bind Method.GET to { Response.Companion(Status.OK).body("pong") },
-        "/api/health" bind Method.GET to { Response.Companion(Status.OK).body("healthy") },
+        "/api/ping" bind Method.GET to { Response(Status.OK).body("pong") },
+        "/api/health" bind Method.GET to { Response(Status.OK).body("healthy") },
         "/api/user/boards" bind Method.GET to
             auth REQUEST@{ _, user ->
                 try {
@@ -29,21 +29,15 @@ val get =
                             .firstOrNull()
                             ?.let { user ->
                                 if (user.password != user.password) {
-                                    return@transaction Response
-                                        .Companion(Status.UNAUTHORIZED)
-                                        .with(errorLens of "Invalid password".error)
+                                    return@transaction Response(Status.UNAUTHORIZED).with(errorLens of "Invalid password".error)
                                 }
                                 val boards = user.boards.map { it.toModel() }
-                                Response
-                                    .Companion(Status.OK)
-                                    .with(boardsListLens of BoardsListModel(user.username, boards))
+                                Response(Status.OK).with(boardsListLens of BoardsListModel(user.username, boards))
                             }
-                            ?: Response.Companion(Status.NOT_FOUND).with(errorLens of "User not found".error)
+                            ?: Response(Status.NOT_FOUND).with(errorLens of "User not found".error)
                     }
                 } catch (e: Exception) {
-                    Response
-                        .Companion(Status.BAD_REQUEST)
-                        .with(errorLens of "Failed to retrieve boards: $e".error)
+                    Response(Status.BAD_REQUEST).with(errorLens of "Failed to retrieve boards: $e".error)
                 }
             },
     )

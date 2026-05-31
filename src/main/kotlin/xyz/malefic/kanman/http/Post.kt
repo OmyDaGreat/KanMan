@@ -8,13 +8,14 @@ import org.http4k.routing.bind
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.BoardEntity
 import xyz.malefic.kanman.data.UserEntity
-import xyz.malefic.kanman.data.Visibility
 import xyz.malefic.kanman.data.boardLens
+import xyz.malefic.kanman.data.boardRequestLens
 import xyz.malefic.kanman.data.error
 import xyz.malefic.kanman.data.errorLens
 import xyz.malefic.kanman.data.toModel
 import xyz.malefic.kanman.data.userLens
 import xyz.malefic.kanman.util.auth
+import xyz.malefic.kanman.util.model
 
 val post =
     arrayOf(
@@ -30,48 +31,25 @@ val post =
                             }
                         }
                     } catch (e: Exception) {
-                        return@REQUEST Response
-                            .Companion(Status.BAD_REQUEST)
-                            .with(errorLens of "Failed to create user: $e".error)
+                        return@REQUEST Response(Status.BAD_REQUEST).with(errorLens of "Failed to create user: $e".error)
                     }
 
-                Response.Companion(Status.OK).with(userLens of userResult.toModel())
+                Response(Status.OK).with(userLens of userResult.toModel())
             },
-        "/api/board/create" bind Method.POST to REQUEST@{ request ->
-            val title =
-                request.query("title")
-                    ?: return@REQUEST Response
-                        .Companion(Status.BAD_REQUEST)
-                        .with(errorLens of "Expected title, instead got nothing".error)
-            val visibilityStr =
-                request.query("visibility")
-                    ?: return@REQUEST Response
-                        .Companion(
-                            Status.BAD_REQUEST,
-                        ).with(errorLens of "Expected visibility (PUBLIC/PRIVATE), instead got nothing".error)
-            val visibility =
-                try {
-                    Visibility.valueOf(visibilityStr.uppercase())
-                } catch (_: IllegalArgumentException) {
-                    return@REQUEST Response
-                        .Companion(Status.BAD_REQUEST)
-                        .with(errorLens of "Invalid visibility '$visibilityStr'. Expected PUBLIC or PRIVATE.".error)
-                }
-
-            val board =
-                try {
-                    transaction {
-                        BoardEntity.new {
-                            this.title = title
-                            this.visibility = visibility
+        "/api/board/create" bind Method.POST to
+            model(boardRequestLens) REQUEST@{ _, board ->
+                val board =
+                    try {
+                        transaction {
+                            BoardEntity.new {
+                                this.title = board.title
+                                this.visibility = board.visibility
+                            }
                         }
+                    } catch (e: Exception) {
+                        return@REQUEST Response(Status.BAD_REQUEST).with(errorLens of "Failed to create board: $e".error)
                     }
-                } catch (e: Exception) {
-                    return@REQUEST Response
-                        .Companion(Status.BAD_REQUEST)
-                        .with(errorLens of "Failed to create board: $e".error)
-                }
 
-            Response.Companion(Status.OK).with(boardLens of board.toModel())
-        },
+                Response(Status.OK).with(boardLens of board.toModel())
+            },
     )

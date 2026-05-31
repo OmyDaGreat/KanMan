@@ -37,12 +37,20 @@ val loginLens = Body.auto<LoginModel>().toLens()
 data class BoardModel(
     val id: Uuid,
     val title: String,
-    val visibility: String,
+    val visibility: Visibility,
 )
 
-fun BoardEntity.toModel() = BoardModel(id.value, title, visibility.name)
+fun BoardEntity.toModel() = BoardModel(id.value, title, visibility)
 
 val boardLens = Body.auto<BoardModel>().toLens()
+
+@Serializable
+data class BoardRequestModel(
+    val title: String,
+    val visibility: Visibility,
+)
+
+val boardRequestLens = Body.auto<BoardRequestModel>().toLens()
 
 @Serializable
 data class BoardsListModel(
