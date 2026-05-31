@@ -1,10 +1,7 @@
-@file:OptIn(ExperimentalUuidApi::class)
-
 package xyz.malefic.kanman.data
 
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.dao.id.UuidTable
-import kotlin.uuid.ExperimentalUuidApi
 
 object Users : UuidTable("users") {
     val username = varchar("username", 128).uniqueIndex()

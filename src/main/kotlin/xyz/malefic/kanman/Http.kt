@@ -18,9 +18,7 @@ import xyz.malefic.kanman.data.BoardEntity
 import xyz.malefic.kanman.data.UserEntity
 import xyz.malefic.kanman.data.Users
 import xyz.malefic.kanman.data.Visibility
-import kotlin.uuid.ExperimentalUuidApi
 
-@ExperimentalUuidApi
 val http: RoutingHttpHandler =
     ServerFilters.Cors(corsPolicy).then(
         routes(

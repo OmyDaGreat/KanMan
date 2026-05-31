@@ -11,9 +11,7 @@ import xyz.malefic.kanman.data.Boards
 import xyz.malefic.kanman.data.SQLKermit
 import xyz.malefic.kanman.data.StickyNotes
 import xyz.malefic.kanman.data.Users
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 fun main() {
     Database.connect(
         url = "jdbc:sqlite:data.db", // TODO: Actually decide file name
