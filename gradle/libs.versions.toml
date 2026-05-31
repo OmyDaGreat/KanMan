@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.3.21"
-http4k = "6.49.0.0"
+http4k = "6.50.0.0"
 junit = "6.1.0"
 coroutines = "1.11.0"
 sqlite = "3.53.1.0"
