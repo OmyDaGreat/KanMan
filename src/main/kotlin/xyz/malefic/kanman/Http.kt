@@ -14,6 +14,10 @@ import org.http4k.routing.bind
 import org.http4k.routing.routes
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import xyz.malefic.kanman.data.BoardEntity
+import xyz.malefic.kanman.data.UserEntity
+import xyz.malefic.kanman.data.Users
+import xyz.malefic.kanman.data.Visibility
 import kotlin.uuid.ExperimentalUuidApi
 
 @ExperimentalUuidApi
