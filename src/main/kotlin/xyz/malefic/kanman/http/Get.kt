@@ -3,10 +3,12 @@ package xyz.malefic.kanman.http
 import org.http4k.core.Method.GET
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
 import org.http4k.routing.bind
+import org.http4k.routing.path
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.BoardEntity
@@ -16,31 +18,33 @@ import xyz.malefic.kanman.data.Visibility.PRIVATE
 import xyz.malefic.kanman.data.Visibility.PUBLIC
 import xyz.malefic.kanman.data.boardLens
 import xyz.malefic.kanman.data.boardSummaryListLens
-import xyz.malefic.kanman.data.errorLens
-import xyz.malefic.kanman.data.errorModel
-import xyz.malefic.kanman.data.idLens
 import xyz.malefic.kanman.data.toSummaryModel
 import xyz.malefic.kanman.util.auth
 import xyz.malefic.kanman.util.currentUser
 import xyz.malefic.kanman.util.error
 import xyz.malefic.kanman.util.toVisibility
+import kotlin.uuid.Uuid
 
 val get =
     arrayOf(
         "/api/ping" bind GET to { Response(OK).body("pong") },
         "/api/health" bind GET to { Response(OK).body("healthy") },
-        "/api/board" bind GET to
-            auth(idLens) { user, id ->
+        "/api/board/{id}" bind GET to
+            auth { user, request ->
+                val id =
+                    request.path("id")?.let { Uuid.parse(it) }
+                        ?: return@auth Response(BAD_REQUEST).with("Invalid board id".error)
+
                 try {
                     Response(OK).with(
-                        boardLens of (
-                            user.boards.firstOrNull { it.id == id } ?: return@auth Response(
-                                BAD_REQUEST,
-                            ).with(errorLens of "Board with id $id not found".errorModel)
-                        ),
+                        boardLens of
+                            (
+                                user.boards.firstOrNull { it.id == id }
+                                    ?: return@auth Response(NOT_FOUND).with("Board not found".error)
+                            ),
                     )
                 } catch (e: Exception) {
-                    Response(BAD_REQUEST).with(errorLens of "Failed to retrieve board with id $id: $e".errorModel)
+                    Response(BAD_REQUEST).with("Failed to retrieve board: $e".error)
                 }
             },
         "/api/boards" bind GET to { request ->

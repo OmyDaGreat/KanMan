@@ -22,14 +22,17 @@ fun <A> model(
             try {
                 lens(request)
             } catch (e: Exception) {
-                return@REQUEST Response(BAD_REQUEST).with(errorLens of "Invalid JSON for request body: $e".errorModel)
+                return@REQUEST Response(BAD_REQUEST).with("Invalid JSON for request body: $e".error)
             }
         handler(request, a)
     }
 
-fun auth(next: (UserResponseModel) -> Response) =
+fun auth(next: (UserResponseModel, Request) -> Response) =
     auth.then { request ->
-        next(currentUser(request) ?: return@then Response(UNAUTHORIZED).with(errorLens of "Authenticated user not found".errorModel))
+        next(
+            currentUser(request) ?: return@then Response(UNAUTHORIZED).with("Authenticated user not found".error),
+            request,
+        )
     }
 
 fun <T> auth(
@@ -38,7 +41,7 @@ fun <T> auth(
 ) = auth.then(
     model(lens) REQUEST@{ request, lensRequest ->
         val user =
-            currentUser(request) ?: return@REQUEST Response(UNAUTHORIZED).with(errorLens of "Authenticated user not found".errorModel)
+            currentUser(request) ?: return@REQUEST Response(UNAUTHORIZED).with("Authenticated user not found".error)
         next(user, lensRequest)
     },
 )
