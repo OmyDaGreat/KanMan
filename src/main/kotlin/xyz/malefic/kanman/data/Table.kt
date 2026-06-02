@@ -20,6 +20,7 @@ object AuthTokens : UuidTable("auth_tokens") {
 object Boards : UuidTable("boards") {
     val title = varchar("title", 128)
     val visibility = enumeration<Visibility>("visibility")
+    val owner = reference("owner_id", Users)
 }
 
 object StickyNotes : UuidTable("stickies") {

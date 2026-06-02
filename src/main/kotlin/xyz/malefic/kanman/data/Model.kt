@@ -89,11 +89,22 @@ data class BoardModel(
     val id: Uuid,
     val title: String,
     val visibility: Visibility,
+    val owner: UserResponseModel,
     val stickies: List<StickyNoteModel>,
     val users: List<UserResponseModel>,
 )
 
-fun BoardEntity.toModel() = BoardModel(id.value, title, visibility, stickies.map { it.toModel() }, users.map { it.toResponseModel() })
+fun BoardEntity.toModel() =
+    BoardModel(
+        id.value,
+        title,
+        visibility,
+        owner.toResponseModel(),
+        stickies.map {
+            it.toModel()
+        },
+        users.map { it.toResponseModel() },
+    )
 
 val boardLens = Body.auto<BoardModel>().toLens()
 
@@ -102,9 +113,10 @@ data class BoardSummaryModel(
     val id: Uuid,
     val title: String,
     val visibility: Visibility,
+    val owner: UserResponseModel,
 )
 
-fun BoardEntity.toSummaryModel() = BoardSummaryModel(id.value, title, visibility)
+fun BoardEntity.toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toResponseModel())
 
 @Serializable
 data class BoardSummaryListModel(

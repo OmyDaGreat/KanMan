@@ -11,6 +11,7 @@ import xyz.malefic.kanman.data.TokenType.ACCESS
 import xyz.malefic.kanman.data.TokenType.REFRESH
 import xyz.malefic.kanman.data.UserEntity
 import xyz.malefic.kanman.data.UserRequestModel
+import xyz.malefic.kanman.data.UserResponseModel
 import xyz.malefic.kanman.data.Users
 import xyz.malefic.kanman.data.toResponseModel
 import xyz.malefic.kanman.util.ACCESS_TOKEN_TTL_MILLIS
@@ -60,7 +61,8 @@ fun getUserFromAccessToken(accessToken: String) =
     }
 
 @RequiresTransaction
-private fun JdbcTransaction.issueTokenPair(user: UserEntity): TokenResponseModel {
+context(_: JdbcTransaction)
+private fun issueTokenPair(user: UserEntity): TokenResponseModel {
     val accessToken = generateToken()
     val refreshToken = generateToken()
     val accessExpiration = nowMs() + ACCESS_TOKEN_TTL_MILLIS
@@ -88,3 +90,8 @@ private fun JdbcTransaction.issueTokenPair(user: UserEntity): TokenResponseModel
         expiresIn = ACCESS_TOKEN_TTL_MILLIS / 1000,
     )
 }
+
+@RequiresTransaction
+context(_: JdbcTransaction)
+val UserResponseModel.entity
+    get() = UserEntity.findById(id) ?: throw IllegalArgumentException("User with ID $id not found")

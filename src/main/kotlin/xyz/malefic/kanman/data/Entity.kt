@@ -34,6 +34,7 @@ class BoardEntity(
 
     var title by Boards.title
     var visibility by Boards.visibility
+    var owner by UserEntity referencedOn Boards.owner
     val stickies by StickyNoteEntity referrersOn StickyNotes.board
     var users by UserEntity via BoardUsers
 }

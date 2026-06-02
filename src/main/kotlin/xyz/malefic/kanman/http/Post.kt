@@ -7,24 +7,20 @@ import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
 import org.http4k.routing.bind
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.data.BoardEntity
-import xyz.malefic.kanman.data.BoardUsers
-import xyz.malefic.kanman.data.UserEntity
 import xyz.malefic.kanman.data.boardCreateLens
 import xyz.malefic.kanman.data.boardLens
 import xyz.malefic.kanman.data.refreshRequestLens
 import xyz.malefic.kanman.data.toModel
 import xyz.malefic.kanman.data.toResponseModel
 import xyz.malefic.kanman.data.tokenResponseLens
+import xyz.malefic.kanman.data.transaction.createBoard
+import xyz.malefic.kanman.data.transaction.createUser
 import xyz.malefic.kanman.data.transaction.getTokensFromLogin
 import xyz.malefic.kanman.data.transaction.refreshTokens
 import xyz.malefic.kanman.data.userRequestLens
 import xyz.malefic.kanman.data.userResponseLens
 import xyz.malefic.kanman.util.auth
 import xyz.malefic.kanman.util.error
-import xyz.malefic.kanman.util.hashPassword
 import xyz.malefic.kanman.util.model
 
 val post =
@@ -49,12 +45,7 @@ val post =
             model(userRequestLens) REQUEST@{ _, user ->
                 val userResult =
                     try {
-                        transaction {
-                            UserEntity.new {
-                                this.username = user.username
-                                this.hashedPassword = hashPassword(user.password)
-                            }
-                        }
+                        createUser(user)
                     } catch (e: Exception) {
                         return@REQUEST Response(INTERNAL_SERVER_ERROR).with("Failed to create user: $e".error)
                     }
@@ -65,18 +56,7 @@ val post =
             auth(boardCreateLens) REQUEST@{ user, boardRequest ->
                 val boardResponse =
                     try {
-                        transaction {
-                            val createdBoard =
-                                BoardEntity.new {
-                                    title = boardRequest.title
-                                    visibility = boardRequest.visibility
-                                }
-                            BoardUsers.insert {
-                                it[BoardUsers.user] = user.id
-                                it[BoardUsers.board] = createdBoard.id
-                            }
-                            createdBoard
-                        }
+                        createBoard(boardRequest, user)
                     } catch (e: Exception) {
                         return@REQUEST Response(INTERNAL_SERVER_ERROR).with("Failed to create board: $e".error)
                     }
