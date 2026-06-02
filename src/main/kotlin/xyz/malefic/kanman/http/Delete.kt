@@ -4,6 +4,7 @@ import org.http4k.core.Method.DELETE
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.FORBIDDEN
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.with
@@ -32,7 +33,7 @@ val delete =
                         null
                     }?.let { return@REQUEST it }
                 } catch (e: Exception) {
-                    return@REQUEST Response(BAD_REQUEST).with("Failed to create board: $e".error)
+                    return@REQUEST Response(INTERNAL_SERVER_ERROR).with("Failed to create board: $e".error)
                 }
 
                 Response(OK)

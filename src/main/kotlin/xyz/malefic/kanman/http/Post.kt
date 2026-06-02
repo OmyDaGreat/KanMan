@@ -2,7 +2,7 @@ package xyz.malefic.kanman.http
 
 import org.http4k.core.Method.POST
 import org.http4k.core.Response
-import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
@@ -56,7 +56,7 @@ val post =
                             }
                         }
                     } catch (e: Exception) {
-                        return@REQUEST Response(BAD_REQUEST).with("Failed to create user: $e".error)
+                        return@REQUEST Response(INTERNAL_SERVER_ERROR).with("Failed to create user: $e".error)
                     }
 
                 Response(OK).with(userResponseLens of userResult.toResponseModel())
@@ -78,7 +78,7 @@ val post =
                             createdBoard
                         }
                     } catch (e: Exception) {
-                        return@REQUEST Response(BAD_REQUEST).with("Failed to create board: $e".error)
+                        return@REQUEST Response(INTERNAL_SERVER_ERROR).with("Failed to create board: $e".error)
                     }
 
                 Response(OK).with(boardLens of boardResponse.toModel())

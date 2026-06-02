@@ -3,6 +3,7 @@ package xyz.malefic.kanman.http
 import org.http4k.core.Method.GET
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Status.Companion.UNAUTHORIZED
@@ -44,7 +45,7 @@ val get =
                             ),
                     )
                 } catch (e: Exception) {
-                    Response(BAD_REQUEST).with("Failed to retrieve board: $e".error)
+                    Response(INTERNAL_SERVER_ERROR).with("Failed to retrieve board: $e".error)
                 }
             },
         "/api/boards" bind GET to { request ->
@@ -94,7 +95,7 @@ val get =
                     Response(OK).with(boardSummaryListLens of BoardSummaryListModel(boards ?: emptyList()))
                 }
             } catch (e: Exception) {
-                Response(BAD_REQUEST).with("Failed to list boards: $e".error)
+                Response(INTERNAL_SERVER_ERROR).with("Failed to list boards: $e".error)
             }
         },
     )
