@@ -7,7 +7,8 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.AuthTokenEntity
 import xyz.malefic.kanman.data.AuthTokens
 import xyz.malefic.kanman.data.TokenResponseModel
-import xyz.malefic.kanman.data.TokenType
+import xyz.malefic.kanman.data.TokenType.ACCESS
+import xyz.malefic.kanman.data.TokenType.REFRESH
 import xyz.malefic.kanman.data.UserEntity
 import xyz.malefic.kanman.data.UserRequestModel
 import xyz.malefic.kanman.data.Users
@@ -34,11 +35,27 @@ fun getTokensFromLogin(user: UserRequestModel) =
             ?.let { issueTokenPair(it) }
     }
 
+fun revokeRefreshToken(token: String) =
+    transaction {
+        AuthTokenEntity.findSingleByAndUpdate(
+            AuthTokens.tokenHash eq hashToken(token),
+        ) { it.revokedAt = nowMs() }
+    }
+
 fun refreshTokens(refreshToken: String) =
     transaction {
-        val token = findValidToken(refreshToken, TokenType.REFRESH) ?: return@transaction null
-        token.revokedAt = nowMs()
+        val token = revokeRefreshToken(refreshToken) ?: return@transaction null
         issueTokenPair(token.user)
+    }
+
+fun getUserFromAccessToken(accessToken: String) =
+    transaction {
+        AuthTokenEntity
+            .find { AuthTokens.tokenHash eq hashToken(accessToken) }
+            .firstOrNull()
+            ?.takeIf { it.tokenType == ACCESS && it.revokedAt == null && it.expiresAt > nowMs() }
+            ?.user
+            ?.toResponseModel()
     }
 
 @Suppress("UnusedReceiverParameter")
@@ -50,7 +67,7 @@ fun JdbcTransaction.issueTokenPair(user: UserEntity): TokenResponseModel {
 
     AuthTokenEntity.new {
         this.user = user
-        tokenType = TokenType.ACCESS
+        tokenType = ACCESS
         tokenHash = hashToken(accessToken)
         expiresAt = accessExpiration
         revokedAt = null
@@ -58,7 +75,7 @@ fun JdbcTransaction.issueTokenPair(user: UserEntity): TokenResponseModel {
 
     AuthTokenEntity.new {
         this.user = user
-        tokenType = TokenType.REFRESH
+        tokenType = REFRESH
         tokenHash = hashToken(refreshToken)
         expiresAt = refreshExpiration
         revokedAt = null
@@ -70,12 +87,3 @@ fun JdbcTransaction.issueTokenPair(user: UserEntity): TokenResponseModel {
         expiresIn = ACCESS_TOKEN_TTL_MILLIS / 1000,
     )
 }
-
-@Suppress("UnusedReceiverParameter")
-fun JdbcTransaction.findValidToken(
-    token: String,
-    kind: TokenType,
-) = AuthTokenEntity
-    .find { AuthTokens.tokenHash eq hashToken(token) }
-    .firstOrNull()
-    ?.takeIf { it.tokenType == kind && it.revokedAt == null && it.expiresAt > nowMs() }

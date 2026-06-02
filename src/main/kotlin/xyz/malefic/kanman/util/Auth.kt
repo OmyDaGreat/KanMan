@@ -6,11 +6,9 @@ import org.http4k.core.Response
 import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
 import org.http4k.lens.RequestKey
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.data.TokenType
 import xyz.malefic.kanman.data.errorLens
 import xyz.malefic.kanman.data.errorModel
-import xyz.malefic.kanman.data.transaction.findValidToken
+import xyz.malefic.kanman.data.transaction.getUserFromAccessToken
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
@@ -37,11 +35,11 @@ val auth: Filter =
             if (token.isNullOrBlank()) {
                 Response(UNAUTHORIZED).with(errorLens of "Missing bearer token".errorModel)
             } else {
-                val userId = transaction { findValidToken(token, TokenType.ACCESS)?.user?.id?.value }
-                if (userId == null) {
+                val user = getUserFromAccessToken(token)
+                if (user == null) {
                     Response(UNAUTHORIZED).with(errorLens of "Invalid or expired token".errorModel)
                 } else {
-                    next(request.with(authenticatedUserId of userId))
+                    next(request.with(authenticatedUserId of user.id))
                 }
             }
         }
