@@ -11,6 +11,7 @@ import xyz.malefic.kanman.data.BoardEntity
 import xyz.malefic.kanman.data.StickyNoteEntity
 import xyz.malefic.kanman.data.stickyCreateLens
 import xyz.malefic.kanman.data.toModel
+import xyz.malefic.kanman.data.transaction.isBoardValid
 import xyz.malefic.kanman.util.ConnectionRegistry
 import xyz.malefic.kanman.util.WsAbort
 import xyz.malefic.kanman.util.abort
@@ -24,6 +25,9 @@ val ws =
                 WsResponse { ws ->
                     try {
                         val id = Uuid.parse(request.path("id") ?: ws.abort("Missing board {id} query param"))
+                        if (isBoardValid(id, user)) {
+                            ws.abort("Board not found or access denied")
+                        }
                         ConnectionRegistry.register(id, ws)
 
                         ws.send(WsMessage("hello ${user.username}."))
