@@ -6,6 +6,7 @@ import org.http4k.server.asServer
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import xyz.malefic.kanman.data.AuthTokens
 import xyz.malefic.kanman.data.BoardUsers
 import xyz.malefic.kanman.data.Boards
 import xyz.malefic.kanman.data.SQLKermit
@@ -22,7 +23,7 @@ fun main() {
     transaction {
         addLogger(SQLKermit)
         exec("PRAGMA foreign_keys = ON;")
-        SchemaUtils.create(Users, Boards, StickyNotes, BoardUsers)
+        SchemaUtils.create(Users, AuthTokens, Boards, StickyNotes, BoardUsers)
     }
 
     val server = poly(http, ws).asServer(Undertow(6320)).start()

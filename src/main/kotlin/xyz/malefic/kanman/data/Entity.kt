@@ -11,8 +11,20 @@ class UserEntity(
     companion object : UuidEntityClass<UserEntity>(Users)
 
     var username by Users.username
-    var password by Users.password
+    var hashedPassword by Users.hashedPassword
     var boards by BoardEntity via BoardUsers
+}
+
+class AuthTokenEntity(
+    id: EntityID<Uuid>,
+) : UuidEntity(id) {
+    companion object : UuidEntityClass<AuthTokenEntity>(AuthTokens)
+
+    var user by UserEntity referencedOn AuthTokens.user
+    var tokenHash by AuthTokens.tokenHash
+    var tokenType by AuthTokens.tokenType
+    var expiresAt by AuthTokens.expiresAt
+    var revokedAt by AuthTokens.revokedAt
 }
 
 class BoardEntity(

@@ -9,7 +9,7 @@ import org.http4k.filter.CorsPolicy
 
 val corsPolicy =
     CorsPolicy(
-        headers = listOf("Content-Type"),
+        headers = listOf("Content-Type", "Authorization"),
         methods = listOf(GET, POST, PUT, DELETE),
         originPolicy = AllowAllOriginPolicy,
     )

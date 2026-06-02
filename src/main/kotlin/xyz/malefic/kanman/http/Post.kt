@@ -1,55 +1,87 @@
 package xyz.malefic.kanman.http
 
-import org.http4k.core.Method
+import org.http4k.core.Method.POST
 import org.http4k.core.Response
-import org.http4k.core.Status
+import org.http4k.core.Status.Companion.BAD_REQUEST
+import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
 import org.http4k.routing.bind
+import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.BoardEntity
+import xyz.malefic.kanman.data.BoardUsers
 import xyz.malefic.kanman.data.UserEntity
 import xyz.malefic.kanman.data.boardLens
 import xyz.malefic.kanman.data.boardRequestLens
 import xyz.malefic.kanman.data.error
 import xyz.malefic.kanman.data.errorLens
+import xyz.malefic.kanman.data.refreshRequestLens
 import xyz.malefic.kanman.data.toModel
-import xyz.malefic.kanman.data.userLens
+import xyz.malefic.kanman.data.toResponseModel
+import xyz.malefic.kanman.data.tokenResponseLens
+import xyz.malefic.kanman.data.userRequestLens
+import xyz.malefic.kanman.data.userResponseLens
 import xyz.malefic.kanman.util.auth
+import xyz.malefic.kanman.util.getTokensFromLogin
+import xyz.malefic.kanman.util.hashPassword
 import xyz.malefic.kanman.util.model
+import xyz.malefic.kanman.util.refreshTokens
 
 val post =
     arrayOf(
-        "/api/user/register" bind Method.POST to
-            auth REQUEST@{ _, user ->
-                // TODO: More proper user creds validation (+ password hashing)
+        "/api/login" bind POST to
+            model(userRequestLens) REQUEST@{ _, login ->
+                val tokens =
+                    getTokensFromLogin(login)
+                        ?: return@REQUEST Response(UNAUTHORIZED).with(errorLens of "Invalid username or password".error)
+
+                Response(OK).with(tokenResponseLens of tokens)
+            },
+        "/api/token/refresh" bind POST to
+            model(refreshRequestLens) REQUEST@{ _, refresh ->
+                val tokens =
+                    refreshTokens(refresh.refreshToken)
+                        ?: return@REQUEST Response(UNAUTHORIZED).with(errorLens of "Invalid or expired refresh token".error)
+
+                Response(OK).with(tokenResponseLens of tokens)
+            },
+        "/api/user/register" bind POST to
+            model(userRequestLens) REQUEST@{ _, user ->
                 val userResult =
                     try {
                         transaction {
                             UserEntity.new {
                                 this.username = user.username
-                                this.password = user.password
+                                this.hashedPassword = hashPassword(user.password)
                             }
                         }
                     } catch (e: Exception) {
-                        return@REQUEST Response(Status.BAD_REQUEST).with(errorLens of "Failed to create user: $e".error)
+                        return@REQUEST Response(BAD_REQUEST).with(errorLens of "Failed to create user: $e".error)
                     }
 
-                Response(Status.OK).with(userLens of userResult.toModel())
+                Response(OK).with(userResponseLens of userResult.toResponseModel())
             },
-        "/api/board/create" bind Method.POST to
-            model(boardRequestLens) REQUEST@{ _, board ->
-                val board =
+        "/api/board/create" bind POST to
+            auth(boardRequestLens) REQUEST@{ user, boardRequest ->
+                val boardResponse =
                     try {
                         transaction {
-                            BoardEntity.new {
-                                this.title = board.title
-                                this.visibility = board.visibility
+                            val createdBoard =
+                                BoardEntity.new {
+                                    title = boardRequest.title
+                                    visibility = boardRequest.visibility
+                                }
+                            BoardUsers.insert {
+                                it[BoardUsers.user] = user.id
+                                it[BoardUsers.board] = createdBoard.id
                             }
+                            createdBoard
                         }
                     } catch (e: Exception) {
-                        return@REQUEST Response(Status.BAD_REQUEST).with(errorLens of "Failed to create board: $e".error)
+                        return@REQUEST Response(BAD_REQUEST).with(errorLens of "Failed to create board: $e".error)
                     }
 
-                Response(Status.OK).with(boardLens of board.toModel())
+                Response(OK).with(boardLens of boardResponse.toModel())
             },
     )

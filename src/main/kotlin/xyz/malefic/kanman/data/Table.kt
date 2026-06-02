@@ -5,7 +5,15 @@ import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 
 object Users : UuidTable("users") {
     val username = varchar("username", 128).uniqueIndex()
-    val password = varchar("password", 256)
+    val hashedPassword = varchar("password", 256)
+}
+
+object AuthTokens : UuidTable("auth_tokens") {
+    val user = reference("user_id", Users)
+    val tokenHash = varchar("token_hash", 64).uniqueIndex()
+    val tokenType = enumeration<TokenType>("kind")
+    val expiresAt = long("expires_at")
+    val revokedAt = long("revoked_at").nullable()
 }
 
 object Boards : UuidTable("boards") {
@@ -42,4 +50,9 @@ enum class Column {
 enum class Visibility {
     PUBLIC,
     PRIVATE,
+}
+
+enum class TokenType {
+    ACCESS,
+    REFRESH,
 }
