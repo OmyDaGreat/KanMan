@@ -1,6 +1,7 @@
 package xyz.malefic.kanman.util
 
 import org.http4k.core.Request
+import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.websocket.Websocket
 import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
@@ -26,3 +27,5 @@ fun Websocket.abort(error: String): Nothing {
     close()
     throw WsAbort()
 }
+
+inline fun <reified T : Any> wsLens() = WsMessage.auto<T>().toLens()

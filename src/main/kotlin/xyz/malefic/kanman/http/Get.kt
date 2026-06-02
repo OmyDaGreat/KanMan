@@ -9,7 +9,6 @@ import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
 import org.http4k.routing.bind
 import org.http4k.routing.path
-import xyz.malefic.kanman.data.BoardSummaryListModel
 import xyz.malefic.kanman.data.boardLens
 import xyz.malefic.kanman.data.boardSummaryListLens
 import xyz.malefic.kanman.data.transaction.currentUser
@@ -42,6 +41,6 @@ val get =
                     getUserBoards(visibility, user)
                         ?: run { return@catch Response(UNAUTHORIZED).with("Authentication required for private boards".error) }
 
-                Response(OK).with(boardSummaryListLens of BoardSummaryListModel(boards))
+                Response(OK).with(boardSummaryListLens of boards)
             },
     )

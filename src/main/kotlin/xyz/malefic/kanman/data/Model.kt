@@ -2,9 +2,8 @@ package xyz.malefic.kanman.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.http4k.core.Body
-import org.http4k.format.KotlinxSerialization.auto
-import org.http4k.websocket.WsMessage
+import xyz.malefic.kanman.util.lens
+import xyz.malefic.kanman.util.wsLens
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -15,15 +14,13 @@ data class ErrorModel(
 val String.errorModel: ErrorModel
     get() = ErrorModel(this)
 
-val errorLens = Body.auto<ErrorModel>().toLens()
+val errorLens = lens<ErrorModel>()
 
 @Serializable
 data class UserRequestModel(
     val username: String,
     val password: String,
 )
-
-val userRequestLens = Body.auto<UserRequestModel>().toLens()
 
 @Serializable
 data class UserResponseModel(
@@ -34,15 +31,13 @@ data class UserResponseModel(
 
 fun UserEntity.toResponseModel(): UserResponseModel = UserResponseModel(id.value, username, boards.map { it.toModel() })
 
-val userResponseLens = Body.auto<UserResponseModel>().toLens()
+val userResponseLens = lens<UserResponseModel>()
 
 @Serializable
 data class RefreshRequestModel(
     @SerialName("refresh_token")
     val refreshToken: String,
 )
-
-val refreshRequestLens = Body.auto<RefreshRequestModel>().toLens()
 
 @Serializable
 data class TokenResponseModel(
@@ -54,7 +49,7 @@ data class TokenResponseModel(
     val expiresIn: Long,
 )
 
-val tokenResponseLens = Body.auto<TokenResponseModel>().toLens()
+val tokenResponseLens = lens<TokenResponseModel>()
 
 @Serializable
 data class StickyNoteModel(
@@ -74,15 +69,13 @@ data class StickyCreateModel(
     val column: Column,
 )
 
-val stickyCreateLens = WsMessage.auto<StickyCreateModel>().toLens()
+val stickyCreateLens = wsLens<StickyCreateModel>()
 
 @Serializable
 data class BoardCreateModel(
     val title: String,
     val visibility: Visibility,
 )
-
-val boardCreateLens = Body.auto<BoardCreateModel>().toLens()
 
 @Serializable
 data class BoardModel(
@@ -106,7 +99,7 @@ fun BoardEntity.toModel() =
         users.map { it.toResponseModel() },
     )
 
-val boardLens = Body.auto<BoardModel>().toLens()
+val boardLens = lens<BoardModel>()
 
 @Serializable
 data class BoardSummaryModel(
@@ -118,9 +111,4 @@ data class BoardSummaryModel(
 
 fun BoardEntity.toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toResponseModel())
 
-@Serializable
-data class BoardSummaryListModel(
-    val boards: List<BoardSummaryModel>,
-)
-
-val boardSummaryListLens = Body.auto<BoardSummaryListModel>().toLens()
+val boardSummaryListLens = lens<List<BoardSummaryModel>>()
