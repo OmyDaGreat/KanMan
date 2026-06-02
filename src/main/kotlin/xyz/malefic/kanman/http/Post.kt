@@ -61,7 +61,7 @@ val post =
 
                 Response(OK).with(userResponseLens of userResult.toResponseModel())
             },
-        "/api/board/create" bind POST to
+        "/api/board" bind POST to
             auth(boardCreateLens) REQUEST@{ user, boardRequest ->
                 val boardResponse =
                     try {

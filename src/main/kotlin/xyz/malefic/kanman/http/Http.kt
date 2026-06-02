@@ -11,5 +11,6 @@ val http: RoutingHttpHandler =
         routes(
             *get,
             *post,
+            *delete,
         ),
     )
