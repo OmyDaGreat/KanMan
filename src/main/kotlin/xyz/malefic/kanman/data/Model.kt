@@ -6,6 +6,8 @@ import org.http4k.core.Body
 import org.http4k.format.KotlinxSerialization.auto
 import kotlin.uuid.Uuid
 
+val idLens = Body.auto<Uuid>().toLens()
+
 @Serializable
 data class ErrorModel(
     val error: String,

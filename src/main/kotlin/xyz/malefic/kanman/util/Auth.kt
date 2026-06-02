@@ -63,6 +63,11 @@ fun verifyPassword(
     hashedPassword: String,
 ): Boolean = verifier.verify(password.toCharArray(), hashedPassword).verified
 
+fun currentUser(request: Request) =
+    transaction {
+        UserEntity.findById(authenticatedUserId(request))?.toResponseModel()
+    }
+
 fun getTokensFromLogin(user: UserRequestModel) =
     transaction {
         UserEntity
@@ -108,11 +113,6 @@ private fun JdbcTransaction.issueTokenPair(user: UserEntity): TokenResponseModel
         expiresIn = ACCESS_TOKEN_TTL_MILLIS / 1000,
     )
 }
-
-fun currentUser(request: Request) =
-    transaction {
-        UserEntity.findById(authenticatedUserId(request))?.toResponseModel()
-    }
 
 @Suppress("UnusedReceiverParameter")
 private fun JdbcTransaction.findValidToken(
