@@ -10,17 +10,11 @@ import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
 import org.http4k.routing.bind
 import org.http4k.routing.path
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.data.BoardEntity
 import xyz.malefic.kanman.data.BoardSummaryListModel
-import xyz.malefic.kanman.data.Boards
-import xyz.malefic.kanman.data.Visibility.PRIVATE
-import xyz.malefic.kanman.data.Visibility.PUBLIC
 import xyz.malefic.kanman.data.boardLens
 import xyz.malefic.kanman.data.boardSummaryListLens
-import xyz.malefic.kanman.data.toSummaryModel
 import xyz.malefic.kanman.data.transaction.currentUser
+import xyz.malefic.kanman.data.transaction.getUserBoards
 import xyz.malefic.kanman.util.auth
 import xyz.malefic.kanman.util.error
 import xyz.malefic.kanman.util.toVisibility
@@ -48,52 +42,16 @@ val get =
                     Response(INTERNAL_SERVER_ERROR).with("Failed to retrieve board: $e".error)
                 }
             },
-        "/api/boards" bind GET to { request ->
+        "/api/boards" bind GET to REQUEST@{ request ->
             try {
                 val visibility = request.query("visibility")?.toVisibility
                 val user = currentUser(request)
 
                 val boards =
-                    transaction {
-                        when (visibility) {
-                            PUBLIC -> {
-                                BoardEntity
-                                    .find { Boards.visibility eq PUBLIC }
-                                    .map { it.toSummaryModel() }
-                            }
+                    getUserBoards(visibility, user)
+                        ?: run { return@REQUEST Response(UNAUTHORIZED).with("Authentication required for private boards".error) }
 
-                            PRIVATE -> {
-                                if (user == null) return@transaction null
-                                BoardEntity
-                                    .find { Boards.visibility eq PRIVATE }
-                                    .filter { board -> board.users.any { u -> u.id.value == user.id } }
-                                    .map { it.toSummaryModel() }
-                            }
-
-                            else -> {
-                                val public =
-                                    BoardEntity
-                                        .find { Boards.visibility eq PUBLIC }
-                                        .map { it.toSummaryModel() }
-                                if (user == null) {
-                                    public
-                                } else {
-                                    val privateVisible =
-                                        BoardEntity
-                                            .find { Boards.visibility eq PRIVATE }
-                                            .filter { board -> board.users.any { u -> u.id.value == user.id } }
-                                            .map { it.toSummaryModel() }
-                                    (public + privateVisible).distinctBy { it.id }
-                                }
-                            }
-                        }
-                    }
-
-                if (visibility == PRIVATE && user == null) {
-                    Response(UNAUTHORIZED).with("Authentication required for private boards".error)
-                } else {
-                    Response(OK).with(boardSummaryListLens of BoardSummaryListModel(boards ?: emptyList()))
-                }
+                Response(OK).with(boardSummaryListLens of BoardSummaryListModel(boards))
             } catch (e: Exception) {
                 Response(INTERNAL_SERVER_ERROR).with("Failed to list boards: $e".error)
             }
