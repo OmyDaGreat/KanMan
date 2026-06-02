@@ -21,6 +21,7 @@ val delete =
     arrayOf(
         "/api/board/{id}" bind DELETE to
             auth REQUEST@{ user, request ->
+                // TODO: Only allow owners(?) to delete boards
                 val id = Uuid.parse(request.path("id") ?: return@REQUEST Response(BAD_REQUEST).with("Invalid board id".error))
 
                 try {

@@ -1,5 +1,6 @@
 package xyz.malefic.kanman.data
 
+import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 
@@ -29,8 +30,8 @@ object StickyNotes : UuidTable("stickies") {
 }
 
 object BoardUsers : Table("board_users") {
-    val board = reference("board_id", Boards)
-    val user = reference("user_id", Users)
+    val board = reference("board_id", Boards, onDelete = ReferenceOption.CASCADE)
+    val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
     override val primaryKey = PrimaryKey(board, user)
 }
 
