@@ -1,5 +1,6 @@
 package xyz.malefic.kanman
 
+import co.touchlab.kermit.Logger
 import org.http4k.routing.path
 import org.http4k.routing.websocket.bind
 import org.http4k.routing.websockets
@@ -10,6 +11,7 @@ import xyz.malefic.kanman.data.BoardEntity
 import xyz.malefic.kanman.data.StickyNoteEntity
 import xyz.malefic.kanman.data.stickyCreateLens
 import xyz.malefic.kanman.data.toModel
+import xyz.malefic.kanman.util.ConnectionRegistry
 import xyz.malefic.kanman.util.WsAbort
 import xyz.malefic.kanman.util.abort
 import xyz.malefic.kanman.util.authWS
@@ -20,11 +22,13 @@ val ws =
         "/api/ws/{id}" bind
             authWS { user, request ->
                 WsResponse { ws ->
-                    ws.send(WsMessage("hello ${user.username}."))
+                    try {
+                        val id = Uuid.parse(request.path("id") ?: ws.abort("Missing board {id} query param"))
+                        ConnectionRegistry.register(id, ws)
 
-                    ws.onMessage { msg ->
-                        try {
-                            val id = Uuid.parse(request.path("id") ?: ws.abort("Missing board {id} query param"))
+                        ws.send(WsMessage("hello ${user.username}."))
+
+                        ws.onMessage { msg ->
                             val stickyNoteRequest = stickyCreateLens(msg)
                             ws.send(WsMessage("${user.username} is adding a sticky note!"))
                             val stickyNote =
@@ -37,15 +41,18 @@ val ws =
                                     }
                                 }.toModel()
                             ws.send(WsMessage("Sticky note created: $stickyNote"))
-                        } catch (_: WsAbort) {
-                            // already sent error + closed
-                        } catch (e: Exception) {
-                            ws.send(WsMessage("Failed to create sticky note: $e"))
-                            ws.close()
                         }
-                    }
 
-                    ws.onClose { println("${user.username} is leaving the board.") }
+                        ws.onClose {
+                            ConnectionRegistry.unregister(id, ws)
+                            Logger.i(tag = "WebSockets") { "${user.username} is leaving the board with id $id." }
+                        }
+                    } catch (_: WsAbort) {
+                        // already sent error + closed
+                    } catch (e: Exception) {
+                        ws.send(WsMessage("Failed to create sticky note: $e"))
+                        ws.close()
+                    }
                 }
             },
     )

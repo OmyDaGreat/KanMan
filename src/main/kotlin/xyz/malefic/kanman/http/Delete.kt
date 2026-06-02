@@ -12,6 +12,7 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.BoardEntity
+import xyz.malefic.kanman.util.ConnectionRegistry
 import xyz.malefic.kanman.util.auth
 import xyz.malefic.kanman.util.error
 import kotlin.uuid.Uuid
@@ -36,6 +37,7 @@ val delete =
                     return@REQUEST Response(INTERNAL_SERVER_ERROR).with("Failed to create board: $e".error)
                 }
 
+                ConnectionRegistry.closeAll(id)
                 Response(OK)
             },
     )
