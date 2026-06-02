@@ -10,8 +10,6 @@ import org.http4k.routing.bind
 import xyz.malefic.kanman.data.boardCreateLens
 import xyz.malefic.kanman.data.boardLens
 import xyz.malefic.kanman.data.refreshRequestLens
-import xyz.malefic.kanman.data.toModel
-import xyz.malefic.kanman.data.toResponseModel
 import xyz.malefic.kanman.data.tokenResponseLens
 import xyz.malefic.kanman.data.transaction.createBoard
 import xyz.malefic.kanman.data.transaction.createUser
@@ -50,7 +48,7 @@ val post =
                         return@REQUEST Response(INTERNAL_SERVER_ERROR).with("Failed to create user: $e".error)
                     }
 
-                Response(OK).with(userResponseLens of userResult.toResponseModel())
+                Response(OK).with(userResponseLens of userResult)
             },
         "/api/board" bind POST to
             auth(boardCreateLens) REQUEST@{ user, boardRequest ->
@@ -61,6 +59,6 @@ val post =
                         return@REQUEST Response(INTERNAL_SERVER_ERROR).with("Failed to create board: $e".error)
                     }
 
-                Response(OK).with(boardLens of boardResponse.toModel())
+                Response(OK).with(boardLens of boardResponse)
             },
     )

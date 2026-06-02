@@ -17,10 +17,12 @@ val delete =
     arrayOf(
         "/api/board/{id}" bind DELETE to
             auth REQUEST@{ user, request ->
-                val id = Uuid.parse(request.path("id") ?: return@REQUEST Response(BAD_REQUEST).with("Invalid board id".error))
+                val id = Uuid.parse(request.path("id") ?: return@REQUEST Response(BAD_REQUEST).with("Invalid board".error))
 
                 try {
-                    deleteBoard(id, user)?.let { return@REQUEST it }
+                    if (!deleteBoard(id, user)) {
+                        return@REQUEST Response(BAD_REQUEST).with("Invalid board".error)
+                    }
                 } catch (e: Exception) {
                     return@REQUEST Response(INTERNAL_SERVER_ERROR).with("Failed to create board: $e".error)
                 }
