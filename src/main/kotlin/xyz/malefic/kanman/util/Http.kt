@@ -44,11 +44,10 @@ inline fun <reified A : Any> model(crossinline handler: (Request, A) -> Response
         handler(request, a)
     }
 
-fun auth(next: (UserResponseModel, Request) -> Response) =
+fun auth(next: Request.(UserResponseModel) -> Response) =
     auth.then { request ->
-        next(
+        request.next(
             currentUser(request) ?: return@then Response(UNAUTHORIZED).with("Authenticated user not found".error),
-            request,
         )
     }
 

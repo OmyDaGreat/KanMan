@@ -26,8 +26,8 @@ val get =
         "/api/health" bind GET to { Response(OK).body("healthy") },
         "/api/board/{id}" bind GET to
             catchPlus("Failed to retrieve board") {
-                auth { user, request ->
-                    val id = request.path("id")?.let { Uuid.parse(it) } ?: return@auth Response(BAD_REQUEST).with("Invalid board id".error)
+                auth { user ->
+                    val id = path("id")?.let { Uuid.parse(it) } ?: return@auth Response(BAD_REQUEST).with("Invalid board id".error)
                     val board = user.boards.firstOrNull { it.id == id } ?: return@auth Response(NOT_FOUND).with("Board not found".error)
 
                     Response(OK).with(boardLens of board)
