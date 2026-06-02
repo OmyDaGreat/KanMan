@@ -13,7 +13,7 @@ data class ErrorModel(
     val error: String,
 )
 
-val String.error: ErrorModel
+val String.errorModel: ErrorModel
     get() = ErrorModel(this)
 
 val errorLens = Body.auto<ErrorModel>().toLens()
@@ -68,6 +68,14 @@ data class StickyNoteModel(
 fun StickyNoteEntity.toModel(): StickyNoteModel = StickyNoteModel(title, content, column, board.toModel())
 
 @Serializable
+data class BoardCreateModel(
+    val title: String,
+    val visibility: Visibility,
+)
+
+val boardCreateLens = Body.auto<BoardCreateModel>().toLens()
+
+@Serializable
 data class BoardModel(
     val id: Uuid,
     val title: String,
@@ -81,17 +89,17 @@ fun BoardEntity.toModel() = BoardModel(id.value, title, visibility, stickies.map
 val boardLens = Body.auto<BoardModel>().toLens()
 
 @Serializable
-data class BoardRequestModel(
+data class BoardSummaryModel(
+    val id: Uuid,
     val title: String,
     val visibility: Visibility,
 )
 
-val boardRequestLens = Body.auto<BoardRequestModel>().toLens()
+fun BoardEntity.toSummaryModel() = BoardSummaryModel(id.value, title, visibility)
 
 @Serializable
-data class BoardListModel(
-    val username: String,
-    val boards: List<BoardModel>,
+data class BoardSummaryListModel(
+    val boards: List<BoardSummaryModel>,
 )
 
-val boardListLens = Body.auto<BoardListModel>().toLens()
+val boardSummaryListLens = Body.auto<BoardSummaryListModel>().toLens()

@@ -9,8 +9,9 @@ import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.lens.BiDiBodyLens
 import xyz.malefic.kanman.data.UserResponseModel
-import xyz.malefic.kanman.data.error
+import xyz.malefic.kanman.data.Visibility
 import xyz.malefic.kanman.data.errorLens
+import xyz.malefic.kanman.data.errorModel
 
 fun <A> model(
     lens: BiDiBodyLens<A>,
@@ -21,14 +22,14 @@ fun <A> model(
             try {
                 lens(request)
             } catch (e: Exception) {
-                return@REQUEST Response(BAD_REQUEST).with(errorLens of "Invalid JSON for request body: $e".error)
+                return@REQUEST Response(BAD_REQUEST).with(errorLens of "Invalid JSON for request body: $e".errorModel)
             }
         handler(request, a)
     }
 
 fun auth(next: (UserResponseModel) -> Response) =
     auth.then { request ->
-        next(currentUser(request) ?: return@then Response(UNAUTHORIZED).with(errorLens of "Authenticated user not found".error))
+        next(currentUser(request) ?: return@then Response(UNAUTHORIZED).with(errorLens of "Authenticated user not found".errorModel))
     }
 
 fun <T> auth(
@@ -36,9 +37,21 @@ fun <T> auth(
     next: (UserResponseModel, T) -> Response,
 ) = auth.then(
     model(lens) REQUEST@{ request, lensRequest ->
-        val user = currentUser(request) ?: return@REQUEST Response(UNAUTHORIZED).with(errorLens of "Authenticated user not found".error)
+        val user =
+            currentUser(request) ?: return@REQUEST Response(UNAUTHORIZED).with(errorLens of "Authenticated user not found".errorModel)
         next(user, lensRequest)
     },
 )
 
 fun nowMs(): Long = System.currentTimeMillis()
+
+val String.toVisibility
+    get() =
+        try {
+            Visibility.valueOf(this.uppercase())
+        } catch (_: Exception) {
+            null
+        }
+
+val String.error: (Response) -> Response
+    get() = errorLens.of(this.errorModel)

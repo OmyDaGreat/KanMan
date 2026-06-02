@@ -17,8 +17,8 @@ import xyz.malefic.kanman.data.TokenType
 import xyz.malefic.kanman.data.UserEntity
 import xyz.malefic.kanman.data.UserRequestModel
 import xyz.malefic.kanman.data.Users
-import xyz.malefic.kanman.data.error
 import xyz.malefic.kanman.data.errorLens
+import xyz.malefic.kanman.data.errorModel
 import xyz.malefic.kanman.data.toResponseModel
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -44,11 +44,11 @@ val auth: Filter =
                     ?.removePrefix("Bearer ")
                     ?.trim()
             if (token.isNullOrBlank()) {
-                Response(UNAUTHORIZED).with(errorLens of "Missing bearer token".error)
+                Response(UNAUTHORIZED).with(errorLens of "Missing bearer token".errorModel)
             } else {
                 val userId = transaction { findValidToken(token, TokenType.ACCESS)?.user?.id?.value }
                 if (userId == null) {
-                    Response(UNAUTHORIZED).with(errorLens of "Invalid or expired token".error)
+                    Response(UNAUTHORIZED).with(errorLens of "Invalid or expired token".errorModel)
                 } else {
                     next(request.with(authenticatedUserId of userId))
                 }

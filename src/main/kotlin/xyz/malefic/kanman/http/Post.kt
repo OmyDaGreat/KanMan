@@ -12,10 +12,10 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.BoardEntity
 import xyz.malefic.kanman.data.BoardUsers
 import xyz.malefic.kanman.data.UserEntity
+import xyz.malefic.kanman.data.boardCreateLens
 import xyz.malefic.kanman.data.boardLens
-import xyz.malefic.kanman.data.boardRequestLens
-import xyz.malefic.kanman.data.error
 import xyz.malefic.kanman.data.errorLens
+import xyz.malefic.kanman.data.errorModel
 import xyz.malefic.kanman.data.refreshRequestLens
 import xyz.malefic.kanman.data.toModel
 import xyz.malefic.kanman.data.toResponseModel
@@ -34,7 +34,7 @@ val post =
             model(userRequestLens) REQUEST@{ _, login ->
                 val tokens =
                     getTokensFromLogin(login)
-                        ?: return@REQUEST Response(UNAUTHORIZED).with(errorLens of "Invalid username or password".error)
+                        ?: return@REQUEST Response(UNAUTHORIZED).with(errorLens of "Invalid username or password".errorModel)
 
                 Response(OK).with(tokenResponseLens of tokens)
             },
@@ -42,7 +42,7 @@ val post =
             model(refreshRequestLens) REQUEST@{ _, refresh ->
                 val tokens =
                     refreshTokens(refresh.refreshToken)
-                        ?: return@REQUEST Response(UNAUTHORIZED).with(errorLens of "Invalid or expired refresh token".error)
+                        ?: return@REQUEST Response(UNAUTHORIZED).with(errorLens of "Invalid or expired refresh token".errorModel)
 
                 Response(OK).with(tokenResponseLens of tokens)
             },
@@ -57,13 +57,13 @@ val post =
                             }
                         }
                     } catch (e: Exception) {
-                        return@REQUEST Response(BAD_REQUEST).with(errorLens of "Failed to create user: $e".error)
+                        return@REQUEST Response(BAD_REQUEST).with(errorLens of "Failed to create user: $e".errorModel)
                     }
 
                 Response(OK).with(userResponseLens of userResult.toResponseModel())
             },
         "/api/board/create" bind POST to
-            auth(boardRequestLens) REQUEST@{ user, boardRequest ->
+            auth(boardCreateLens) REQUEST@{ user, boardRequest ->
                 val boardResponse =
                     try {
                         transaction {
@@ -79,7 +79,7 @@ val post =
                             createdBoard
                         }
                     } catch (e: Exception) {
-                        return@REQUEST Response(BAD_REQUEST).with(errorLens of "Failed to create board: $e".error)
+                        return@REQUEST Response(BAD_REQUEST).with(errorLens of "Failed to create board: $e".errorModel)
                     }
 
                 Response(OK).with(boardLens of boardResponse.toModel())
