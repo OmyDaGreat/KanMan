@@ -6,6 +6,9 @@ import org.http4k.core.Response
 import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
 import org.http4k.lens.RequestKey
+import org.http4k.websocket.WsFilter
+import org.http4k.websocket.WsMessage
+import org.http4k.websocket.WsResponse
 import xyz.malefic.kanman.data.errorLens
 import xyz.malefic.kanman.data.errorModel
 import xyz.malefic.kanman.data.transaction.getUserFromAccessToken
@@ -38,6 +41,34 @@ val auth: Filter =
                 val user = getUserFromAccessToken(token)
                 if (user == null) {
                     Response(UNAUTHORIZED).with(errorLens of "Invalid or expired token".errorModel)
+                } else {
+                    next(request.with(authenticatedUserId of user.id))
+                }
+            }
+        }
+    }
+
+val authWS: WsFilter =
+    WsFilter { next ->
+        { request ->
+            val token =
+                request
+                    .header("Authorization")
+                    ?.takeIf { it.startsWith("Bearer ") }
+                    ?.removePrefix("Bearer ")
+                    ?.trim()
+            if (token.isNullOrBlank()) {
+                WsResponse { ws ->
+                    ws.send(WsMessage("Error: Missing bearer token"))
+                    ws.close()
+                }
+            } else {
+                val user = getUserFromAccessToken(token)
+                if (user == null) {
+                    WsResponse { ws ->
+                        ws.send(WsMessage("Error: Invalid or expired token"))
+                        ws.close()
+                    }
                 } else {
                     next(request.with(authenticatedUserId of user.id))
                 }

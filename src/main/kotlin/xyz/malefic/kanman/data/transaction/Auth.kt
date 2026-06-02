@@ -15,6 +15,7 @@ import xyz.malefic.kanman.data.Users
 import xyz.malefic.kanman.data.toResponseModel
 import xyz.malefic.kanman.util.ACCESS_TOKEN_TTL_MILLIS
 import xyz.malefic.kanman.util.REFRESH_TOKEN_TTL_MILLIS
+import xyz.malefic.kanman.util.RequiresTransaction
 import xyz.malefic.kanman.util.authenticatedUserId
 import xyz.malefic.kanman.util.generateToken
 import xyz.malefic.kanman.util.hashToken
@@ -58,8 +59,8 @@ fun getUserFromAccessToken(accessToken: String) =
             ?.toResponseModel()
     }
 
-@Suppress("UnusedReceiverParameter")
-fun JdbcTransaction.issueTokenPair(user: UserEntity): TokenResponseModel {
+@RequiresTransaction
+private fun JdbcTransaction.issueTokenPair(user: UserEntity): TokenResponseModel {
     val accessToken = generateToken()
     val refreshToken = generateToken()
     val accessExpiration = nowMs() + ACCESS_TOKEN_TTL_MILLIS

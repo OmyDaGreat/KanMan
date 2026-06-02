@@ -4,9 +4,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.http4k.core.Body
 import org.http4k.format.KotlinxSerialization.auto
+import org.http4k.websocket.WsMessage
 import kotlin.uuid.Uuid
-
-val idLens = Body.auto<Uuid>().toLens()
 
 @Serializable
 data class ErrorModel(
@@ -59,13 +58,23 @@ val tokenResponseLens = Body.auto<TokenResponseModel>().toLens()
 
 @Serializable
 data class StickyNoteModel(
+    val id: Uuid,
     val title: String,
     val content: String,
     val column: Column,
     val board: BoardModel,
 )
 
-fun StickyNoteEntity.toModel(): StickyNoteModel = StickyNoteModel(title, content, column, board.toModel())
+fun StickyNoteEntity.toModel(): StickyNoteModel = StickyNoteModel(id.value, title, content, column, board.toModel())
+
+@Serializable
+data class StickyCreateModel(
+    val title: String,
+    val content: String,
+    val column: Column,
+)
+
+val stickyCreateLens = WsMessage.auto<StickyCreateModel>().toLens()
 
 @Serializable
 data class BoardCreateModel(
