@@ -9,8 +9,6 @@ import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
 import org.http4k.routing.bind
 import org.http4k.routing.path
-import xyz.malefic.kanman.data.boardLens
-import xyz.malefic.kanman.data.boardSummaryListLens
 import xyz.malefic.kanman.data.transaction.currentUser
 import xyz.malefic.kanman.data.transaction.getUserBoards
 import xyz.malefic.kanman.util.auth
@@ -18,6 +16,7 @@ import xyz.malefic.kanman.util.catch
 import xyz.malefic.kanman.util.catchPlus
 import xyz.malefic.kanman.util.error
 import xyz.malefic.kanman.util.toVisibility
+import xyz.malefic.kanman.util.value
 import kotlin.uuid.Uuid
 
 val get =
@@ -30,7 +29,7 @@ val get =
                     val id = path("id")?.let { Uuid.parse(it) } ?: return@auth Response(BAD_REQUEST).with("Invalid board id".error)
                     val board = user.boards.firstOrNull { it.id == id } ?: return@auth Response(NOT_FOUND).with("Board not found".error)
 
-                    Response(OK).with(boardLens of board)
+                    Response(OK).with(value(board))
                 }
             },
         "/api/boards" bind GET to
@@ -41,6 +40,6 @@ val get =
                     getUserBoards(visibility, user)
                         ?: run { return@catch Response(UNAUTHORIZED).with("Authentication required for private boards".error) }
 
-                Response(OK).with(boardSummaryListLens of boards)
+                Response(OK).with(value(boards))
             },
     )

@@ -2,19 +2,12 @@ package xyz.malefic.kanman.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import xyz.malefic.kanman.util.lens
-import xyz.malefic.kanman.util.wsLens
 import kotlin.uuid.Uuid
 
 @Serializable
 data class ErrorModel(
     val error: String,
 )
-
-val String.errorModel: ErrorModel
-    get() = ErrorModel(this)
-
-val errorLens = lens<ErrorModel>()
 
 @Serializable
 data class UserRequestModel(
@@ -30,8 +23,6 @@ data class UserResponseModel(
 )
 
 fun UserEntity.toResponseModel(): UserResponseModel = UserResponseModel(id.value, username, boards.map { it.toModel() })
-
-val userResponseLens = lens<UserResponseModel>()
 
 @Serializable
 data class RefreshRequestModel(
@@ -49,8 +40,6 @@ data class TokenResponseModel(
     val expiresIn: Long,
 )
 
-val tokenResponseLens = lens<TokenResponseModel>()
-
 @Serializable
 data class StickyNoteModel(
     val id: Uuid,
@@ -65,11 +54,9 @@ fun StickyNoteEntity.toModel(): StickyNoteModel = StickyNoteModel(id.value, titl
 @Serializable
 data class StickyCreateModel(
     val title: String,
-    val content: String,
+    val content: String?,
     val column: Column,
 )
-
-val stickyCreateLens = wsLens<StickyCreateModel>()
 
 @Serializable
 data class BoardCreateModel(
@@ -99,8 +86,6 @@ fun BoardEntity.toModel() =
         users.map { it.toResponseModel() },
     )
 
-val boardLens = lens<BoardModel>()
-
 @Serializable
 data class BoardSummaryModel(
     val id: Uuid,
@@ -110,5 +95,3 @@ data class BoardSummaryModel(
 )
 
 fun BoardEntity.toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toResponseModel())
-
-val boardSummaryListLens = lens<List<BoardSummaryModel>>()

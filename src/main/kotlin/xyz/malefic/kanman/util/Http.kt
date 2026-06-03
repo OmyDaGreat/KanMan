@@ -11,9 +11,8 @@ import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.format.KotlinxSerialization.auto
+import xyz.malefic.kanman.data.ErrorModel
 import xyz.malefic.kanman.data.UserResponseModel
-import xyz.malefic.kanman.data.errorLens
-import xyz.malefic.kanman.data.errorModel
 import xyz.malefic.kanman.data.transaction.currentUser
 
 fun catch(
@@ -34,12 +33,12 @@ fun catchPlus(
 ) = catch(message, func())
 
 inline fun <reified A : Any> model(crossinline handler: (Request, A) -> Response): HttpHandler =
-    REQUEST@{ request ->
+    request@{ request ->
         val a =
             try {
                 lens<A>()(request)
             } catch (e: Exception) {
-                return@REQUEST Response(BAD_REQUEST).with("Invalid JSON for request body: $e".error)
+                return@request Response(BAD_REQUEST).with("Invalid JSON for request body: $e".error)
             }
         handler(request, a)
     }
@@ -53,13 +52,15 @@ fun auth(next: Request.(UserResponseModel) -> Response) =
 
 inline fun <reified T : Any> auth(crossinline next: (UserResponseModel, T) -> Response) =
     auth.then(
-        model<T> REQUEST@{ request, lensRequest ->
-            val user = currentUser(request) ?: return@REQUEST Response(UNAUTHORIZED).with("Authenticated user not found".error)
+        model<T> model@{ request, lensRequest ->
+            val user = currentUser(request) ?: return@model Response(UNAUTHORIZED).with("Authenticated user not found".error)
             next(user, lensRequest)
         },
     )
 
 val String.error: (Response) -> Response
-    get() = errorLens.of(this.errorModel)
+    get() = value(ErrorModel(this))
 
 inline fun <reified T : Any> lens() = Body.auto<T>().toLens()
+
+inline fun <reified T : Any> value(obj: T) = lens<T>().of<Response>(obj)

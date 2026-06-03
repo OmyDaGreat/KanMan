@@ -28,4 +28,4 @@ fun Websocket.abort(error: String): Nothing {
     throw WsAbort()
 }
 
-inline fun <reified T : Any> wsLens() = WsMessage.auto<T>().toLens()
+inline fun <reified T : Any> wsLens(msg: WsMessage) = WsMessage.auto<T>().toLens()(msg)

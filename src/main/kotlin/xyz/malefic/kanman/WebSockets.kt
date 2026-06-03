@@ -8,14 +8,15 @@ import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.BoardEntity
+import xyz.malefic.kanman.data.StickyCreateModel
 import xyz.malefic.kanman.data.StickyNoteEntity
-import xyz.malefic.kanman.data.stickyCreateLens
 import xyz.malefic.kanman.data.toModel
 import xyz.malefic.kanman.data.transaction.isBoardValid
 import xyz.malefic.kanman.util.ConnectionRegistry
 import xyz.malefic.kanman.util.WsAbort
 import xyz.malefic.kanman.util.abort
 import xyz.malefic.kanman.util.authWS
+import xyz.malefic.kanman.util.wsLens
 import kotlin.uuid.Uuid
 
 val ws =
@@ -33,13 +34,13 @@ val ws =
                         ws.send(WsMessage("hello ${user.username}."))
 
                         ws.onMessage { msg ->
-                            val stickyNoteRequest = stickyCreateLens(msg)
+                            val stickyNoteRequest = wsLens<StickyCreateModel>(msg)
                             ws.send(WsMessage("${user.username} is adding a sticky note!"))
                             val stickyNote =
                                 transaction {
                                     StickyNoteEntity.new {
                                         this.title = stickyNoteRequest.title
-                                        this.content = stickyNoteRequest.content
+                                        this.content = stickyNoteRequest.content ?: ""
                                         this.column = stickyNoteRequest.column
                                         this.board = BoardEntity.findById(id) ?: ws.abort("Board not found")
                                     }

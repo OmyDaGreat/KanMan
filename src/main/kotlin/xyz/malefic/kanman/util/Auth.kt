@@ -9,8 +9,6 @@ import org.http4k.lens.RequestKey
 import org.http4k.websocket.WsFilter
 import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
-import xyz.malefic.kanman.data.errorLens
-import xyz.malefic.kanman.data.errorModel
 import xyz.malefic.kanman.data.transaction.getUserFromAccessToken
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -36,11 +34,11 @@ val auth: Filter =
                     ?.removePrefix("Bearer ")
                     ?.trim()
             if (token.isNullOrBlank()) {
-                Response(UNAUTHORIZED).with(errorLens of "Missing bearer token".errorModel)
+                Response(UNAUTHORIZED).with(value("Missing bearer token".error))
             } else {
                 val user = getUserFromAccessToken(token)
                 if (user == null) {
-                    Response(UNAUTHORIZED).with(errorLens of "Invalid or expired token".errorModel)
+                    Response(UNAUTHORIZED).with("Invalid or expired token".error)
                 } else {
                     next(request.with(authenticatedUserId of user.id))
                 }
