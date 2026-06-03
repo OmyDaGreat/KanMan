@@ -2,7 +2,6 @@ package xyz.malefic.kanman.util
 
 import org.http4k.core.Request
 import org.http4k.format.KotlinxSerialization.auto
-import org.http4k.websocket.Websocket
 import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
 import org.http4k.websocket.then
@@ -20,12 +19,14 @@ fun authWS(next: (UserResponseModel, Request) -> WsResponse) =
         )
     }
 
-class WsAbort : Throwable()
+class WsAbort(
+    override val message: String,
+    override val cause: Exception? = null,
+) : Exception(message, cause)
 
-fun Websocket.abort(error: String): Nothing {
-    send(WsMessage("Error: $error"))
-    close()
-    throw WsAbort()
-}
+fun abortWS(
+    message: String,
+    cause: Exception? = null,
+): Nothing = throw WsAbort(message, cause)
 
 inline fun <reified T : Any> wsLens(msg: WsMessage) = WsMessage.auto<T>().toLens()(msg)

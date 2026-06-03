@@ -14,7 +14,7 @@ import xyz.malefic.kanman.data.toModel
 import xyz.malefic.kanman.data.transaction.isBoardValid
 import xyz.malefic.kanman.util.ConnectionRegistry
 import xyz.malefic.kanman.util.WsAbort
-import xyz.malefic.kanman.util.abort
+import xyz.malefic.kanman.util.abortWS
 import xyz.malefic.kanman.util.authWS
 import xyz.malefic.kanman.util.wsLens
 import kotlin.uuid.Uuid
@@ -25,37 +25,48 @@ val ws =
             authWS { user, request ->
                 WsResponse { ws ->
                     try {
-                        val id = Uuid.parse(request.path("id") ?: ws.abort("Missing board id"))
+                        val id = Uuid.parse(request.path("id") ?: abortWS("Missing board id"))
                         if (!isBoardValid(id, user)) {
-                            ws.abort("Board not found or access denied")
+                            abortWS("Board not found or access denied")
                         }
                         ConnectionRegistry.register(id, ws)
 
                         ConnectionRegistry.broadcast(id, WsMessage("${user.username} has joined the board."))
 
                         ws.onMessage { msg ->
-                            val stickyNoteRequest = wsLens<StickyCreateModel>(msg)
-                            val stickyNote =
-                                transaction {
-                                    StickyNoteEntity.new {
-                                        this.title = stickyNoteRequest.title
-                                        this.content = stickyNoteRequest.content ?: ""
-                                        this.column = stickyNoteRequest.column
-                                        this.board = BoardEntity.findById(id) ?: ws.abort("Board not found")
-                                    }
-                                }.toModel()
-                            ConnectionRegistry.broadcast(id, WsMessage("Sticky note created: $stickyNote."))
+                            try {
+                                val stickyNoteRequest = wsLens<StickyCreateModel>(msg)
+                                val stickyNote =
+                                    transaction {
+                                        StickyNoteEntity.new {
+                                            this.title = stickyNoteRequest.title
+                                            this.content = stickyNoteRequest.content ?: ""
+                                            this.column = stickyNoteRequest.column
+                                            this.board = BoardEntity.findById(id) ?: abortWS("Board not found")
+                                        }
+                                    }.toModel()
+                                ConnectionRegistry.broadcast(id, WsMessage("Sticky note created: $stickyNote."))
+                            } catch (e: Exception) {
+                                Logger.e(e, "WebSockets") { "Failed to create sticky note" }
+                                ws.send(WsMessage("Internal server error"))
+                            }
                         }
 
                         ws.onClose {
-                            ConnectionRegistry.broadcast(id, WsMessage("${user.username} has left the board."))
-                            ConnectionRegistry.unregister(id, ws)
+                            if (ConnectionRegistry.unregister(id, ws)) {
+                                ConnectionRegistry.broadcast(id, WsMessage("${user.username} has left the board."))
+                            }
                         }
-                    } catch (_: WsAbort) {
-                        // already sent error + closed
+
+                        ws.onError { throwable ->
+                            Logger.e(throwable, "WebSockets") { "${user.username} disconnected with error on board $id" }
+                            if (ConnectionRegistry.unregister(id, ws)) {
+                                ConnectionRegistry.broadcast(id, WsMessage("${user.username} has left the board."))
+                            }
+                        }
                     } catch (e: Exception) {
-                        Logger.e(e, "WebSockets") { "Failed to create sticky note" }
-                        ws.send(WsMessage("Failed to create sticky note"))
+                        Logger.e(e, "WebSockets") { "Error during WS setup" }
+                        ws.send(WsMessage(if (e is WsAbort) e.message else "Internal server error"))
                         ws.close()
                     }
                 }

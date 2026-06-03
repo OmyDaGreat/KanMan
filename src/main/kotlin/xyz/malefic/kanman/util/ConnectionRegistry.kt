@@ -21,7 +21,7 @@ object ConnectionRegistry {
     fun unregister(
         boardId: Uuid,
         ws: Websocket,
-    ) = connections[boardId]?.remove(ws)
+    ) = connections[boardId]?.remove(ws) == true
 
     fun closeAll(boardId: Uuid) = connections.remove(boardId)?.forEach { it.close() }
 }
