@@ -13,7 +13,7 @@ import xyz.malefic.kanman.data.transaction.createBoard
 import xyz.malefic.kanman.data.transaction.createUser
 import xyz.malefic.kanman.data.transaction.getTokensFromLogin
 import xyz.malefic.kanman.data.transaction.refreshTokens
-import xyz.malefic.kanman.util.auth
+import xyz.malefic.kanman.util.authModel
 import xyz.malefic.kanman.util.catchPlus
 import xyz.malefic.kanman.util.error
 import xyz.malefic.kanman.util.model
@@ -23,7 +23,7 @@ val post =
     arrayOf(
         "/api/login" bind POST to
             catchPlus("Failed to process login") {
-                model<UserRequestModel> model@{ _, login ->
+                model<UserRequestModel> { _, login ->
                     val tokens =
                         getTokensFromLogin(login) ?: return@model Response(UNAUTHORIZED).with("Invalid username or password".error)
 
@@ -32,7 +32,7 @@ val post =
             },
         "/api/token/refresh" bind POST to
             catchPlus("Failed to refresh tokens") {
-                model<RefreshRequestModel> model@{ _, refresh ->
+                model<RefreshRequestModel> { _, refresh ->
                     val tokens =
                         refreshTokens(refresh.refreshToken)
                             ?: return@model Response(UNAUTHORIZED).with("Invalid or expired refresh token".error)
@@ -50,7 +50,7 @@ val post =
             },
         "/api/board" bind POST to
             catchPlus("Failed to create board") {
-                auth<BoardCreateModel> { user, boardRequest ->
+                authModel<BoardCreateModel> { user, boardRequest ->
                     val boardResponse = createBoard(boardRequest, user)
 
                     Response(OK).with(value(boardResponse))

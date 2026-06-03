@@ -43,14 +43,14 @@ inline fun <reified A : Any> model(crossinline handler: (Request, A) -> Response
         handler(request, a)
     }
 
-fun auth(next: Request.(UserResponseModel) -> Response) =
+fun authRequest(next: Request.(UserResponseModel) -> Response) =
     auth.then { request ->
         request.next(
             currentUser(request) ?: return@then Response(UNAUTHORIZED).with("Authenticated user not found".error),
         )
     }
 
-inline fun <reified T : Any> auth(crossinline next: (UserResponseModel, T) -> Response) =
+inline fun <reified T : Any> authModel(crossinline next: (UserResponseModel, T) -> Response) =
     auth.then(
         model<T> model@{ request, lensRequest ->
             val user = currentUser(request) ?: return@model Response(UNAUTHORIZED).with("Authenticated user not found".error)

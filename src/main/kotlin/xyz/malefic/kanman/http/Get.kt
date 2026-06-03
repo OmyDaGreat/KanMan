@@ -11,7 +11,7 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import xyz.malefic.kanman.data.transaction.currentUser
 import xyz.malefic.kanman.data.transaction.getUserBoards
-import xyz.malefic.kanman.util.auth
+import xyz.malefic.kanman.util.authRequest
 import xyz.malefic.kanman.util.catch
 import xyz.malefic.kanman.util.catchPlus
 import xyz.malefic.kanman.util.error
@@ -25,9 +25,10 @@ val get =
         "/api/health" bind GET to { Response(OK).body("healthy") },
         "/api/board/{id}" bind GET to
             catchPlus("Failed to retrieve board") {
-                auth { user ->
-                    val id = path("id")?.let { Uuid.parse(it) } ?: return@auth Response(BAD_REQUEST).with("Invalid board id".error)
-                    val board = user.boards.firstOrNull { it.id == id } ?: return@auth Response(NOT_FOUND).with("Board not found".error)
+                authRequest { user ->
+                    val id = path("id")?.let { Uuid.parse(it) } ?: return@authRequest Response(BAD_REQUEST).with("Invalid board id".error)
+                    val board =
+                        user.boards.firstOrNull { it.id == id } ?: return@authRequest Response(NOT_FOUND).with("Board not found".error)
 
                     Response(OK).with(value(board))
                 }
