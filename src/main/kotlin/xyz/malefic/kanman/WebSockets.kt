@@ -25,17 +25,16 @@ val ws =
             authWS { user, request ->
                 WsResponse { ws ->
                     try {
-                        val id = Uuid.parse(request.path("id") ?: ws.abort("Missing board {id} query param"))
+                        val id = Uuid.parse(request.path("id") ?: ws.abort("Missing board id"))
                         if (!isBoardValid(id, user)) {
                             ws.abort("Board not found or access denied")
                         }
                         ConnectionRegistry.register(id, ws)
 
-                        ws.send(WsMessage("hello ${user.username}."))
+                        ConnectionRegistry.broadcast(id, WsMessage("${user.username} has joined the board."))
 
                         ws.onMessage { msg ->
                             val stickyNoteRequest = wsLens<StickyCreateModel>(msg)
-                            ws.send(WsMessage("${user.username} is adding a sticky note!"))
                             val stickyNote =
                                 transaction {
                                     StickyNoteEntity.new {
@@ -45,17 +44,18 @@ val ws =
                                         this.board = BoardEntity.findById(id) ?: ws.abort("Board not found")
                                     }
                                 }.toModel()
-                            ws.send(WsMessage("Sticky note created: $stickyNote"))
+                            ConnectionRegistry.broadcast(id, WsMessage("Sticky note created: $stickyNote."))
                         }
 
                         ws.onClose {
+                            ConnectionRegistry.broadcast(id, WsMessage("${user.username} has left the board."))
                             ConnectionRegistry.unregister(id, ws)
-                            Logger.i(tag = "WebSockets") { "${user.username} is leaving the board with id $id." }
                         }
                     } catch (_: WsAbort) {
                         // already sent error + closed
                     } catch (e: Exception) {
-                        ws.send(WsMessage("Failed to create sticky note: $e"))
+                        Logger.e(e, "WebSockets") { "Failed to create sticky note" }
+                        ws.send(WsMessage("Failed to create sticky note"))
                         ws.close()
                     }
                 }
