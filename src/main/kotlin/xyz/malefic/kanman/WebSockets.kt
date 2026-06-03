@@ -26,7 +26,7 @@ val ws =
                 WsResponse { ws ->
                     try {
                         val id = Uuid.parse(request.path("id") ?: ws.abort("Missing board {id} query param"))
-                        if (isBoardValid(id, user)) {
+                        if (!isBoardValid(id, user)) {
                             ws.abort("Board not found or access denied")
                         }
                         ConnectionRegistry.register(id, ws)
