@@ -4,13 +4,15 @@ import co.touchlab.kermit.Logger
 import org.http4k.routing.path
 import org.http4k.routing.websocket.bind
 import org.http4k.routing.websockets
-import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.BoardEntity
-import xyz.malefic.kanman.data.StickyCreateModel
 import xyz.malefic.kanman.data.StickyNoteEntity
-import xyz.malefic.kanman.data.toModel
+import xyz.malefic.kanman.data.model.StickyCreateModel
+import xyz.malefic.kanman.data.model.WsEvent.StickyCreate
+import xyz.malefic.kanman.data.model.WsEvent.UserJoin
+import xyz.malefic.kanman.data.model.WsEvent.UserLeave
+import xyz.malefic.kanman.data.model.toModel
 import xyz.malefic.kanman.data.transaction.isBoardValid
 import xyz.malefic.kanman.util.ConnectionRegistry
 import xyz.malefic.kanman.util.abortWS
@@ -31,7 +33,7 @@ val ws =
                         }
                         ConnectionRegistry.register(id, ws)
 
-                        ConnectionRegistry.broadcast(id, WsMessage("${user.username} has joined the board."))
+                        ConnectionRegistry.broadcast(id, UserJoin(id, user))
 
                         ws.onMessage { msg ->
                             try {
@@ -45,7 +47,7 @@ val ws =
                                             this.board = BoardEntity.findById(id) ?: abortWS("Board not found")
                                         }
                                     }.toModel()
-                                ConnectionRegistry.broadcast(id, WsMessage("Sticky note created: $stickyNote."))
+                                ConnectionRegistry.broadcast(id, StickyCreate(id, user, stickyNote))
                             } catch (e: Exception) {
                                 Logger.e(e, "WebSockets") { "Failed to create sticky note" }
                                 ws.error("Internal server error")
@@ -54,14 +56,14 @@ val ws =
 
                         ws.onClose {
                             if (ConnectionRegistry.unregister(id, ws)) {
-                                ConnectionRegistry.broadcast(id, WsMessage("${user.username} has left the board."))
+                                ConnectionRegistry.broadcast(id, UserLeave(id, user))
                             }
                         }
 
-                        ws.onError { throwable ->
-                            Logger.e(throwable, "WebSockets") { "${user.username} disconnected with error on board $id" }
+                        ws.onError { e ->
+                            Logger.e(e, "WebSockets") { "${user.username} disconnected with error on board $id" }
                             if (ConnectionRegistry.unregister(id, ws)) {
-                                ConnectionRegistry.broadcast(id, WsMessage("${user.username} has left the board."))
+                                ConnectionRegistry.broadcast(id, UserLeave(id, user))
                             }
                         }
                     } catch (e: Exception) {

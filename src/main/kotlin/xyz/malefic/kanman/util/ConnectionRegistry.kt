@@ -1,21 +1,21 @@
 package xyz.malefic.kanman.util
 
 import org.http4k.websocket.Websocket
-import org.http4k.websocket.WsMessage
+import xyz.malefic.kanman.data.model.WsEvent
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.uuid.Uuid
 
 object ConnectionRegistry {
-    private val connections = ConcurrentHashMap<Uuid, MutableSet<Websocket>>()
+    val connections = ConcurrentHashMap<Uuid, MutableSet<Websocket>>()
 
     fun register(
         boardId: Uuid,
         ws: Websocket,
     ) = connections.getOrPut(boardId) { ConcurrentHashMap.newKeySet() }.add(ws)
 
-    fun broadcast(
+    inline fun <reified T : WsEvent> broadcast(
         boardId: Uuid,
-        msg: WsMessage,
+        msg: T,
     ) = connections[boardId]?.forEach { it.send(msg) }
 
     fun unregister(

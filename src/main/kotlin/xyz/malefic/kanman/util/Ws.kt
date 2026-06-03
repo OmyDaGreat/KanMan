@@ -6,8 +6,8 @@ import org.http4k.websocket.Websocket
 import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
 import org.http4k.websocket.then
-import xyz.malefic.kanman.data.ErrorModel
-import xyz.malefic.kanman.data.UserResponseModel
+import xyz.malefic.kanman.data.model.ErrorModel
+import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.transaction.currentUser
 
 fun authWS(next: (UserResponseModel, Request) -> WsResponse) =
@@ -35,6 +35,6 @@ inline fun <reified T : Any> wsLens(msg: WsMessage) = WsMessage.auto<T>().toLens
 
 inline fun <reified T : Any> wsLens(obj: T) = WsMessage.auto<T>().toLens()(obj)
 
-inline fun <reified T : Any> wsValue(obj: T) = wsLens(obj)
+inline fun <reified T : Any> Websocket.send(obj: T) = send(wsLens(obj))
 
-fun Websocket.error(message: String) = send(wsValue(ErrorModel(message)))
+fun Websocket.error(message: String) = send(ErrorModel(message))

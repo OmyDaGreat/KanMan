@@ -18,7 +18,7 @@ val delete =
             authRequest { user ->
                 val id =
                     Uuid.parseOrNull(path("id") ?: return@authRequest error(BAD_REQUEST) { "Invalid board" })
-                        ?: return@authRequest error(BAD_REQUEST) { "Invalid board id" }
+                        ?: return@authRequest error(BAD_REQUEST) { "Invalid board" }
 
                 try {
                     if (!deleteBoard(id, user)) {

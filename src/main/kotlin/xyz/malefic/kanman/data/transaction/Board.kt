@@ -2,13 +2,13 @@ package xyz.malefic.kanman.data.transaction
 
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.data.BoardCreateModel
+import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.BoardEntity
-import xyz.malefic.kanman.data.BoardModel
+import xyz.malefic.kanman.data.model.BoardModel
 import xyz.malefic.kanman.data.BoardUsers
-import xyz.malefic.kanman.data.UserResponseModel
+import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.Visibility.PRIVATE
-import xyz.malefic.kanman.data.toModel
+import xyz.malefic.kanman.data.model.toModel
 import xyz.malefic.kanman.util.ConnectionRegistry
 import kotlin.uuid.Uuid
 

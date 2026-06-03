@@ -12,8 +12,8 @@ import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.format.KotlinxSerialization.auto
-import xyz.malefic.kanman.data.ErrorModel
-import xyz.malefic.kanman.data.UserResponseModel
+import xyz.malefic.kanman.data.model.ErrorModel
+import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.transaction.currentUser
 
 fun catch(

@@ -4,9 +4,9 @@ import org.http4k.core.Method.POST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.routing.bind
-import xyz.malefic.kanman.data.BoardCreateModel
-import xyz.malefic.kanman.data.RefreshRequestModel
-import xyz.malefic.kanman.data.UserRequestModel
+import xyz.malefic.kanman.data.model.BoardCreateModel
+import xyz.malefic.kanman.data.model.RefreshRequestModel
+import xyz.malefic.kanman.data.model.UserRequestModel
 import xyz.malefic.kanman.data.transaction.createBoard
 import xyz.malefic.kanman.data.transaction.createUser
 import xyz.malefic.kanman.data.transaction.getTokensFromLogin

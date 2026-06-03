@@ -1,7 +1,12 @@
-package xyz.malefic.kanman.data
+package xyz.malefic.kanman.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import xyz.malefic.kanman.data.BoardEntity
+import xyz.malefic.kanman.data.Column
+import xyz.malefic.kanman.data.StickyNoteEntity
+import xyz.malefic.kanman.data.UserEntity
+import xyz.malefic.kanman.data.Visibility
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -50,13 +55,6 @@ data class StickyNoteModel(
 )
 
 fun StickyNoteEntity.toModel(): StickyNoteModel = StickyNoteModel(id.value, title, content, column, board.toModel())
-
-@Serializable
-data class StickyCreateModel(
-    val title: String,
-    val content: String?,
-    val column: Column,
-)
 
 @Serializable
 data class BoardCreateModel(
