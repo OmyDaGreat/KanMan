@@ -29,4 +29,8 @@ fun abortWS(
     cause: Exception? = null,
 ): Nothing = throw WsAbort(message, cause)
 
+inline fun <reified T : Any> wsLens() = WsMessage.auto<T>().toLens()
+
 inline fun <reified T : Any> wsLens(msg: WsMessage) = WsMessage.auto<T>().toLens()(msg)
+
+inline fun <reified T : Any> wsLens(obj: T) = WsMessage.auto<T>().toLens()(obj)
