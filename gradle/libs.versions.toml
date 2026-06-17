@@ -1,13 +1,15 @@
 [versions]
-kotlin = "2.4.0"
+kotlin = "2.3.21"
 http4k = "6.53.0.0"
-junit = "6.1.0"
 coroutines = "1.11.0"
 sqlite = "3.53.2.0"
 exposed = "1.3.0"
 bcrypt = "0.10.2"
 kermit = "2.1.0"
 serialization = "1.11.0"
+jetbrains-compose = "1.11.1"
+kobweb = "0.24.0"
+kutint = "1.0.1"
 
 [libraries]
 http4k-bom = { group = "org.http4k", name = "http4k-bom", version.ref = "http4k" }
@@ -22,9 +24,15 @@ exposed-core = { group = "org.jetbrains.exposed", name = "exposed-core", version
 exposed-dao = { group = "org.jetbrains.exposed", name = "exposed-dao", version.ref = "exposed" }
 exposed-jdbc = { group = "org.jetbrains.exposed", name = "exposed-jdbc", version.ref = "exposed" }
 
-junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
-junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
-junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
+compose-html-core = { module = "org.jetbrains.compose.html:html-core", version.ref = "jetbrains-compose" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "jetbrains-compose" }
+kobweb-core = { module = "com.varabyte.kobweb:kobweb-core ", version.ref = "kobweb" }
+kobweb-silk = { module = "com.varabyte.kobweb:kobweb-silk", version.ref = "kobweb" }
+kobweb-api = { module = "com.varabyte.kobweb:kobweb-api", version.ref = "kobweb" }
+silk-icons-fa = { module = "com.varabyte.kobwebx:silk-icons-fa", version.ref = "kobweb" }
+silk-icons-mdi = { module = "com.varabyte.kobwebx:silk-icons-mdi", version.ref = "kobweb" }
+
+kutint = { group = "xyz.malefic", name = "kutint", version.ref = "kutint" }
 
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 
@@ -33,6 +41,12 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 bcrypt = { group = "at.favre.lib", name = "bcrypt", version.ref = "bcrypt" }
 
 kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit" }
+
+[plugins]
+kobweb = { id = "com.varabyte.kobweb.application", version.ref = "kobweb" }
+compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 [bundles]
 http4k = [
@@ -48,3 +62,6 @@ storage = [
     "exposed-dao",
     "exposed-jdbc",
 ]
+kobweb = ["kobweb-core", "kobweb-silk"]
+compose = ["compose-html-core", "compose-runtime"]
+silk-icons = ["silk-icons-fa", "silk-icons-mdi"]

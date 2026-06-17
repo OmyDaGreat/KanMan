@@ -5,11 +5,12 @@ services:
       - "6320:6320"
     environment:
       - JAVA_OPTS=-Xmx512m
+      - PORT=8080
       - API_KEY=${API_KEY:-}
     volumes:
       - entry_data:/data
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6320/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6320/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

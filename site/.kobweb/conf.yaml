@@ -1,0 +1,14 @@
+site:
+  title: "KanMan"
+
+server:
+  files:
+    dev:
+      contentRoot: "build/processedResources/js/main/public"
+      script: "build/kotlin-webpack/js/developmentExecutable/kanman.js"
+      api: "build/libs/kanman.jar"
+    prod:
+      script: "build/kotlin-webpack/js/productionExecutable/kanman.js"
+      siteRoot: ".kobweb/site"
+
+  port: 6320

@@ -1,7 +1,6 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        mavenCentral()
     }
 }
 
@@ -9,4 +8,19 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-rootProject.name = "KanManServer"
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        google()
+    }
+
+    versionCatalogs {
+        create("wrappers") {
+            val wrappersVersion = "2026.6.1"
+            from("org.jetbrains.kotlin-wrappers:kotlin-wrappers-catalog:$wrappersVersion")
+        }
+    }
+}
+
+rootProject.name = "kanman"
+include(":site")
