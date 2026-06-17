@@ -55,7 +55,6 @@ dependencies {
     implementation(libs.bcrypt)
     implementation(libs.kermit)
 
-    testImplementation(libs.bundles.http4k.testing)
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)

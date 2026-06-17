@@ -11,16 +11,10 @@ serialization = "1.11.0"
 
 [libraries]
 http4k-bom = { group = "org.http4k", name = "http4k-bom", version.ref = "http4k" }
-http4k-client-okhttp = { group = "org.http4k", name = "http4k-client-okhttp" }
 http4k-config = { group = "org.http4k", name = "http4k-config" }
 http4k-core = { group = "org.http4k", name = "http4k-core" }
-http4k-format-kotlinx-serialization = { group = "org.http4k", name = "http4k-format-kotlinx-serialization" }
+http4k-format = { group = "org.http4k", name = "http4k-format-kotlinx-serialization" }
 http4k-server-undertow = { group = "org.http4k", name = "http4k-server-undertow" }
-
-
-http4k-testing-approval = { group = "org.http4k", name = "http4k-testing-approval" }
-http4k-testing-hamkrest = { group = "org.http4k", name = "http4k-testing-hamkrest" }
-http4k-testing-kotest = { group = "org.http4k", name = "http4k-testing-kotest" }
 http4k-server-websocket = { group = "org.http4k", name = "http4k-server-websocket" }
 
 sqlite-jdbc = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqlite" }
@@ -42,10 +36,9 @@ kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit" }
 
 [bundles]
 http4k = [
-    "http4k-client-okhttp",
     "http4k-config",
     "http4k-core",
-    "http4k-format-kotlinx-serialization",
+    "http4k-format",
     "http4k-server-undertow",
     "http4k-server-websocket",
 ]
@@ -54,9 +47,4 @@ storage = [
     "exposed-core",
     "exposed-dao",
     "exposed-jdbc",
-]
-http4k-testing = [
-    "http4k-testing-approval",
-    "http4k-testing-hamkrest",
-    "http4k-testing-kotest",
 ]
