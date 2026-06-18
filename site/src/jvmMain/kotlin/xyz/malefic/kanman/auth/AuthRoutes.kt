@@ -11,7 +11,6 @@ import xyz.malefic.kanman.util.catchPlus
 import xyz.malefic.kanman.util.error
 import xyz.malefic.kanman.util.model
 import xyz.malefic.kanman.util.response
-import xyz.malefic.kanman.util.value
 
 val authRoutes =
     listOf(
@@ -22,7 +21,7 @@ val authRoutes =
                 model<UserRequestModel> { _, login ->
                     val tokens = getTokensFromLogin(login) ?: return@model error(UNAUTHORIZED) { "Invalid username or password" }
 
-                    response(OK, value(tokens))
+                    response(OK, tokens)
                 }
             },
         "/api/token/refresh" bind POST to
@@ -31,7 +30,7 @@ val authRoutes =
                     val tokens =
                         refreshTokens(refresh.refreshToken) ?: return@model error(UNAUTHORIZED) { "Invalid or expired refresh token" }
 
-                    response(OK, value(tokens))
+                    response(OK, tokens)
                 }
             },
     )

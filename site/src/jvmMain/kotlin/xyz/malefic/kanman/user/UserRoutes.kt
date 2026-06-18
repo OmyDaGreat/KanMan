@@ -13,7 +13,6 @@ import xyz.malefic.kanman.util.error
 import xyz.malefic.kanman.util.model
 import xyz.malefic.kanman.util.response
 import xyz.malefic.kanman.util.toVisibility
-import xyz.malefic.kanman.util.value
 
 val userRoutes =
     listOf(
@@ -24,14 +23,14 @@ val userRoutes =
                 val boards =
                     getUserBoards(visibility, user) ?: return@catch error(UNAUTHORIZED) { "Authentication required for private boards" }
 
-                response(OK, value(boards))
+                response(OK, boards)
             },
         "/api/user/register" bind POST to
             catchPlus("Failed to register user") {
                 model<UserRequestModel> { _, user ->
                     val userResult = createUser(user)
 
-                    response(OK, value(userResult))
+                    response(OK, userResult)
                 }
             },
     )

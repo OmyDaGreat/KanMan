@@ -86,14 +86,14 @@ inline fun <reified T : Any> authModel(crossinline next: (UserResponseModel, T) 
 
 inline fun <reified T : Any> lens() = Body.auto<T>().toLens()
 
-inline fun <reified T : Any> value(obj: T) = lens<T>().of<Response>(obj)
+fun response(status: Status) = Response(status)
 
-fun response(
+inline fun <reified T : Any> response(
     status: Status,
-    modifier: (Response) -> Response = { it },
-) = Response(status).with(modifier)
+    body: T,
+) = Response(status).with(lens<T>().of(body))
 
 fun error(
     status: Status,
     message: () -> String,
-) = response(status) { value(ErrorModel(message()))(it) }
+) = response(status, ErrorModel(message()))

@@ -11,7 +11,6 @@ import xyz.malefic.kanman.data.db.AuthTokens
 import xyz.malefic.kanman.data.db.UserEntity
 import xyz.malefic.kanman.data.db.Users
 import xyz.malefic.kanman.data.model.TokenResponseModel
-import xyz.malefic.kanman.data.model.TokenType
 import xyz.malefic.kanman.data.model.TokenType.ACCESS
 import xyz.malefic.kanman.data.model.TokenType.REFRESH
 import xyz.malefic.kanman.data.model.UserRequestModel
