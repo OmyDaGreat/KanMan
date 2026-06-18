@@ -1,22 +1,36 @@
 package xyz.malefic.kanman.styles
 
+import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Color
 import com.varabyte.kobweb.compose.ui.graphics.Color.Companion.rgba
+import com.varabyte.kobweb.compose.ui.modifiers.setVariable
+import com.varabyte.kobweb.silk.components.navigation.LinkVars
 import com.varabyte.kobweb.silk.init.InitSilk
 import com.varabyte.kobweb.silk.init.InitSilkContext
+import com.varabyte.kobweb.silk.init.registerStyleBase
+import com.varabyte.kobweb.silk.style.vars.color.BackgroundColorVar
+import com.varabyte.kobweb.silk.style.vars.color.BorderColorVar
+import com.varabyte.kobweb.silk.style.vars.color.ColorVar
+import com.varabyte.kobweb.silk.style.vars.color.FocusOutlineColorVar
+import com.varabyte.kobweb.silk.style.vars.color.PlaceholderColorVar
+import com.varabyte.kobweb.silk.theme.colors.ColorMode
+import com.varabyte.kobweb.silk.theme.colors.cssClass
+import com.varabyte.kobweb.silk.theme.colors.loadFromLocalStorage
 import com.varabyte.kobweb.silk.theme.colors.palette.background
 import com.varabyte.kobweb.silk.theme.colors.palette.border
 import com.varabyte.kobweb.silk.theme.colors.palette.button
-import com.varabyte.kobweb.silk.theme.colors.palette.callout
 import com.varabyte.kobweb.silk.theme.colors.palette.checkbox
 import com.varabyte.kobweb.silk.theme.colors.palette.color
 import com.varabyte.kobweb.silk.theme.colors.palette.focusOutline
 import com.varabyte.kobweb.silk.theme.colors.palette.input
+import com.varabyte.kobweb.silk.theme.colors.palette.link
 import com.varabyte.kobweb.silk.theme.colors.palette.overlay
 import com.varabyte.kobweb.silk.theme.colors.palette.placeholder
 import com.varabyte.kobweb.silk.theme.colors.palette.switch
 import com.varabyte.kobweb.silk.theme.colors.palette.tab
+import com.varabyte.kobweb.silk.theme.colors.palette.toPalette
 import com.varabyte.kobweb.silk.theme.colors.palette.tooltip
+import com.varabyte.kobweb.silk.theme.colors.systemPreference
 import xyz.malefic.kutint.RGB
 import xyz.malefic.kutint.parseHex
 
@@ -241,6 +255,8 @@ val RGB.color: Color
 
 @InitSilk
 fun initColor(ctx: InitSilkContext) {
+    ctx.config.initialColorMode = ColorMode.loadFromLocalStorage() ?: ColorMode.systemPreference
+
     ctx.theme.palettes.light.apply {
         background = backgroundLight.color
         color = onBackgroundLight.color
@@ -255,13 +271,11 @@ fun initColor(ctx: InitSilkContext) {
             focus = primaryLight.color,
             pressed = primaryLight.color.darkened(0.2f),
         )
-
         checkbox.set(
             background = primaryLight.color,
             hover = primaryLight.color.darkened(0.1f),
             color = onPrimaryLight.color,
         )
-
         input.set(
             hoveredBorder = primaryLight.color,
             invalidBorder = errorLight.color,
@@ -269,13 +283,11 @@ fun initColor(ctx: InitSilkContext) {
             filledHover = surfaceVariantLight.color.darkened(0.05f),
             filledFocus = primaryLight.color,
         )
-
         switch.set(
             backgroundOn = primaryLight.color,
             backgroundOff = surfaceVariantLight.color,
             thumb = onPrimaryLight.color,
         )
-
         tab.set(
             color = onSurfaceVariantLight.color,
             background = surfaceLight.color,
@@ -284,20 +296,13 @@ fun initColor(ctx: InitSilkContext) {
             pressed = surfaceVariantLight.color.darkened(0.1f),
             disabled = outlineVariantLight.color,
         )
-
         tooltip.set(
             background = inverseSurfaceLight.color,
             color = inverseOnSurfaceLight.color,
         )
-
-        callout.set(
-            caution = errorLight.color,
-            important = primaryLight.color,
-            note = secondaryLight.color,
-            question = tertiaryLight.color,
-            quote = outlineLight.color,
-            tip = tertiaryLight.color,
-            warning = errorLight.color,
+        link.set(
+            default = primaryLight.color,
+            visited = primaryLight.color.darkened(0.1f),
         )
     }
 
@@ -315,13 +320,11 @@ fun initColor(ctx: InitSilkContext) {
             focus = primaryDark.color,
             pressed = primaryDark.color.darkened(0.2f),
         )
-
         checkbox.set(
             background = primaryDark.color,
             hover = primaryDark.color.darkened(0.1f),
             color = onPrimaryDark.color,
         )
-
         input.set(
             hoveredBorder = primaryDark.color,
             invalidBorder = errorDark.color,
@@ -329,13 +332,11 @@ fun initColor(ctx: InitSilkContext) {
             filledHover = surfaceVariantDark.color.darkened(0.05f),
             filledFocus = primaryDark.color,
         )
-
         switch.set(
             backgroundOn = primaryDark.color,
             backgroundOff = surfaceVariantDark.color,
             thumb = onPrimaryDark.color,
         )
-
         tab.set(
             color = onSurfaceVariantDark.color,
             background = surfaceDark.color,
@@ -344,20 +345,27 @@ fun initColor(ctx: InitSilkContext) {
             pressed = surfaceVariantDark.color.darkened(0.1f),
             disabled = outlineVariantDark.color,
         )
-
         tooltip.set(
             background = inverseSurfaceDark.color,
             color = inverseOnSurfaceDark.color,
         )
-
-        callout.set(
-            caution = errorDark.color,
-            important = primaryDark.color,
-            note = secondaryDark.color,
-            question = tertiaryDark.color,
-            quote = outlineDark.color,
-            tip = tertiaryDark.color,
-            warning = errorDark.color,
+        link.set(
+            default = primaryDark.color,
+            visited = primaryDark.color.darkened(0.1f),
         )
+    }
+
+    ColorMode.entries.forEach { colorMode ->
+        ctx.stylesheet.registerStyleBase(".${colorMode.cssClass}") {
+            val palette = colorMode.toPalette()
+            Modifier
+                .setVariable(BackgroundColorVar, palette.background)
+                .setVariable(ColorVar, palette.color)
+                .setVariable(BorderColorVar, palette.border)
+                .setVariable(FocusOutlineColorVar, palette.focusOutline)
+                .setVariable(PlaceholderColorVar, palette.placeholder)
+                .setVariable(LinkVars.DefaultColor, palette.link.default)
+                .setVariable(LinkVars.VisitedColor, palette.link.visited)
+        }
     }
 }

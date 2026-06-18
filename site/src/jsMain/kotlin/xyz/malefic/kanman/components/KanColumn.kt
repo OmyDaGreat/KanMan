@@ -26,5 +26,5 @@ fun KanColumn(title: String) =
         H2 {
             Text(title)
         }
-        HorizontalDivider(Modifier.border(1.px, LineStyle.Solid, Color.black))
+        HorizontalDivider()
     }

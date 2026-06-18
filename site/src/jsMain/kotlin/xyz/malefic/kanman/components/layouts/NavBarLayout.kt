@@ -1,145 +1,62 @@
 package xyz.malefic.kanman.components.layouts
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.varabyte.kobweb.compose.css.zIndex
+import com.varabyte.kobweb.compose.css.Overflow
+import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.foundation.layout.Row
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
-import com.varabyte.kobweb.compose.ui.modifiers.background
-import com.varabyte.kobweb.compose.ui.modifiers.color
+import com.varabyte.kobweb.compose.ui.modifiers.borderRight
+import com.varabyte.kobweb.compose.ui.modifiers.fillMaxHeight
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
-import com.varabyte.kobweb.compose.ui.modifiers.flexGrow
-import com.varabyte.kobweb.compose.ui.modifiers.fontSize
-import com.varabyte.kobweb.compose.ui.modifiers.fontWeight
 import com.varabyte.kobweb.compose.ui.modifiers.height
-import com.varabyte.kobweb.compose.ui.modifiers.margin
-import com.varabyte.kobweb.compose.ui.modifiers.maxWidth
-import com.varabyte.kobweb.compose.ui.modifiers.onClick
+import com.varabyte.kobweb.compose.ui.modifiers.overflow
 import com.varabyte.kobweb.compose.ui.modifiers.padding
+import com.varabyte.kobweb.core.PageContext
 import com.varabyte.kobweb.core.layout.Layout
-import com.varabyte.kobweb.core.rememberPageContext
+import com.varabyte.kobweb.silk.components.layout.Surface
 import com.varabyte.kobweb.silk.components.navigation.Link
-import com.varabyte.kobweb.silk.style.toModifier
-import org.jetbrains.compose.web.css.Position
-import org.jetbrains.compose.web.css.height
-import org.jetbrains.compose.web.css.left
-import org.jetbrains.compose.web.css.percent
-import org.jetbrains.compose.web.css.position
+import com.varabyte.kobweb.silk.style.common.DisabledStyle
+import com.varabyte.kobweb.silk.style.toAttrs
+import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.px
-import org.jetbrains.compose.web.css.top
 import org.jetbrains.compose.web.css.vh
-import org.jetbrains.compose.web.css.width
-import org.jetbrains.compose.web.dom.Div
+import org.jetbrains.compose.web.dom.H1
+import org.jetbrains.compose.web.dom.Span
 import org.jetbrains.compose.web.dom.Text
-import xyz.malefic.kanman.styles.ActiveNavItemStyle
-import xyz.malefic.kanman.styles.DropdownButtonHoverStyle
-import xyz.malefic.kanman.styles.DropdownContentStyle
-import xyz.malefic.kanman.styles.DropdownItemHoverStyle
-import xyz.malefic.kanman.styles.DropdownItemStyle
-import xyz.malefic.kanman.styles.DropdownStyle
-import xyz.malefic.kanman.styles.NavBarStyle
-import xyz.malefic.kanman.styles.NavItemHoverStyle
-import xyz.malefic.kanman.styles.isCurrentPage
-import xyz.malefic.kanman.util.Pages
-import xyz.malefic.kutint.parseHex
-import xyz.malefic.kutint.rgba
 
 @Layout
 @Composable
-fun NavBarLayout(content: @Composable () -> Unit) {
-    val ctx = rememberPageContext()
+fun NavBarLayout(
+    ctx: PageContext,
+    content: @Composable () -> Unit,
+) {
     val currentRoute = ctx.route.path
-    var isDropdownOpen by remember { mutableStateOf(false) }
 
-    // Configuration: Maximum number of pages to show before overflow
-    val maxVisiblePages = 4
-    val allPages = Pages.entries
-    val visiblePages = allPages.take(maxVisiblePages)
-    val overflowPages = allPages.drop(maxVisiblePages)
-
-    Column(Modifier.fillMaxWidth().height(100.vh)) {
-        Box(
-            NavBarStyle.toModifier(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Row(
+    Row(Modifier.fillMaxSize().height(100.vh)) {
+        Surface(Modifier.fillMaxHeight().borderRight(1.px, LineStyle.Solid)) {
+            Column(
                 Modifier
                     .fillMaxWidth()
-                    .maxWidth(1200.px)
                     .padding(0.px, 20.px),
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Box(Modifier.flexGrow(1)) {
-                    // Brand/Logo area (optional)
+                H1 {
+                    Text("KanMan")
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    visiblePages.forEach { page ->
-                        val isActive = page.isCurrentPage(currentRoute)
-                        val pageRoute = page.route
-
-                        Link(
-                            path = pageRoute,
-                            modifier =
-                                if (isActive) {
-                                    ActiveNavItemStyle.toModifier()
-                                } else {
-                                    NavItemHoverStyle.toModifier()
-                                },
-                        ) {
-                            Text(page.value)
-                        }
-                    }
-
-                    if (overflowPages.isNotEmpty()) {
-                        Box(DropdownStyle.toModifier().onClick { isDropdownOpen = !isDropdownOpen }) {
-                            Box(
-                                DropdownButtonHoverStyle.toModifier(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("More")
-                                    Box(
-                                        Modifier
-                                            .margin(left = 8.px)
-                                            .fontSize(10.px),
-                                    ) {
-                                        Text(if (isDropdownOpen) "▲" else "▼")
-                                    }
-                                }
+                Column(verticalArrangement = Arrangement.spacedBy(24.px), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Pages.entries.forEach { page ->
+                        if (page.isPage(currentRoute)) {
+                            Span(DisabledStyle.toAttrs()) {
+                                Text(page.value)
                             }
-
-                            if (isDropdownOpen) {
-                                Box(DropdownContentStyle.toModifier()) {
-                                    Column {
-                                        overflowPages.forEach { page ->
-                                            val isActive = page.isCurrentPage(currentRoute)
-                                            val pageRoute = page.route
-
-                                            Link(
-                                                path = pageRoute,
-                                                modifier =
-                                                    if (isActive) {
-                                                        DropdownItemStyle
-                                                            .background(rgba(13, 110, 253, 0.1f))
-                                                            .color(parseHex("#0d6efd"))
-                                                            .fontWeight(600)
-                                                    } else {
-                                                        DropdownItemHoverStyle.toModifier()
-                                                    },
-                                            ) {
-                                                Text(page.value)
-                                            }
-                                        }
-                                    }
-                                }
+                        } else {
+                            Link(page.route) {
+                                Text(page.value)
                             }
                         }
                     }
@@ -147,26 +64,19 @@ fun NavBarLayout(content: @Composable () -> Unit) {
             }
         }
 
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().weight(1).overflow(Overflow.Auto)) {
             content()
         }
     }
+}
 
-    if (isDropdownOpen) {
-        Div(
-            attrs = {
-                onClick {
-                    isDropdownOpen = false
-                }
-                style {
-                    position(Position.Fixed)
-                    top(0.px)
-                    left(0.px)
-                    width(100.percent)
-                    height(100.percent)
-                    zIndex(1)
-                }
-            },
-        )
-    }
+enum class Pages(
+    val value: String,
+    val route: String,
+) {
+    INDEX("Index", "/"),
+    ABOUT("About", "/about"),
+    ;
+
+    fun isPage(route: String): Boolean = route.trimEnd('/') == this@Pages.route.trimEnd('/')
 }
