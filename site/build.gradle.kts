@@ -1,4 +1,5 @@
 import com.varabyte.kobweb.gradle.application.util.configAsKobwebApplication
+import kotlinx.html.link
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
 import java.util.Properties
@@ -23,6 +24,13 @@ kobweb {
     app {
         index {
             description.set("Powered by Kobweb")
+            head.add {
+                link {
+                    rel = "stylesheet"
+                    href =
+                        "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lavishly+Yours&family=Lora:wght@400;500;700&display=swap"
+                }
+            }
         }
     }
 }
