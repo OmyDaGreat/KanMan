@@ -2,6 +2,7 @@ package xyz.malefic.kanman.util
 
 import co.touchlab.kermit.Logger
 import org.http4k.core.Body
+import org.http4k.core.Filter
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
 import org.http4k.core.Response
@@ -12,9 +13,33 @@ import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.then
 import org.http4k.core.with
 import org.http4k.format.KotlinxSerialization.auto
+import xyz.malefic.kanman.auth.currentUser
+import xyz.malefic.kanman.auth.getUserFromAccessToken
+import xyz.malefic.kanman.auth.requestUser
 import xyz.malefic.kanman.data.model.ErrorModel
 import xyz.malefic.kanman.data.model.UserResponseModel
-import xyz.malefic.kanman.data.transaction.currentUser
+
+val auth: Filter =
+    Filter { next ->
+        { request ->
+            val token =
+                request
+                    .header("Authorization")
+                    ?.takeIf { it.startsWith("Bearer ") }
+                    ?.removePrefix("Bearer ")
+                    ?.trim()
+            if (token.isNullOrBlank()) {
+                error(UNAUTHORIZED) { "Missing bearer token" }
+            } else {
+                val user = getUserFromAccessToken(token)
+                if (user == null) {
+                    error(UNAUTHORIZED) { "Invalid or expired token" }
+                } else {
+                    next(request.with(requestUser of user.id))
+                }
+            }
+        }
+    }
 
 fun catch(
     message: String,

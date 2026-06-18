@@ -1,7 +1,6 @@
 package xyz.malefic.kanman.data.model
 
 import kotlinx.serialization.Serializable
-import xyz.malefic.kanman.data.Column
 import kotlin.uuid.Uuid
 
 sealed class WsEvent {

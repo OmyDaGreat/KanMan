@@ -1,8 +1,12 @@
-package xyz.malefic.kanman.data
+package xyz.malefic.kanman.data.db
 
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.dao.UuidEntity
 import org.jetbrains.exposed.v1.dao.UuidEntityClass
+import xyz.malefic.kanman.data.model.BoardModel
+import xyz.malefic.kanman.data.model.BoardSummaryModel
+import xyz.malefic.kanman.data.model.StickyNoteModel
+import xyz.malefic.kanman.data.model.UserResponseModel
 import kotlin.uuid.Uuid
 
 class UserEntity(
@@ -13,6 +17,8 @@ class UserEntity(
     var username by Users.username
     var hashedPassword by Users.hashedPassword
     var boards by BoardEntity via BoardUsers
+
+    fun toResponseModel(): UserResponseModel = UserResponseModel(id.value, username, boards.map { it.toModel() })
 }
 
 class AuthTokenEntity(
@@ -37,6 +43,18 @@ class BoardEntity(
     var owner by UserEntity referencedOn Boards.owner
     val stickies by StickyNoteEntity referrersOn StickyNotes.board
     var users by UserEntity via BoardUsers
+
+    fun toModel() =
+        BoardModel(
+            id.value,
+            title,
+            visibility,
+            owner.toResponseModel(),
+            stickies.map { it.toModel() },
+            users.map { it.toResponseModel() },
+        )
+
+    fun toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toResponseModel())
 }
 
 class StickyNoteEntity(
@@ -48,4 +66,6 @@ class StickyNoteEntity(
     var content by StickyNotes.content
     var column by StickyNotes.column
     var board by BoardEntity referencedOn StickyNotes.board
+
+    fun toModel(): StickyNoteModel = StickyNoteModel(id.value, title, content, column, board.toModel())
 }

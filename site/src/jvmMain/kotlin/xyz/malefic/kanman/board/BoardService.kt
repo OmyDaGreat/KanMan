@@ -1,14 +1,14 @@
-package xyz.malefic.kanman.data.transaction
+package xyz.malefic.kanman.board
 
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import xyz.malefic.kanman.auth.entity
+import xyz.malefic.kanman.data.db.BoardEntity
+import xyz.malefic.kanman.data.db.BoardUsers
 import xyz.malefic.kanman.data.model.BoardCreateModel
-import xyz.malefic.kanman.data.BoardEntity
 import xyz.malefic.kanman.data.model.BoardModel
-import xyz.malefic.kanman.data.BoardUsers
 import xyz.malefic.kanman.data.model.UserResponseModel
-import xyz.malefic.kanman.data.Visibility.PRIVATE
-import xyz.malefic.kanman.data.model.toModel
+import xyz.malefic.kanman.data.model.Visibility.PRIVATE
 import xyz.malefic.kanman.util.ConnectionRegistry
 import kotlin.uuid.Uuid
 
@@ -35,7 +35,7 @@ fun deleteBoard(
     user: UserResponseModel,
 ) = transaction {
     val board = BoardEntity.findById(id) ?: return@transaction false
-    if (board.owner.id != user.id) {
+    if (board.owner.id.value != user.id) {
         return@transaction false
     }
     board.delete()

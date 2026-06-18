@@ -1,4 +1,4 @@
-package xyz.malefic.kanman
+package xyz.malefic.kanman.board
 
 import co.touchlab.kermit.Logger
 import org.http4k.routing.path
@@ -6,14 +6,12 @@ import org.http4k.routing.websocket.bind
 import org.http4k.routing.websockets
 import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.data.BoardEntity
-import xyz.malefic.kanman.data.StickyNoteEntity
+import xyz.malefic.kanman.data.db.BoardEntity
+import xyz.malefic.kanman.data.db.StickyNoteEntity
 import xyz.malefic.kanman.data.model.StickyCreateModel
 import xyz.malefic.kanman.data.model.WsEvent.StickyCreate
 import xyz.malefic.kanman.data.model.WsEvent.UserJoin
 import xyz.malefic.kanman.data.model.WsEvent.UserLeave
-import xyz.malefic.kanman.data.model.toModel
-import xyz.malefic.kanman.data.transaction.isBoardValid
 import xyz.malefic.kanman.util.ConnectionRegistry
 import xyz.malefic.kanman.util.abortWS
 import xyz.malefic.kanman.util.authWS
@@ -21,7 +19,7 @@ import xyz.malefic.kanman.util.error
 import xyz.malefic.kanman.util.wsLens
 import kotlin.uuid.Uuid
 
-val ws =
+val boardWs =
     websockets(
         "/api/ws/{id}" bind
             authWS { user, request ->

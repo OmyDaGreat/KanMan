@@ -1,25 +1,22 @@
-package xyz.malefic.kanman.http
+package xyz.malefic.kanman.auth
 
+import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.routing.bind
-import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.RefreshRequestModel
 import xyz.malefic.kanman.data.model.UserRequestModel
-import xyz.malefic.kanman.data.transaction.createBoard
-import xyz.malefic.kanman.data.transaction.createUser
-import xyz.malefic.kanman.data.transaction.getTokensFromLogin
-import xyz.malefic.kanman.data.transaction.refreshTokens
-import xyz.malefic.kanman.util.authModel
 import xyz.malefic.kanman.util.catchPlus
 import xyz.malefic.kanman.util.error
 import xyz.malefic.kanman.util.model
 import xyz.malefic.kanman.util.response
 import xyz.malefic.kanman.util.value
 
-val post =
-    arrayOf(
+val authRoutes =
+    listOf(
+        "/api/ping" bind GET to { response(OK).body("pong") },
+        "/api/health" bind GET to { response(OK).body("healthy") },
         "/api/login" bind POST to
             catchPlus("Failed to process login") {
                 model<UserRequestModel> { _, login ->
@@ -35,22 +32,6 @@ val post =
                         refreshTokens(refresh.refreshToken) ?: return@model error(UNAUTHORIZED) { "Invalid or expired refresh token" }
 
                     response(OK, value(tokens))
-                }
-            },
-        "/api/user/register" bind POST to
-            catchPlus("Failed to register user") {
-                model<UserRequestModel> { _, user ->
-                    val userResult = createUser(user)
-
-                    response(OK, value(userResult))
-                }
-            },
-        "/api/board" bind POST to
-            catchPlus("Failed to create board") {
-                authModel<BoardCreateModel> { user, boardRequest ->
-                    val boardResponse = createBoard(boardRequest, user)
-
-                    response(OK, value(boardResponse))
                 }
             },
     )

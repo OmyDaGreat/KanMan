@@ -1,8 +1,11 @@
-package xyz.malefic.kanman.data
+package xyz.malefic.kanman.data.db
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.dao.id.UuidTable
+import xyz.malefic.kanman.data.model.Column
+import xyz.malefic.kanman.data.model.TokenType
+import xyz.malefic.kanman.data.model.Visibility
 
 object Users : UuidTable("users") {
     val username = varchar("username", 128).uniqueIndex()
@@ -34,27 +37,4 @@ object BoardUsers : Table("board_users") {
     val board = reference("board_id", Boards, onDelete = ReferenceOption.CASCADE)
     val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
     override val primaryKey = PrimaryKey(board, user)
-}
-
-/**
- * Enum representing the columns in a Kanban board.
- */
-enum class Column {
-    BACKLOG,
-    PLANNING,
-    IN_PROGRESS,
-    DONE,
-}
-
-/**
- * Enum representing the visibility of a Kanban board.
- */
-enum class Visibility {
-    PUBLIC,
-    PRIVATE,
-}
-
-enum class TokenType {
-    ACCESS,
-    REFRESH,
 }

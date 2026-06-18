@@ -1,6 +1,6 @@
 package xyz.malefic.kanman.util
 
-import xyz.malefic.kanman.data.Visibility
+import xyz.malefic.kanman.data.model.Visibility
 
 fun nowMs(): Long = System.currentTimeMillis()
 

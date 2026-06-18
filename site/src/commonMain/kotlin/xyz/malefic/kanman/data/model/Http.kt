@@ -2,11 +2,6 @@ package xyz.malefic.kanman.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import xyz.malefic.kanman.data.BoardEntity
-import xyz.malefic.kanman.data.Column
-import xyz.malefic.kanman.data.StickyNoteEntity
-import xyz.malefic.kanman.data.UserEntity
-import xyz.malefic.kanman.data.Visibility
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -26,8 +21,6 @@ data class UserResponseModel(
     val username: String,
     val boards: List<BoardModel>,
 )
-
-fun UserEntity.toResponseModel(): UserResponseModel = UserResponseModel(id.value, username, boards.map { it.toModel() })
 
 @Serializable
 data class RefreshRequestModel(
@@ -54,8 +47,6 @@ data class StickyNoteModel(
     val board: BoardModel,
 )
 
-fun StickyNoteEntity.toModel(): StickyNoteModel = StickyNoteModel(id.value, title, content, column, board.toModel())
-
 @Serializable
 data class BoardCreateModel(
     val title: String,
@@ -72,18 +63,6 @@ data class BoardModel(
     val users: List<UserResponseModel>,
 )
 
-fun BoardEntity.toModel() =
-    BoardModel(
-        id.value,
-        title,
-        visibility,
-        owner.toResponseModel(),
-        stickies.map {
-            it.toModel()
-        },
-        users.map { it.toResponseModel() },
-    )
-
 @Serializable
 data class BoardSummaryModel(
     val id: Uuid,
@@ -91,5 +70,3 @@ data class BoardSummaryModel(
     val visibility: Visibility,
     val owner: UserResponseModel,
 )
-
-fun BoardEntity.toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toResponseModel())

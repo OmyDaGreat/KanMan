@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.data
+package xyz.malefic.kanman.data.db
 
 import co.touchlab.kermit.Logger
 import org.jetbrains.exposed.v1.core.SqlLogger

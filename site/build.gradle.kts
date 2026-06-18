@@ -28,6 +28,11 @@ kobweb {
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xcontext-parameters")
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
+    }
+
     configAsKobwebApplication("kanman")
 
     jvmToolchain(25)
@@ -36,8 +41,6 @@ kotlin {
             compileTaskProvider.configure {
                 compilerOptions {
                     jvmTarget.set(JVM_25)
-                    freeCompilerArgs.add("-Xcontext-parameters")
-                    optIn.add("kotlin.uuid.ExperimentalUuidApi")
                 }
             }
         }
