@@ -8,7 +8,7 @@ import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.foundation.layout.Row
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
-import com.varabyte.kobweb.compose.ui.modifiers.borderRight
+import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxHeight
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
@@ -21,12 +21,12 @@ import com.varabyte.kobweb.silk.components.layout.Surface
 import com.varabyte.kobweb.silk.components.navigation.Link
 import com.varabyte.kobweb.silk.style.common.DisabledStyle
 import com.varabyte.kobweb.silk.style.toAttrs
-import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.css.vh
 import org.jetbrains.compose.web.dom.H1
 import org.jetbrains.compose.web.dom.Span
 import org.jetbrains.compose.web.dom.Text
+import xyz.malefic.kanman.styles.Colors
 
 @Layout
 @Composable
@@ -37,7 +37,7 @@ fun NavBarLayout(
     val currentRoute = ctx.route.path
 
     Row(Modifier.fillMaxSize().height(100.vh)) {
-        Surface(Modifier.fillMaxHeight().borderRight(1.px, LineStyle.Solid)) {
+        Surface(Modifier.fillMaxHeight().backgroundColor(Colors.surfaceContainerHigh)) {
             Column(
                 Modifier
                     .fillMaxWidth()
@@ -50,7 +50,7 @@ fun NavBarLayout(
 
                 Column(verticalArrangement = Arrangement.spacedBy(24.px), horizontalAlignment = Alignment.CenterHorizontally) {
                     Pages.entries.forEach { page ->
-                        if (page.isPage(currentRoute)) {
+                        if (page.hasRoute(currentRoute)) {
                             Span(DisabledStyle.toAttrs()) {
                                 Text(page.value)
                             }
@@ -78,5 +78,5 @@ enum class Pages(
     ABOUT("About", "/about"),
     ;
 
-    fun isPage(route: String): Boolean = route.trimEnd('/') == this@Pages.route.trimEnd('/')
+    fun hasRoute(route: String): Boolean = route.trimEnd('/') == this@Pages.route.trimEnd('/')
 }

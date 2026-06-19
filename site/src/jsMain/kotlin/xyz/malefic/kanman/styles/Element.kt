@@ -48,13 +48,13 @@ fun initStyles(ctx: InitSilkContext) {
     ctx.theme.modifyStyle(InputStyle) {
         base {
             Modifier
-                .borderRadius(12.px)
-                .padding(leftRight = 16.px)
+                .borderRadius(16.px)
+                .padding(leftRight = 16.px, topBottom = 12.px)
                 .border(1.px, LineStyle.Solid, BorderColorVar.value())
                 .transition {
-                    property("border-color")
+                    property("all")
                     duration(0.2.s)
-                    timingFunction(AnimationTimingFunction.Ease)
+                    timingFunction(AnimationTimingFunction.EaseInOut)
                 }
         }
     }
@@ -62,9 +62,9 @@ fun initStyles(ctx: InitSilkContext) {
     ctx.theme.modifyStyle(ButtonStyle) {
         base {
             Modifier
-                .letterSpacing(0.08.em)
-                .borderRadius(24.px)
-                .padding(topBottom = 10.px, leftRight = 24.px)
+                .letterSpacing(0.02.em)
+                .borderRadius(100.percent)
+                .padding(topBottom = 12.px, leftRight = 28.px)
                 .transition {
                     property("all")
                     duration(0.25.s)
@@ -72,7 +72,7 @@ fun initStyles(ctx: InitSilkContext) {
                 }
         }
         hover {
-            Modifier.transform { scale(1.03) }
+            Modifier.transform { scale(1.02) }
         }
     }
 
@@ -96,16 +96,16 @@ fun initStyles(ctx: InitSilkContext) {
     ctx.theme.modifyStyle(VerticalDividerStyle) {
         base {
             Modifier
-                .borderLeft(2.px, LineStyle.Solid, BorderColorVar.value())
-                .opacity(0.7)
+                .borderLeft(1.px, LineStyle.Solid, BorderColorVar.value())
+                .opacity(0.35)
         }
     }
 
     ctx.theme.modifyStyle(HorizontalDividerStyle) {
         base {
             Modifier
-                .borderTop(2.px, LineStyle.Solid, BorderColorVar.value())
-                .opacity(0.7)
+                .borderTop(1.px, LineStyle.Solid, BorderColorVar.value())
+                .opacity(0.35)
         }
     }
 
@@ -130,7 +130,7 @@ fun initStyles(ctx: InitSilkContext) {
     ctx.theme.modifyStyle(SpanTextStyle) {
         base {
             Modifier
-                .lineHeight(1.6)
+                .lineHeight(1.65)
                 .letterSpacing(0.01.em)
         }
     }
@@ -138,15 +138,15 @@ fun initStyles(ctx: InitSilkContext) {
     ctx.theme.modifyStyle(OverlayStyle) {
         base {
             Modifier
-                .backdropFilter(blur(6.px))
-                .transition(Transition.all(0.3.s, AnimationTimingFunction.Ease))
+                .backdropFilter(blur(8.px))
+                .transition(Transition.all(0.3.s, AnimationTimingFunction.EaseInOut))
         }
     }
 
     ctx.theme.modifyStyle(CheckboxStyle) {
         base {
             Modifier
-                .borderRadius(6.px)
+                .borderRadius(8.px)
                 .border(1.px, LineStyle.Solid, BorderColorVar.value())
                 .transition(Transition.all(0.2.s))
         }
@@ -155,9 +155,9 @@ fun initStyles(ctx: InitSilkContext) {
     ctx.theme.modifyStyle(TabsTabStyle) {
         base {
             Modifier
-                .fontFamily(DISPLAY_FONT)
+                .fontFamily(HEADER_FONT)
                 .fontWeight(500)
-                .letterSpacing(0.05.em)
+                .letterSpacing(0.02.em)
                 .transition(Transition.all(0.2.s))
         }
     }
@@ -165,7 +165,7 @@ fun initStyles(ctx: InitSilkContext) {
     ctx.theme.modifyStyle(ImageStyle) {
         base {
             Modifier
-                .borderRadius(8.px)
+                .borderRadius(16.px)
                 .transition(Transition.all(0.2.s))
         }
     }

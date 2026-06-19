@@ -28,7 +28,7 @@ kobweb {
                 link {
                     rel = "stylesheet"
                     href =
-                        "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Comfortaa&family=Lora:wght@400;500;700&display=swap"
+                        "https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Quicksand:wght@300;400;500&family=Outfit:wght@100;200;400;600&display=swap"
                 }
             }
         }
