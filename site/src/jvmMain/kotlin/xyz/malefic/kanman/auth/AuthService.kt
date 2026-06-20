@@ -6,7 +6,11 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import org.http4k.core.Request
 import org.http4k.lens.RequestKey
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.isNotNull
+import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.db.AuthTokenEntity
@@ -25,6 +29,7 @@ import kotlin.uuid.Uuid
 
 const val ACCESS_TOKEN_TTL_MILLIS = 15 * 60 * 1000L
 const val REFRESH_TOKEN_TTL_MILLIS = 30 * 24 * 60 * 60 * 1000L
+const val REFRESH_GRACE_PERIOD_MILLIS = 30 * 1000L
 
 private val log = Logger.withTag("Auth")
 private val secureRandom = SecureRandom()
@@ -109,13 +114,30 @@ fun refreshTokens(refreshToken: String): TokenResponseModel? =
 
         val token = AuthTokenEntity.findById(id) ?: return@transaction null
 
-        if (token.revokedAt != null || token.expiresAt < nowMs() || token.secretHash != hash(secret)) {
+        if (token.expiresAt < nowMs() || token.secretHash != hash(secret)) {
             token.revokedAt = nowMs()
             return@transaction null
         }
 
+        token.revokedAt?.let { revokedAt ->
+            if (nowMs() - revokedAt > REFRESH_GRACE_PERIOD_MILLIS) {
+                return@transaction null
+            }
+        }
+
         token.revokedAt = nowMs()
         issueTokenPair(token.user)
+    }
+
+fun janitor() =
+    transaction {
+        val now = nowMs()
+        val graceLimit = now - REFRESH_GRACE_PERIOD_MILLIS
+        AuthTokenEntity
+            .find {
+                (AuthTokens.expiresAt less now) or
+                    (AuthTokens.revokedAt.isNotNull() and (AuthTokens.revokedAt less graceLimit))
+            }.forEach { it.delete() }
     }
 
 fun revokeRefreshToken(refreshToken: String) =
