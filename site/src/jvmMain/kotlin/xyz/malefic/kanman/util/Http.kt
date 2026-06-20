@@ -9,6 +9,7 @@ import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
+import org.http4k.core.Status.Companion.TOO_MANY_REQUESTS
 import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.then
 import org.http4k.core.with
@@ -18,6 +19,7 @@ import xyz.malefic.kanman.auth.getUserFromAccessToken
 import xyz.malefic.kanman.auth.requestUser
 import xyz.malefic.kanman.data.model.ErrorModel
 import xyz.malefic.kanman.data.model.UserResponseModel
+import java.util.concurrent.ConcurrentHashMap
 
 val auth: Filter =
     Filter { next ->
@@ -97,3 +99,27 @@ fun error(
     status: Status,
     message: () -> String,
 ) = response(status, ErrorModel(message()))
+
+fun rateLimit(
+    requests: Int,
+    windowMillis: Long,
+): Filter {
+    val hits = ConcurrentHashMap<String, MutableList<Long>>()
+    return { next ->
+        { request ->
+            val ip = request.header("X-Forwarded-For") ?: request.source?.address ?: "unknown"
+            val now = nowMs()
+            val userHits = hits.getOrPut(ip) { mutableListOf() }
+
+            synchronized(userHits) {
+                userHits.removeIf { it < now - windowMillis }
+                if (userHits.size >= requests) {
+                    error(TOO_MANY_REQUESTS) { "Rate limit exceeded. Try again later." }
+                } else {
+                    userHits.add(now)
+                    next(request)
+                }
+            }
+        }
+    }
+}

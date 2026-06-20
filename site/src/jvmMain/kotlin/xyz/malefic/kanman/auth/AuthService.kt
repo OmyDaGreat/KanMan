@@ -30,6 +30,8 @@ import kotlin.uuid.Uuid
 const val ACCESS_TOKEN_TTL_MILLIS = 15 * 60 * 1000L
 const val REFRESH_TOKEN_TTL_MILLIS = 30 * 24 * 60 * 60 * 1000L
 const val REFRESH_GRACE_PERIOD_MILLIS = 30 * 1000L
+const val LOCKOUT_DURATION_MILLIS = 15 * 60 * 1000L
+const val MAX_FAILED_ATTEMPTS = 5
 
 private val log = Logger.withTag("Auth")
 private val secureRandom = SecureRandom()
@@ -156,14 +158,25 @@ fun currentUser(request: Request) = transaction { UserEntity.findById(requestUse
 
 fun getTokensFromLogin(user: UserRequestModel) =
     transaction {
-        UserEntity
-            .find { Users.username eq user.username }
-            .firstOrNull()
-            ?.takeIf { verifyPassword(user.password, it.hashedPassword) }
-            ?.let {
-                revokeAccessTokensForUser(it)
-                issueTokenPair(it)
+        val userEntity = UserEntity.find { Users.username eq user.username }.firstOrNull() ?: return@transaction null
+        val now = nowMs()
+
+        if (userEntity.lockUntil > now) {
+            return@transaction null
+        }
+
+        if (verifyPassword(user.password, userEntity.hashedPassword)) {
+            userEntity.failedAttempts = 0
+            userEntity.lockUntil = 0
+            revokeAccessTokensForUser(userEntity)
+            issueTokenPair(userEntity)
+        } else {
+            userEntity.failedAttempts += 1
+            if (userEntity.failedAttempts >= MAX_FAILED_ATTEMPTS) {
+                userEntity.lockUntil = now + LOCKOUT_DURATION_MILLIS
             }
+            null
+        }
     }
 
 fun getUserFromAccessToken(accessToken: String) =

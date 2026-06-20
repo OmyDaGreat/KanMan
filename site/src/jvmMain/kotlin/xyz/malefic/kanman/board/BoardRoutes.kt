@@ -19,7 +19,7 @@ import xyz.malefic.kanman.util.response
 import kotlin.uuid.Uuid
 
 val boardRoutes =
-    listOf(
+    arrayOf(
         "/api/board/{id}" bind GET to
             catchPlus("Failed to retrieve board") {
                 authRequest { user ->

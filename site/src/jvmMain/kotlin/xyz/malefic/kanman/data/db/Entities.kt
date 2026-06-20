@@ -16,6 +16,8 @@ class UserEntity(
 
     var username by Users.username
     var hashedPassword by Users.hashedPassword
+    var failedAttempts by Users.failedAttempts
+    var lockUntil by Users.lockUntil
     var boards by BoardEntity via BoardUsers
 
     fun toResponseModel(): UserResponseModel = UserResponseModel(id.value, username, boards.map { it.toModel() })

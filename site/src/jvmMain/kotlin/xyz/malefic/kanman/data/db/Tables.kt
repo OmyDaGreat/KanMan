@@ -9,6 +9,8 @@ import xyz.malefic.kanman.data.model.Visibility
 object Users : UuidTable("users") {
     val username = varchar("username", 128).uniqueIndex()
     val hashedPassword = varchar("password", 256)
+    val failedAttempts = integer("failed_attempts").default(0)
+    val lockUntil = long("lock_until").default(0)
 }
 
 object AuthTokens : UuidTable("auth_tokens") {

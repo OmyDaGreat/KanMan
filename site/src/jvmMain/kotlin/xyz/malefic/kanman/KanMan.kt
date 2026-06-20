@@ -6,6 +6,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.http4k.core.Method.GET
+import org.http4k.core.Status.Companion.OK
 import org.http4k.core.then
 import org.http4k.filter.ServerFilters
 import org.http4k.filter.debug
@@ -21,16 +22,25 @@ import xyz.malefic.kanman.board.boardRoutes
 import xyz.malefic.kanman.board.boardWs
 import xyz.malefic.kanman.data.db.initDatabase
 import xyz.malefic.kanman.user.userRoutes
+import xyz.malefic.kanman.util.rateLimit
+import xyz.malefic.kanman.util.response
 import xyz.malefic.kanman.util.serveStaticFile
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 fun main() {
     initDatabase()
 
+    val throttler = rateLimit(10, 1.minutes.inWholeMilliseconds)
+
     val http: RoutingHttpHandler =
         ServerFilters.Cors(corsPolicy).then(
             routes(
-                *(authRoutes + boardRoutes + userRoutes).toTypedArray(),
+                "/api/ping" bind GET to { response(OK).body("pong") },
+                "/api/health" bind GET to { response(OK).body("healthy") },
+                *authRoutes.map { throttler.then(it) }.toTypedArray(),
+                *boardRoutes,
+                *userRoutes,
                 "/{path:.*}" bind GET to ::serveStaticFile,
             ),
         )

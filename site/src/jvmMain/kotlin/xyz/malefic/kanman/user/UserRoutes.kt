@@ -11,7 +11,7 @@ import xyz.malefic.kanman.util.response
 import xyz.malefic.kanman.util.toVisibility
 
 val userRoutes =
-    listOf(
+    arrayOf(
         "/api/boards" bind GET to
             catch("Failed to list boards") { request ->
                 val visibility = request.query("visibility")?.toVisibility

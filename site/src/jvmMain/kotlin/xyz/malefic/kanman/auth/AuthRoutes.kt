@@ -16,10 +16,8 @@ import xyz.malefic.kanman.util.model
 import xyz.malefic.kanman.util.response
 
 val authRoutes =
-    listOf(
-        "/api/ping" bind GET to { response(OK).body("pong") },
-        "/api/health" bind GET to { response(OK).body("healthy") },
-        "/api/user/register" bind POST to
+    arrayOf(
+        "/api/register" bind POST to
             catchPlus("Failed to register user") {
                 model<UserRequestModel> { _, user ->
                     transaction {
