@@ -78,6 +78,7 @@ kotlin {
             implementation(libs.bundles.compose)
             implementation(libs.bundles.kobweb)
             implementation(libs.kutint)
+            implementation(wrappers.js)
         }
     }
 }

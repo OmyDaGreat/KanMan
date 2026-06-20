@@ -3,6 +3,7 @@ package xyz.malefic.kanman.api
 import co.touchlab.kermit.Logger
 import kotlinx.browser.window
 import org.w3c.dom.WebSocket
+import xyz.malefic.kanman.api.AuthSession.accessToken
 import xyz.malefic.kanman.data.model.BoardModel
 
 object WebSockets {
@@ -13,7 +14,7 @@ object WebSockets {
         }
     val BoardModel.ws
         get() =
-            WebSocket("$wsBaseUrl/api/ws/$id").also { ws ->
+            WebSocket("$wsBaseUrl/api/ws/$id?token=$accessToken").also { ws ->
                 ws.onmessage = {
                     Logger.d(tag = "WebSocket") { it.data as String }
                 }
