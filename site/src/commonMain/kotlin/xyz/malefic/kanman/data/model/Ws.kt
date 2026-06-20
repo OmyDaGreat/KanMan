@@ -21,12 +21,12 @@ sealed class WsEvent {
         val boardId: Uuid,
         val creator: UserResponseModel,
         val sticky: StickyNoteModel,
-    ) : WsEvent()
+    ) : WsEvent() {
+        @Serializable
+        data class Model(
+            val title: String,
+            val content: String?,
+            val column: Column,
+        )
+    }
 }
-
-@Serializable
-data class StickyCreateModel(
-    val title: String,
-    val content: String?,
-    val column: Column,
-)

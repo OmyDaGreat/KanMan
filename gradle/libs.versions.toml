@@ -10,6 +10,7 @@ serialization = "1.11.0"
 jetbrains-compose = "1.11.1"
 kobweb = "0.24.0"
 kutint = "1.0.1"
+jwt = "4.5.2"
 
 [libraries]
 http4k-bom = { group = "org.http4k", name = "http4k-bom", version.ref = "http4k" }
@@ -24,6 +25,10 @@ exposed-core = { group = "org.jetbrains.exposed", name = "exposed-core", version
 exposed-dao = { group = "org.jetbrains.exposed", name = "exposed-dao", version.ref = "exposed" }
 exposed-jdbc = { group = "org.jetbrains.exposed", name = "exposed-jdbc", version.ref = "exposed" }
 
+jwt = { group = "com.auth0", name = "java-jwt", version.ref = "jwt" }
+
+bcrypt = { group = "at.favre.lib", name = "bcrypt", version.ref = "bcrypt" }
+
 compose-html-core = { module = "org.jetbrains.compose.html:html-core", version.ref = "jetbrains-compose" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "jetbrains-compose" }
 kobweb-core = { module = "com.varabyte.kobweb:kobweb-core ", version.ref = "kobweb" }
@@ -37,8 +42,6 @@ kutint = { group = "xyz.malefic", name = "kutint", version.ref = "kutint" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
-
-bcrypt = { group = "at.favre.lib", name = "bcrypt", version.ref = "bcrypt" }
 
 kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit" }
 

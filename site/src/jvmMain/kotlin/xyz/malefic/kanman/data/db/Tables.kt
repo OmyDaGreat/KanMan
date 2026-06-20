@@ -4,7 +4,6 @@ import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import xyz.malefic.kanman.data.model.Column
-import xyz.malefic.kanman.data.model.TokenType
 import xyz.malefic.kanman.data.model.Visibility
 
 object Users : UuidTable("users") {
@@ -14,8 +13,7 @@ object Users : UuidTable("users") {
 
 object AuthTokens : UuidTable("auth_tokens") {
     val user = reference("user_id", Users)
-    val tokenHash = varchar("token_hash", 64).uniqueIndex()
-    val tokenType = enumeration<TokenType>("kind")
+    val secretHash = varchar("secret_hash", 64)
     val expiresAt = long("expires_at")
     val revokedAt = long("revoked_at").nullable()
 }

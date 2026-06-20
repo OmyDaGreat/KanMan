@@ -6,7 +6,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 fun initDatabase() {
     Database.connect(
-        url = "jdbc:sqlite:data.db?foreign_keys=on", // TODO: Replace "data.db"
+        url = "jdbc:sqlite:kanban.db?foreign_keys=on",
         driver = "org.sqlite.JDBC",
     )
 

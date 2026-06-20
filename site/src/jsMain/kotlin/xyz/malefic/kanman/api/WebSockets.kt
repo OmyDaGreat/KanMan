@@ -1,0 +1,21 @@
+package xyz.malefic.kanman.api
+
+import co.touchlab.kermit.Logger
+import kotlinx.browser.window
+import org.w3c.dom.WebSocket
+import xyz.malefic.kanman.data.model.BoardModel
+
+object WebSockets {
+    val wsBaseUrl: String
+        get() {
+            val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
+            return "$protocol//${window.location.host}"
+        }
+    val BoardModel.ws
+        get() =
+            WebSocket("$wsBaseUrl/api/ws/$id").also { ws ->
+                ws.onmessage = {
+                    Logger.d(tag = "WebSocket") { it.data as String }
+                }
+            }
+}

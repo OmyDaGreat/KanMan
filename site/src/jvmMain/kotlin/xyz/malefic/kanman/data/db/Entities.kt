@@ -27,8 +27,7 @@ class AuthTokenEntity(
     companion object : UuidEntityClass<AuthTokenEntity>(AuthTokens)
 
     var user by UserEntity referencedOn AuthTokens.user
-    var tokenHash by AuthTokens.tokenHash
-    var tokenType by AuthTokens.tokenType
+    var secretHash by AuthTokens.secretHash
     var expiresAt by AuthTokens.expiresAt
     var revokedAt by AuthTokens.revokedAt
 }

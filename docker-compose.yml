@@ -6,7 +6,7 @@ services:
     environment:
       - JAVA_OPTS=-Xmx512m
       - PORT=8080
-      - API_KEY=${API_KEY:-}
+      - SECRET=${SECRET:-} # Use "openssl rand -hex 32" to generate a random secret key
     volumes:
       - entry_data:/data
     healthcheck:

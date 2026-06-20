@@ -69,6 +69,7 @@ kotlin {
             implementation(libs.bundles.http4k)
             implementation(libs.bundles.storage)
             implementation(libs.bcrypt)
+            implementation(libs.jwt)
             compileOnly(libs.kobweb.api)
         }
 
@@ -113,7 +114,7 @@ afterEvaluate {
     afterEvaluate {
         tasks.named<JavaExec>("jvmRun") {
             dependsOn(dockerRuntime)
-            systemProperty("API_KEY", localProperties["API_KEY"] ?: System.getenv("API_KEY") ?: "")
+            systemProperty("SECRET", localProperties["SECRET"] ?: System.getenv("SECRET") ?: "")
         }
     }
 }

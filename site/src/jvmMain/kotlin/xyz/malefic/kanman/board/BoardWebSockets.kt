@@ -8,7 +8,6 @@ import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.db.BoardEntity
 import xyz.malefic.kanman.data.db.StickyNoteEntity
-import xyz.malefic.kanman.data.model.StickyCreateModel
 import xyz.malefic.kanman.data.model.WsEvent.StickyCreate
 import xyz.malefic.kanman.data.model.WsEvent.UserJoin
 import xyz.malefic.kanman.data.model.WsEvent.UserLeave
@@ -35,7 +34,7 @@ val boardWs =
 
                         ws.onMessage { msg ->
                             try {
-                                val stickyNoteRequest = wsLens<StickyCreateModel>(msg)
+                                val stickyNoteRequest = wsLens<StickyCreate.Model>(msg)
                                 val stickyNote =
                                     transaction {
                                         StickyNoteEntity.new {

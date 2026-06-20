@@ -5,6 +5,7 @@ import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
+import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxHeight
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
 import com.varabyte.kobweb.compose.ui.modifiers.padding
@@ -24,7 +25,8 @@ fun KanColumn(title: String) =
             .fillMaxHeight()
             .width(20.vw)
             .backgroundColor(Colors.primaryContainer)
-            .padding(18.px),
+            .padding(18.px)
+            .borderRadius(18.px),
         Arrangement.Top,
     ) {
         H2 {

@@ -11,8 +11,3 @@ enum class Visibility {
     PUBLIC,
     PRIVATE,
 }
-
-enum class TokenType {
-    ACCESS,
-    REFRESH,
-}
