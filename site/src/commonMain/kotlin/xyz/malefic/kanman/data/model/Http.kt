@@ -26,7 +26,11 @@ data class UserResponseModel(
 data class RefreshRequestModel(
     @SerialName("refresh_token")
     val refreshToken: String,
-)
+) {
+    companion object {
+        val String.refresh get() = RefreshRequestModel(this)
+    }
+}
 
 @Serializable
 data class TokenResponseModel(

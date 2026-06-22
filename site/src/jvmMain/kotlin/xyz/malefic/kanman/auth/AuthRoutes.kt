@@ -8,7 +8,6 @@ import org.http4k.routing.bind
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.model.RefreshRequestModel
 import xyz.malefic.kanman.data.model.UserRequestModel
-import xyz.malefic.kanman.user.createUser
 import xyz.malefic.kanman.util.authRequest
 import xyz.malefic.kanman.util.catchPlus
 import xyz.malefic.kanman.util.error
@@ -37,10 +36,12 @@ val authRoutes =
                 }
             },
         "/api/logout" bind POST to
-            model<RefreshRequestModel> { _, refresh ->
-                revokeRefreshToken(refresh.refreshToken)
+            catchPlus("Failed to logout") {
+                model<RefreshRequestModel> { _, refresh ->
+                    revokeRefreshToken(refresh.refreshToken)
 
-                response(OK)
+                    response(OK)
+                }
             },
         "/api/token/refresh" bind POST to
             catchPlus("Failed to refresh tokens") {

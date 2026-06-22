@@ -189,3 +189,11 @@ private fun revokeAccessTokensForUser(user: UserEntity) =
 context(_: JdbcTransaction)
 val UserResponseModel.entity
     get() = UserEntity.findById(id) ?: throw IllegalArgumentException("User with ID $id not found")
+
+fun createUser(user: UserRequestModel) =
+    transaction {
+        UserEntity.new {
+            this.username = user.username
+            this.hashedPassword = hashPassword(user.password)
+        }
+    }.toResponseModel()

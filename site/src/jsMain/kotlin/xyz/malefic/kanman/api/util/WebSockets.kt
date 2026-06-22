@@ -1,9 +1,9 @@
-package xyz.malefic.kanman.api
+package xyz.malefic.kanman.api.util
 
 import co.touchlab.kermit.Logger
 import kotlinx.browser.window
 import org.w3c.dom.WebSocket
-import xyz.malefic.kanman.api.AuthSession.accessToken
+import xyz.malefic.kanman.api.util.AuthSession.accessToken
 import xyz.malefic.kanman.data.model.BoardModel
 
 object WebSockets {

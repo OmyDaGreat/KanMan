@@ -7,12 +7,16 @@ import org.http4k.core.Status.Companion.BAD_REQUEST
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
+import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.Column
+import xyz.malefic.kanman.data.model.Visibility
+import xyz.malefic.kanman.data.model.Visibility.Companion.toVisibility
 import xyz.malefic.kanman.util.authModel
 import xyz.malefic.kanman.util.authRequest
+import xyz.malefic.kanman.util.catch
 import xyz.malefic.kanman.util.catchPlus
 import xyz.malefic.kanman.util.error
 import xyz.malefic.kanman.util.response
@@ -61,5 +65,22 @@ val boardRoutes =
                 }
 
                 response(OK)
+            },
+        "/api/boards/public" bind GET to
+            catch("Failed to list public boards") {
+                val boards = getBoards(Visibility.PUBLIC, null)!!
+
+                response(OK, boards)
+            },
+        "/api/boards" bind GET to
+            catchPlus("Failed to list boards") {
+                authRequest { user ->
+                    val visibility = query("visibility")?.toVisibility
+                    val boards =
+                        getBoards(visibility, user)
+                            ?: return@authRequest error(UNAUTHORIZED) { "Authentication required for private boards" }
+
+                    response(OK, boards)
+                }
             },
     )

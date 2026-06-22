@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.api
+package xyz.malefic.kanman.api.util
 
 import kotlinx.coroutines.await
 import org.w3c.fetch.Response

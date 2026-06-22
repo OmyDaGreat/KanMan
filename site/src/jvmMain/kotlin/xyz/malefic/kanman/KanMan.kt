@@ -21,7 +21,6 @@ import xyz.malefic.kanman.auth.janitor
 import xyz.malefic.kanman.board.boardRoutes
 import xyz.malefic.kanman.board.boardWs
 import xyz.malefic.kanman.data.db.initDatabase
-import xyz.malefic.kanman.user.userRoutes
 import xyz.malefic.kanman.util.rateLimit
 import xyz.malefic.kanman.util.response
 import xyz.malefic.kanman.util.serveStaticFile
@@ -40,7 +39,6 @@ fun main() {
                 "/api/health" bind GET to { response(OK).body("healthy") },
                 *authRoutes.map { throttler.then(it) }.toTypedArray(),
                 *boardRoutes,
-                *userRoutes,
                 "/{path:.*}" bind GET to ::serveStaticFile,
             ),
         )
