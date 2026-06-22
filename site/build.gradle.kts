@@ -77,8 +77,9 @@ kotlin {
             implementation(libs.bundles.silk.icons)
             implementation(libs.bundles.compose)
             implementation(libs.bundles.kobweb)
-            implementation(libs.kutint)
             implementation(wrappers.js)
+            implementation(libs.kutint)
+            implementation(libs.arrow)
         }
     }
 }

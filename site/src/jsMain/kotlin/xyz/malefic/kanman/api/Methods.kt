@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 
 val json = Json { ignoreUnknownKeys = true }
 
-suspend inline fun <reified T> getApi(url: String): T =
+suspend inline fun <reified T> getApi(url: String) =
     withAuth(url) { response ->
         response
             .text()

@@ -11,6 +11,7 @@ jetbrains-compose = "1.11.1"
 kobweb = "0.24.0"
 kutint = "1.0.1"
 jwt = "4.5.2"
+arrow = "2.2.3"
 
 [libraries]
 http4k-bom = { group = "org.http4k", name = "http4k-bom", version.ref = "http4k" }
@@ -44,6 +45,8 @@ kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 
 kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit" }
+
+arrow = { group = "io.arrow-kt", name = "arrow-core", version.ref = "arrow" }
 
 [plugins]
 kobweb = { id = "com.varabyte.kobweb.application", version.ref = "kobweb" }
