@@ -49,7 +49,7 @@ fun api(handler: suspend Raise<Issue>.(Request) -> Response): HttpHandler =
     }
 
 fun apiAuth(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> Response): HttpHandler =
-    { request -> runBlocking { either { handler(authenticate(request).bind(), request) }.fold({ it.toResponse() }, { it }) } }
+    { request -> runBlocking { either { handler(authenticate(request), request) }.fold({ it.toResponse() }, { it }) } }
 
 context(r: Raise<Issue>)
 inline fun <reified T : Any> Request.model(): T =

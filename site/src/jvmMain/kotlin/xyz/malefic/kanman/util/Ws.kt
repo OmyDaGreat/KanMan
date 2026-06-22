@@ -2,6 +2,7 @@ package xyz.malefic.kanman.util
 
 import arrow.core.Either
 import arrow.core.raise.Raise
+import arrow.core.raise.context.bind
 import arrow.core.raise.either
 import kotlinx.coroutines.runBlocking
 import org.http4k.core.Request
@@ -11,15 +12,20 @@ import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
 import xyz.malefic.kanman.auth.authenticate
 import xyz.malefic.kanman.data.model.Issue
+import xyz.malefic.kanman.data.model.Issue.Server.BadRequest
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
 import xyz.malefic.kanman.data.model.UserResponseModel
 
 fun apiWS(handler: suspend Raise<Issue>.(Request) -> WsResponse): (Request) -> WsResponse =
     { request ->
         runBlocking {
-            either {
-                Either.catch { handler(request) }.mapLeft { Internal(it.message ?: "Internal server error") }.bind()
-            }.fold(
+            val result: Either<Issue, WsResponse> =
+                try {
+                    either { handler(this, request) }
+                } catch (e: Exception) {
+                    Either.Left(Internal(e.message ?: "Internal server error"))
+                }
+            result.fold(
                 { error ->
                     WsResponse { ws ->
                         ws.send(error)
@@ -31,18 +37,15 @@ fun apiWS(handler: suspend Raise<Issue>.(Request) -> WsResponse): (Request) -> W
         }
     }
 
-fun apiAuthWS(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> WsResponse): (Request) -> WsResponse =
-    apiWS { request ->
-        val user = authenticate(request).bind()
-        handler(user, request)
-    }
+fun apiAuthWS(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> WsResponse) =
+    apiWS { request -> handler(authenticate(request), request) }
 
-inline fun <reified T : Any> wsLens(msg: WsMessage) = WsMessage.auto<T>().toLens()(msg)
+context(r: Raise<Issue>)
+inline fun <reified T : Any> WsMessage.model() =
+    Either.catch { WsMessage.auto<T>().toLens()(this) }.mapLeft { BadRequest("Invalid JSON for request body: ${it.message}") }.bind()
 
-inline fun <reified T : Any> wsLens(obj: T) = WsMessage.auto<T>().toLens()(obj)
+inline fun <reified T : Any> Websocket.send(obj: T) = send(WsMessage.auto<T>().toLens()(obj))
 
-inline fun <reified T : Any> Websocket.send(obj: T) = send(wsLens(obj))
-
-fun Websocket.error(message: String) = send(Internal(message))
+fun Websocket.error(message: String = "Internal server error") = send(Internal(message))
 
 inline fun <reified T : Issue> Websocket.error(error: T) = send(error)

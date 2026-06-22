@@ -70,21 +70,22 @@ fun hashPassword(password: String): String = bcrypt.hashToString(12, password.to
 private fun verifyPassword(
     pw: String,
     hash: String,
-): Boolean = verifier.verify(pw.toCharArray(), hash).verified
+) = verifier.verify(pw.toCharArray(), hash).verified
 
-private fun hash(text: String): String =
-    MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
+private fun hash(text: String) = MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
 
-private fun generateSecret(bytes: Int = 32): String = ByteArray(bytes).also { secureRandom.nextBytes(it) }.let { base64.encode(it) }
+private fun generateSecret(bytes: Int = 32) = ByteArray(bytes).also { secureRandom.nextBytes(it) }.let { base64.encode(it) }
 
-private fun createAccessToken(user: UserEntity): String =
+private fun createAccessToken(user: UserEntity) =
     JWT
         .create()
         .withSubject(user.id.value.toString())
         .withExpiresAt(Date(nowMs() + ACCESS_TOKEN_TTL_MILLIS))
         .sign(jwtAlgorithm)
 
-fun verifyAccessToken(token: String): Uuid? = Uuid.parseOrNull(jwtVerifier.verify(token).subject)
+context(r: Raise<Issue>)
+fun verifyAccessToken(token: String) =
+    r.ensureNotNull(Uuid.parseOrNull(jwtVerifier.verify(token).subject)) { Unauthorized("Invalid or expired token") }
 
 context(_: JdbcTransaction)
 fun issueTokenPair(user: UserEntity): TokenResponseModel {
@@ -106,26 +107,26 @@ fun issueTokenPair(user: UserEntity): TokenResponseModel {
 }
 
 context(r: Raise<Issue>)
-fun refreshTokens(refreshToken: String): TokenResponseModel =
+fun refreshTokens(refreshToken: String) =
     transaction {
         val (idPart, secret) =
             r.ensureNotNull(
                 refreshToken.split(":").takeIf { it.size == 2 },
             ) { BadRequest("Invalid refresh token format") }
         val id = r.ensureNotNull(Uuid.parseOrNull(idPart)) { BadRequest("Invalid refresh token ID") }
-
         val token = r.ensureNotNull(AuthTokenEntity.findById(id)) { Unauthorized("Refresh token not found") }
+        val now = nowMs()
 
-        if (token.expiresAt < nowMs() || token.secretHash != hash(secret)) {
-            token.revokedAt = nowMs()
+        if (token.expiresAt < now || token.secretHash != hash(secret)) {
+            token.revokedAt = now
             r.raise(Unauthorized("Refresh token expired or invalid"))
         }
 
         token.revokedAt?.let { revokedAt ->
-            r.ensure(revokedAt + REFRESH_GRACE_PERIOD_MILLIS > nowMs()) { Unauthorized("Refresh token already revoked") }
+            r.ensure(revokedAt + REFRESH_GRACE_PERIOD_MILLIS > now) { Unauthorized("Refresh token already revoked") }
         }
 
-        token.revokedAt = nowMs()
+        token.revokedAt = now
         issueTokenPair(token.user)
     }
 
@@ -174,8 +175,13 @@ fun getTokensFromLogin(user: UserRequestModel) =
         issueTokenPair(userEntity)
     }
 
+context(r: Raise<Issue>)
 fun getUserFromAccessToken(accessToken: String) =
-    transaction { verifyAccessToken(accessToken)?.let { UserEntity.findById(it)?.toResponseModel() } }
+    transaction {
+        r
+            .ensureNotNull(UserEntity.findById(verifyAccessToken(accessToken))) { Unauthorized("Invalid or expired access token") }
+            .toResponseModel()
+    }
 
 context(_: JdbcTransaction)
 private fun revokeAccessTokensForUser(user: UserEntity) =
@@ -197,16 +203,14 @@ fun UserRequestModel.create() =
         }
     }.toResponseModel()
 
-fun authenticate(request: Request): Either<Issue, UserResponseModel> =
-    either {
-        val token =
-            ensureNotNull(
-                request
-                    .header("Authorization")
-                    ?.takeIf { it.startsWith("Bearer ") }
-                    ?.removePrefix("Bearer ")
-                    ?.trim(),
-            ) { Unauthorized("Missing bearer token") }
-
-        ensureNotNull(getUserFromAccessToken(token)) { Unauthorized("Invalid or expired token") }
-    }
+context(r: Raise<Issue>)
+fun authenticate(request: Request) =
+    getUserFromAccessToken(
+        r.ensureNotNull(
+            request
+                .header("Authorization")
+                ?.takeIf { it.startsWith("Bearer ") }
+                ?.removePrefix("Bearer ")
+                ?.trim(),
+        ) { Unauthorized("Missing bearer token") },
+    )

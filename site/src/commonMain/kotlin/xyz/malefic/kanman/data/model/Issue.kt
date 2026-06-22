@@ -3,8 +3,8 @@ package xyz.malefic.kanman.data.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed class Issue {
-    abstract val message: String
+sealed class Issue : Error() {
+    abstract override val message: String
 
     @Serializable
     sealed class Server : Issue() {

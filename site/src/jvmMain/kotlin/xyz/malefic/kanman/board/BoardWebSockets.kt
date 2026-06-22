@@ -1,5 +1,7 @@
 package xyz.malefic.kanman.board
 
+import arrow.core.raise.catch
+import arrow.core.raise.either
 import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import co.touchlab.kermit.Logger
@@ -19,38 +21,41 @@ import xyz.malefic.kanman.data.model.WsEvent.UserLeave
 import xyz.malefic.kanman.util.ConnectionRegistry
 import xyz.malefic.kanman.util.apiAuthWS
 import xyz.malefic.kanman.util.error
-import xyz.malefic.kanman.util.wsLens
+import xyz.malefic.kanman.util.model
 import kotlin.uuid.Uuid
 
 val boardWs =
     websockets(
         "/api/ws/{id}" bind
             apiAuthWS { user, request ->
-                WsResponse { ws ->
-                    try {
-                        val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { BadRequest("Invalid board id") }
-                        ensure(isBoardValid(id, user)) { NotFound("Board not found or access denied") }
+                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { BadRequest("Invalid board id") }
+                ensure(isBoardValid(id, user)) { NotFound("Board not found or access denied") }
 
-                        ConnectionRegistry.register(id, ws)
-                        ConnectionRegistry.broadcast(id, UserJoin(id, user))
+                WsResponse { ws ->
+                    either {
+                        catch({
+                            ConnectionRegistry.register(id, ws)
+                            ConnectionRegistry.broadcast(id, UserJoin(id, user))
+                        }) { raise(Internal(it.message ?: "Connection registry failure")) }
 
                         ws.onMessage { msg ->
-                            try {
-                                val stickyNoteRequest = wsLens<StickyCreate.Model>(msg)
+                            either {
+                                val stickyNoteRequest = msg.model<StickyCreate.Model>()
                                 val stickyNote =
                                     transaction {
+                                        val boardEntity = BoardEntity.findById(id) ?: raise(NotFound("Board not found"))
                                         StickyNoteEntity
                                             .new {
                                                 this.title = stickyNoteRequest.title
                                                 this.content = stickyNoteRequest.content ?: ""
                                                 this.column = stickyNoteRequest.column
-                                                this.board = BoardEntity.findById(id) ?: throw Exception("Board not found")
+                                                this.board = boardEntity
                                             }.toModel()
                                     }
                                 ConnectionRegistry.broadcast(id, StickyCreate(id, user, stickyNote))
-                            } catch (e: Exception) {
-                                Logger.e(e, "WebSockets") { "Failed to create sticky note" }
-                                ws.error("Internal server error")
+                            }.onLeft { error ->
+                                Logger.e(error, "WebSockets") { "Failed to handle message" }
+                                ws.error(error)
                             }
                         }
 
@@ -61,14 +66,14 @@ val boardWs =
                         }
 
                         ws.onError { e ->
-                            Logger.e(e, "WebSockets") { "${user.username} disconnected with error on board $id" }
+                            Logger.e(e, "WebSockets") { "${user.username} disconnected with error" }
                             if (ConnectionRegistry.unregister(id, ws)) {
                                 ConnectionRegistry.broadcast(id, UserLeave(id, user))
                             }
                         }
-                    } catch (e: Exception) {
-                        Logger.e(e, "WebSockets") { "Error during WS setup" }
-                        ws.error(Internal(e.message ?: "Internal server error"))
+                    }.onLeft { issue ->
+                        Logger.e(issue, "WebSockets") { "Error during WS setup" }
+                        ws.error(issue)
                         ws.close()
                     }
                 }
