@@ -11,17 +11,26 @@ import kotlinx.serialization.json.Json
 import org.w3c.fetch.Headers
 import org.w3c.fetch.RequestInit
 import org.w3c.fetch.Response
-import xyz.malefic.kanman.api.util.ApiError.HttpError.Companion.error
+import xyz.malefic.kanman.data.model.Issue
+import xyz.malefic.kanman.data.model.Issue.Client.Network
+import xyz.malefic.kanman.data.model.Issue.Server.Internal
 
 val json = Json { ignoreUnknownKeys = true }
 
-context(_: Raise<ApiError>)
+suspend fun Response.error(): Issue =
+    try {
+        json.decodeFromString<Issue>(text().await())
+    } catch (_: Exception) {
+        Internal(statusText)
+    }
+
+context(_: Raise<Issue>)
 suspend fun fetch(
     url: String,
     init: RequestInit,
 ) = Either
-    .catchOrThrow<Exception, _> { window.fetch(url, init).await() }
-    .mapLeft { ApiError.NetworkError(it.message ?: "Network failure", it) }
+    .catch { window.fetch(url, init).await() }
+    .mapLeft { Network(it.message ?: "Network failure") }
     .bind()
 
 suspend fun <T> api(

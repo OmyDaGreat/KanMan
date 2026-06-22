@@ -1,86 +1,65 @@
 package xyz.malefic.kanman.board
 
+import arrow.core.raise.ensureNotNull
 import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
-import org.http4k.core.Status.Companion.BAD_REQUEST
-import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
-import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
-import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.Column
-import xyz.malefic.kanman.data.model.Visibility
+import xyz.malefic.kanman.data.model.Issue.Server.BadRequest
+import xyz.malefic.kanman.data.model.Issue.Server.NotFound
 import xyz.malefic.kanman.data.model.Visibility.Companion.toVisibility
-import xyz.malefic.kanman.util.authModel
-import xyz.malefic.kanman.util.authRequest
-import xyz.malefic.kanman.util.catch
-import xyz.malefic.kanman.util.catchPlus
-import xyz.malefic.kanman.util.error
+import xyz.malefic.kanman.util.api
+import xyz.malefic.kanman.util.apiAuth
+import xyz.malefic.kanman.util.model
 import xyz.malefic.kanman.util.response
 import kotlin.uuid.Uuid
 
 val boardRoutes =
     arrayOf(
         "/api/board/{id}" bind GET to
-            catchPlus("Failed to retrieve board") {
-                authRequest { user ->
-                    val id = path("id")?.let { Uuid.parse(it) } ?: return@authRequest error(BAD_REQUEST) { "Invalid board id" }
-                    val board = user.boards.firstOrNull { it.id == id } ?: return@authRequest error(NOT_FOUND) { "Board not found" }
-                    query("column")?.let {
-                        return@authRequest response(
-                            OK,
-                            board.stickies.filter { sticky ->
-                                sticky.column ==
-                                    Column.valueOf(it.trim().uppercase())
-                            },
-                        )
-                    }
+            apiAuth { user, request ->
+                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { BadRequest("Invalid board id") }
+                val board = ensureNotNull(user.boards.firstOrNull { it.id == id }) { NotFound("Board not found") }
 
-                    response(OK, board)
+                request.query("column")?.let {
+                    return@apiAuth response(
+                        OK,
+                        board.stickies.filter { sticky -> sticky.column == Column.valueOf(it.trim().uppercase()) },
+                    )
                 }
+
+                response(OK, board)
             },
         "/api/board" bind POST to
-            catchPlus("Failed to create board") {
-                authModel<BoardCreateModel> { user, boardRequest ->
-                    val boardResponse = createBoard(boardRequest, user)
+            apiAuth { user, request ->
+                val boardRequest = request.model<BoardCreateModel>()
+                val boardResponse = createBoard(boardRequest, user)
 
-                    response(OK, boardResponse)
-                }
+                response(OK, boardResponse)
             },
         "/api/board/{id}" bind DELETE to
-            authRequest { user ->
-                val id =
-                    Uuid.parseOrNull(path("id") ?: return@authRequest error(BAD_REQUEST) { "Invalid board" })
-                        ?: return@authRequest error(BAD_REQUEST) { "Invalid board" }
+            apiAuth { user, request ->
+                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { BadRequest("Invalid board id") }
 
-                try {
-                    if (!deleteBoard(id, user)) {
-                        return@authRequest error(BAD_REQUEST) { "Invalid board" }
-                    }
-                } catch (e: Exception) {
-                    return@authRequest error(INTERNAL_SERVER_ERROR) { "Failed to delete board: $e" }
-                }
+                deleteBoard(id, user)
 
                 response(OK)
             },
         "/api/boards/public" bind GET to
-            catch("Failed to list public boards") {
-                val boards = getBoards(Visibility.PUBLIC, null)!!
+            api { _ ->
+                val boards = getBoards(null, null)
 
                 response(OK, boards)
             },
         "/api/boards" bind GET to
-            catchPlus("Failed to list boards") {
-                authRequest { user ->
-                    val visibility = query("visibility")?.toVisibility
-                    val boards =
-                        getBoards(visibility, user)
-                            ?: return@authRequest error(UNAUTHORIZED) { "Authentication required for private boards" }
+            apiAuth { user, request ->
+                val visibility = request.query("visibility")?.toVisibility
+                val boards = getBoards(visibility, user)
 
-                    response(OK, boards)
-                }
+                response(OK, boards)
             },
     )

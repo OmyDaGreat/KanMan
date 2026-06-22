@@ -63,6 +63,7 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kermit)
+            implementation(libs.arrow)
         }
         jvmMain.dependencies {
             implementation(project.dependencies.platform(libs.http4k.bom))
@@ -79,7 +80,6 @@ kotlin {
             implementation(libs.bundles.kobweb)
             implementation(wrappers.js)
             implementation(libs.kutint)
-            implementation(libs.arrow)
         }
     }
 }
