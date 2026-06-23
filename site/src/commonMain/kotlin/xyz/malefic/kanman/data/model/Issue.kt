@@ -7,30 +7,87 @@ sealed class Issue : Error() {
     abstract override val message: String
 
     @Serializable
-    sealed class Server : Issue() {
+    sealed class Auth : Issue() {
         @Serializable
-        data class Unauthorized(
-            override val message: String,
-        ) : Server()
+        data class InvalidCredentials(
+            override val message: String = "Invalid username or password",
+        ) : Auth()
+
+        @Serializable
+        data class InvalidToken(
+            override val message: String = "Invalid or expired token",
+        ) : Auth()
+
+        @Serializable
+        data class AccountLocked(
+            val unlockAt: Long,
+        ) : Auth() {
+            override val message = "Account locked until $unlockAt"
+        }
+
+        @Serializable
+        data class MissingToken(
+            override val message: String = "Missing authentication token",
+        ) : Auth()
+    }
+
+    @Serializable
+    sealed class User : Issue() {
+        @Serializable
+        data class AlreadyExists(
+            override val message: String = "User already exists",
+        ) : User()
 
         @Serializable
         data class NotFound(
-            override val message: String,
-        ) : Server()
+            override val message: String = "User not found",
+        ) : User()
+    }
+
+    @Serializable
+    sealed class Access : Issue() {
+        @Serializable
+        data class Forbidden(
+            override val message: String = "Access forbidden",
+        ) : Access()
+    }
+
+    @Serializable
+    sealed class Board : Issue() {
+        @Serializable
+        data class NotFound(
+            override val message: String = "Board not found",
+        ) : Board()
 
         @Serializable
-        data class Internal(
-            override val message: String = "Internal server error",
-        ) : Server()
+        data class AccessDenied(
+            override val message: String = "Access denied to board",
+        ) : Board()
 
         @Serializable
-        data class RateLimited(
-            override val message: String,
-        ) : Server()
+        data class InvalidId(
+            override val message: String = "Invalid board ID",
+        ) : Board()
+    }
 
+    @Serializable
+    sealed class Validation : Issue() {
         @Serializable
         data class BadRequest(
             override val message: String,
+        ) : Validation()
+
+        @Serializable
+        data class BadResponse(
+            override val message: String,
+        ) : Validation()
+    }
+
+    @Serializable
+    sealed class Server : Issue() {
+        @Serializable
+        data class Internal(
+            override val message: String = "Internal server error",
         ) : Server()
 
         @Serializable
@@ -39,20 +96,17 @@ sealed class Issue : Error() {
         ) : Server()
 
         @Serializable
-        data class Forbidden(
-            override val message: String,
-        ) : Server()
+        data class RateLimited(
+            val retryAfterMs: Long? = null,
+        ) : Server() {
+            override val message = "Rate limited" + (retryAfterMs?.let { " (retry after ${it}ms)" } ?: "")
+        }
     }
 
     @Serializable
     sealed class Client : Issue() {
         @Serializable
         data class Network(
-            override val message: String,
-        ) : Client()
-
-        @Serializable
-        data class Auth(
             override val message: String,
         ) : Client()
     }

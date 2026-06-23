@@ -12,9 +12,11 @@ import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.db.BoardEntity
 import xyz.malefic.kanman.data.db.StickyNoteEntity
-import xyz.malefic.kanman.data.model.Issue.Server.BadRequest
+import xyz.malefic.kanman.data.model.Issue.Board.AccessDenied
+import xyz.malefic.kanman.data.model.Issue.Board.InvalidId
+import xyz.malefic.kanman.data.model.Issue.Board.NotFound
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
-import xyz.malefic.kanman.data.model.Issue.Server.NotFound
+import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.WsEvent.StickyCreate
 import xyz.malefic.kanman.data.model.WsEvent.UserJoin
 import xyz.malefic.kanman.data.model.WsEvent.UserLeave
@@ -28,8 +30,11 @@ val boardWs =
     websockets(
         "/api/ws/{id}" bind
             apiAuthWS { user, request ->
-                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { BadRequest("Invalid board id") }
-                ensure(isBoardValid(id, user)) { NotFound("Board not found or access denied") }
+                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
+                transaction {
+                    val board = ensureNotNull(BoardEntity.findById(id)) { NotFound() }
+                    ensure(board.visibility == Visibility.PUBLIC || board.users.any { it.id.value == user.id }) { AccessDenied() }
+                }
 
                 WsResponse { ws ->
                     either {
@@ -43,7 +48,7 @@ val boardWs =
                                 val stickyNoteRequest = msg.model<StickyCreate.Model>()
                                 val stickyNote =
                                     transaction {
-                                        val boardEntity = BoardEntity.findById(id) ?: raise(NotFound("Board not found"))
+                                        val boardEntity = BoardEntity.findById(id) ?: raise(NotFound())
                                         StickyNoteEntity
                                             .new {
                                                 this.title = stickyNoteRequest.title

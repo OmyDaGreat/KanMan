@@ -1,6 +1,7 @@
 package xyz.malefic.kanman.util
 
 import arrow.core.Either
+import arrow.core.merge
 import arrow.core.raise.Raise
 import arrow.core.raise.context.bind
 import arrow.core.raise.either
@@ -12,8 +13,8 @@ import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
 import xyz.malefic.kanman.auth.authenticate
 import xyz.malefic.kanman.data.model.Issue
-import xyz.malefic.kanman.data.model.Issue.Server.BadRequest
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
+import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.data.model.UserResponseModel
 
 fun apiWS(handler: suspend Raise<Issue>.(Request) -> WsResponse): (Request) -> WsResponse =
@@ -25,15 +26,13 @@ fun apiWS(handler: suspend Raise<Issue>.(Request) -> WsResponse): (Request) -> W
                 } catch (e: Exception) {
                     Either.Left(Internal(e.message ?: "Internal server error"))
                 }
-            result.fold(
-                { error ->
+            result
+                .mapLeft { error ->
                     WsResponse { ws ->
                         ws.send(error)
                         ws.close()
                     }
-                },
-                { it },
-            )
+                }.merge()
         }
     }
 

@@ -14,10 +14,11 @@ import org.w3c.fetch.Response
 import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.Issue.Client.Network
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
+import xyz.malefic.kanman.data.model.Issue.Validation.BadResponse
 
 val json = Json { ignoreUnknownKeys = true }
 
-suspend fun Response.error(): Issue =
+suspend fun Response.error() =
     try {
         json.decodeFromString<Issue>(text().await())
     } catch (_: Exception) {
@@ -43,7 +44,11 @@ suspend fun <T> api(
     val response = fetch(url, request())
 
     ensure(response.ok) { response.error() }
-    block(response)
+
+    Either
+        .catch { block(response) }
+        .mapLeft { BadResponse("Invalid JSON for response body: ${it.message}") }
+        .bind()
 }
 
 suspend inline fun <reified T> get(url: String) =

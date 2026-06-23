@@ -9,8 +9,8 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.Column
-import xyz.malefic.kanman.data.model.Issue.Server.BadRequest
-import xyz.malefic.kanman.data.model.Issue.Server.NotFound
+import xyz.malefic.kanman.data.model.Issue.Board.InvalidId
+import xyz.malefic.kanman.data.model.Issue.Board.NotFound
 import xyz.malefic.kanman.data.model.Visibility.Companion.toVisibility
 import xyz.malefic.kanman.util.api
 import xyz.malefic.kanman.util.apiAuth
@@ -22,8 +22,8 @@ val boardRoutes =
     arrayOf(
         "/api/board/{id}" bind GET to
             apiAuth { user, request ->
-                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { BadRequest("Invalid board id") }
-                val board = ensureNotNull(user.boards.firstOrNull { it.id == id }) { NotFound("Board not found") }
+                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
+                val board = ensureNotNull(user.boards.firstOrNull { it.id == id }) { NotFound() }
 
                 request.query("column")?.let {
                     return@apiAuth response(
@@ -43,7 +43,7 @@ val boardRoutes =
             },
         "/api/board/{id}" bind DELETE to
             apiAuth { user, request ->
-                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { BadRequest("Invalid board id") }
+                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
 
                 deleteBoard(id, user)
 

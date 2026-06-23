@@ -12,9 +12,9 @@ import xyz.malefic.kanman.data.db.BoardUsers
 import xyz.malefic.kanman.data.db.Boards
 import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.Issue
-import xyz.malefic.kanman.data.model.Issue.Server.Forbidden
-import xyz.malefic.kanman.data.model.Issue.Server.NotFound
-import xyz.malefic.kanman.data.model.Issue.Server.Unauthorized
+import xyz.malefic.kanman.data.model.Issue.Auth.MissingToken
+import xyz.malefic.kanman.data.model.Issue.Board.AccessDenied
+import xyz.malefic.kanman.data.model.Issue.Board.NotFound
 import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.Visibility.PRIVATE
@@ -43,20 +43,12 @@ fun deleteBoard(
     id: Uuid,
     user: UserResponseModel,
 ) = transaction {
-    val board = r.ensureNotNull(BoardEntity.findById(id)) { NotFound("Board not found") }
+    val board = r.ensureNotNull(BoardEntity.findById(id)) { NotFound() }
 
-    r.ensure(board.owner.id.value == user.id) { Forbidden("You don't have permission to delete this board") }
+    r.ensure(board.owner.id.value == user.id) { AccessDenied("You don't have permission to delete this board") }
 
     board.delete()
     ConnectionRegistry.closeAll(id)
-}
-
-fun isBoardValid(
-    id: Uuid,
-    user: UserResponseModel? = null,
-) = transaction {
-    val board = BoardEntity.findById(id) ?: return@transaction false
-    return@transaction !(board.visibility == PRIVATE && user != null && board.users.none { it.id.value == user.id })
 }
 
 context(r: Raise<Issue>)
@@ -70,7 +62,7 @@ fun getBoards(
         }
 
         PRIVATE -> {
-            r.ensureNotNull(user) { Unauthorized("Authentication required to view private boards") }
+            r.ensureNotNull(user) { MissingToken() }
             BoardEntity
                 .find { Boards.visibility eq PRIVATE }
                 .filter { board -> board.users.any { u -> u.id.value == user.id } }

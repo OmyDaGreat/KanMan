@@ -1,8 +1,9 @@
 package xyz.malefic.kanman.util
 
-import arrow.core.Either
+import arrow.core.merge
 import arrow.core.raise.Raise
-import arrow.core.raise.context.bind
+import arrow.core.raise.catch
+import arrow.core.raise.context.raise
 import arrow.core.raise.either
 import arrow.core.raise.ensure
 import co.touchlab.kermit.Logger
@@ -24,13 +25,7 @@ import org.http4k.core.with
 import org.http4k.format.KotlinxSerialization.auto
 import xyz.malefic.kanman.auth.authenticate
 import xyz.malefic.kanman.data.model.Issue
-import xyz.malefic.kanman.data.model.Issue.Server.BadRequest
-import xyz.malefic.kanman.data.model.Issue.Server.Conflict
-import xyz.malefic.kanman.data.model.Issue.Server.Forbidden
-import xyz.malefic.kanman.data.model.Issue.Server.Internal
-import xyz.malefic.kanman.data.model.Issue.Server.NotFound
-import xyz.malefic.kanman.data.model.Issue.Server.RateLimited
-import xyz.malefic.kanman.data.model.Issue.Server.Unauthorized
+import xyz.malefic.kanman.data.model.Issue.Auth
 import xyz.malefic.kanman.data.model.UserResponseModel
 import java.util.concurrent.ConcurrentHashMap
 
@@ -38,13 +33,11 @@ fun api(handler: suspend Raise<Issue>.(Request) -> Response): HttpHandler =
     { request ->
         runBlocking {
             either {
-                Either
-                    .catch { handler(request) }
-                    .mapLeft {
-                        Logger.e(it, "HTTP") { "Internal server error" }
-                        raise(Internal(it.message ?: "Internal server error"))
-                    }.bind()
-            }.fold({ it.toResponse() }, { it })
+                handler(request)
+            }.mapLeft {
+                Logger.e(it, "HTTP") { "Internal server error" }
+                Issue.Server.Internal(it.message).toResponse()
+            }.merge()
         }
     }
 
@@ -52,22 +45,21 @@ fun apiAuth(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> Respon
     { request -> runBlocking { either { handler(authenticate(request), request) }.fold({ it.toResponse() }, { it }) } }
 
 context(r: Raise<Issue>)
-inline fun <reified T : Any> Request.model(): T =
-    Either
-        .catch { lens<T>()(this) }
-        .mapLeft { BadRequest("Invalid JSON for request body: ${it.message}") }
-        .bind()
+inline fun <reified T : Any> Request.model() =
+    catch({ lens<T>()(this) })
+    { raise(Issue.Validation.BadRequest("Invalid JSON for request body: ${it.message}")) }
 
 fun Issue.toResponse(): Response =
     when (this) {
-        is Unauthorized -> response(UNAUTHORIZED, this)
-        is NotFound -> response(NOT_FOUND, this)
-        is Internal -> response(INTERNAL_SERVER_ERROR, this)
-        is RateLimited -> response(TOO_MANY_REQUESTS, this)
-        is BadRequest -> response(BAD_REQUEST, this)
-        is Conflict -> response(CONFLICT, this)
-        is Forbidden -> response(FORBIDDEN, this)
-        is Issue.Client -> response(INTERNAL_SERVER_ERROR, Internal(message))
+        is Auth -> response(UNAUTHORIZED, this)
+        is Issue.Access.Forbidden, is Issue.Board.AccessDenied -> response(FORBIDDEN, this)
+        is Issue.Board.NotFound, is Issue.User.NotFound -> response(NOT_FOUND, this)
+        is Issue.User.AlreadyExists, is Issue.Server.Conflict -> response(CONFLICT, this)
+        is Issue.Board.InvalidId, is Issue.Validation.BadRequest -> response(BAD_REQUEST, this)
+        is Issue.Server.RateLimited -> response(TOO_MANY_REQUESTS, this)
+        is Issue.Server.Internal -> response(INTERNAL_SERVER_ERROR, this)
+        is Issue.Validation.BadResponse -> response(INTERNAL_SERVER_ERROR, Issue.Server.Internal(message))
+        is Issue.Client -> response(INTERNAL_SERVER_ERROR, Issue.Server.Internal(message))
     }
 
 inline fun <reified T : Any> lens() = Body.auto<T>().toLens()
@@ -93,7 +85,7 @@ fun rateLimit(
             synchronized(userHits) {
                 either {
                     userHits.removeIf { it < now - windowMillis }
-                    ensure(userHits.size < requests) { RateLimited("Rate limit exceeded. Try again later.") }
+                    ensure(userHits.size < requests) { Issue.Server.RateLimited() }
                     userHits.add(now)
                     next(request)
                 }.fold({ it.toResponse() }, { it })
