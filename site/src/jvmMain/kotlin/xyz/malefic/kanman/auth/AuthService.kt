@@ -188,11 +188,13 @@ fun UserRequestModel.create() =
         if (UserEntity.find { Users.username eq username }.any()) {
             raise(User.AlreadyExists())
         }
-        UserEntity.new {
-            this.username = this@create.username
-            this.hashedPassword = hashPassword(this@create.password)
-        }
-    }.toResponseModel()
+        issueTokenPair(
+            UserEntity.new {
+                this.username = this@create.username
+                this.hashedPassword = hashPassword(this@create.password)
+            },
+        )
+    }
 
 context(r: Raise<Issue>)
 fun authenticate(request: Request) =

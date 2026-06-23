@@ -6,7 +6,6 @@ import org.http4k.core.Method.POST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.routing.bind
 import org.http4k.routing.path
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.data.model.RefreshRequestModel
 import xyz.malefic.kanman.data.model.UserRequestModel
@@ -19,13 +18,9 @@ val authRoutes =
     arrayOf(
         "/api/register" bind POST to
             api { request ->
-                val user = request.model<UserRequestModel>()
-                transaction {
-                    val userResult = user.create()
-                    val tokens = issueTokenPair(userResult.entity)
+                val tokens = request.model<UserRequestModel>().create()
 
-                    response(OK, tokens)
-                }
+                response(OK, tokens)
             },
         "/api/login" bind POST to
             api { request ->
@@ -36,8 +31,7 @@ val authRoutes =
             },
         "/api/logout" bind POST to
             api { request ->
-                val refresh = request.model<RefreshRequestModel>()
-                revokeRefreshToken(refresh.refreshToken)
+                revokeRefreshToken(request.model<RefreshRequestModel>().refreshToken)
 
                 response(OK)
             },

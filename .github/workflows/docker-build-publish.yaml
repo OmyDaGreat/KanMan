@@ -1,4 +1,4 @@
-name: Docker Build and Push
+name: Docker Build and Publish
 
 on:
   push:
@@ -11,18 +11,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          java-version: '23'
-          distribution: 'temurin'
-
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
-
-      - name: Build with Gradle
-        run: ./gradlew build
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -43,8 +31,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/kanmanserver:${{ github.sha }}
-            ${{ secrets.DOCKER_USERNAME }}/kanmanserver:latest
-          # Enable BuildKit cache
+            ${{ secrets.DOCKER_USERNAME }}/kanman:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/kanman:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
