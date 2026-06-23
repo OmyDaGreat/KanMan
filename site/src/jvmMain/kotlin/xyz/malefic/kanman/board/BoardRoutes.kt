@@ -11,6 +11,7 @@ import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.Column
 import xyz.malefic.kanman.data.model.Issue.Board.InvalidId
 import xyz.malefic.kanman.data.model.Issue.Board.NotFound
+import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.data.model.Visibility.Companion.toVisibility
 import xyz.malefic.kanman.util.api
 import xyz.malefic.kanman.util.apiAuth
@@ -48,6 +49,13 @@ val boardRoutes =
                 deleteBoard(id, user)
 
                 response(OK)
+            },
+        "/api/board/{board_id}/invite/{user_id}" bind POST to
+            apiAuth { user, request ->
+                val boardId = ensureNotNull(request.path("board_id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
+                val addUserId = ensureNotNull(request.path("user_id")?.let { Uuid.parseOrNull(it) }) { BadRequest("Missing username") }
+
+                response(OK, inviteToBoard(boardId, user.id, addUserId))
             },
         "/api/boards/public" bind GET to
             api { _ ->

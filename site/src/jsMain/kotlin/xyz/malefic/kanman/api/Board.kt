@@ -12,3 +12,8 @@ suspend fun board(id: Uuid) = getAuth<BoardModel>("api/board/$id")
 suspend fun board(board: BoardCreateModel) = postAuth<BoardCreateModel, BoardModel>("api/board", board)
 
 suspend fun deleteBoard(id: Uuid) = deleteAuth("api/board/$id")
+
+suspend fun inviteToBoard(
+    boardId: Uuid,
+    userId: Uuid,
+) = postAuth<Unit, List<BoardModel>>("api/board/$boardId/invite/$userId", Unit)
