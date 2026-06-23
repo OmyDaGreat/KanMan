@@ -1,8 +1,9 @@
 package xyz.malefic.kanman.auth
 
 import arrow.core.raise.Raise
-import arrow.core.raise.ensure
-import arrow.core.raise.ensureNotNull
+import arrow.core.raise.context.ensure
+import arrow.core.raise.context.ensureNotNull
+import arrow.core.raise.context.raise
 import at.favre.lib.crypto.bcrypt.BCrypt
 import co.touchlab.kermit.Logger
 import com.auth0.jwt.JWT
@@ -85,7 +86,7 @@ private fun createAccessToken(user: UserEntity) =
         .sign(jwtAlgorithm)
 
 context(r: Raise<Issue>)
-fun verifyAccessToken(token: String) = r.ensureNotNull(Uuid.parseOrNull(jwtVerifier.verify(token).subject)) { InvalidToken() }
+fun verifyAccessToken(token: String) = ensureNotNull(Uuid.parseOrNull(jwtVerifier.verify(token).subject)) { InvalidToken() }
 
 context(_: JdbcTransaction)
 fun issueTokenPair(user: UserEntity): TokenResponseModel {
@@ -109,21 +110,18 @@ fun issueTokenPair(user: UserEntity): TokenResponseModel {
 context(r: Raise<Issue>)
 fun refreshTokens(refreshToken: String) =
     transaction {
-        val (idPart, secret) =
-            r.ensureNotNull(
-                refreshToken.split(":").takeIf { it.size == 2 },
-            ) { BadRequest("Invalid refresh token format") }
-        val id = r.ensureNotNull(Uuid.parseOrNull(idPart)) { BadRequest("Invalid refresh token ID") }
-        val token = r.ensureNotNull(AuthTokenEntity.findById(id)) { InvalidToken("Refresh token not found") }
+        val (idPart, secret) = ensureNotNull(refreshToken.split(":").takeIf { it.size == 2 }) { BadRequest("Invalid refresh token format") }
+        val id = ensureNotNull(Uuid.parseOrNull(idPart)) { BadRequest("Invalid refresh token ID") }
+        val token = ensureNotNull(AuthTokenEntity.findById(id)) { InvalidToken("Refresh token not found") }
         val now = nowMs()
 
         if (token.expiresAt < now || token.secretHash != hash(secret)) {
             token.revokedAt = now
-            r.raise(InvalidToken("Refresh token expired or invalid"))
+            raise(InvalidToken("Refresh token expired or invalid"))
         }
 
         token.revokedAt?.let { revokedAt ->
-            r.ensure(revokedAt + REFRESH_GRACE_PERIOD_MILLIS > now) { InvalidToken("Refresh token already revoked") }
+            ensure(revokedAt + REFRESH_GRACE_PERIOD_MILLIS > now) { InvalidToken("Refresh token already revoked") }
         }
 
         token.revokedAt = now
@@ -145,7 +143,7 @@ context(r: Raise<Issue>)
 fun revokeRefreshToken(refreshToken: String) =
     transaction {
         val idPart = refreshToken.substringBefore(":")
-        val id = r.ensureNotNull(Uuid.parseOrNull(idPart)) { BadRequest("Invalid refresh token ID") }
+        val id = ensureNotNull(Uuid.parseOrNull(idPart)) { BadRequest("Invalid refresh token ID") }
 
         AuthTokenEntity.findById(id)?.apply { revokedAt = nowMs() }
     }
@@ -153,15 +151,12 @@ fun revokeRefreshToken(refreshToken: String) =
 context(r: Raise<Issue>)
 fun getTokensFromLogin(user: UserRequestModel) =
     transaction {
-        val userEntity =
-            r.ensureNotNull(
-                UserEntity.find { Users.username eq user.username }.firstOrNull(),
-            ) { InvalidCredentials() }
+        val userEntity = ensureNotNull(UserEntity.find { Users.username eq user.username }.firstOrNull()) { InvalidCredentials() }
         val now = nowMs()
 
-        r.ensure(userEntity.lockUntil < now) { AccountLocked(userEntity.lockUntil) }
+        ensure(userEntity.lockUntil < now) { AccountLocked(userEntity.lockUntil) }
 
-        r.ensure(verifyPassword(user.password, userEntity.hashedPassword)) {
+        ensure(verifyPassword(user.password, userEntity.hashedPassword)) {
             userEntity.failedAttempts += 1
             if (userEntity.failedAttempts >= MAX_FAILED_ATTEMPTS) {
                 userEntity.lockUntil = now + LOCKOUT_DURATION_MILLIS
@@ -177,11 +172,7 @@ fun getTokensFromLogin(user: UserRequestModel) =
 
 context(r: Raise<Issue>)
 fun getUserFromAccessToken(accessToken: String) =
-    transaction {
-        r
-            .ensureNotNull(UserEntity.findById(verifyAccessToken(accessToken))) { InvalidToken() }
-            .toResponseModel()
-    }
+    transaction { ensureNotNull(UserEntity.findById(verifyAccessToken(accessToken))) { InvalidToken() }.toResponseModel() }
 
 context(_: JdbcTransaction)
 private fun revokeAccessTokensForUser(user: UserEntity) =
@@ -195,7 +186,7 @@ context(r: Raise<Issue>)
 fun UserRequestModel.create() =
     transaction {
         if (UserEntity.find { Users.username eq username }.any()) {
-            r.raise(User.AlreadyExists())
+            raise(User.AlreadyExists())
         }
         UserEntity.new {
             this.username = this@create.username
@@ -206,7 +197,7 @@ fun UserRequestModel.create() =
 context(r: Raise<Issue>)
 fun authenticate(request: Request) =
     getUserFromAccessToken(
-        r.ensureNotNull(
+        ensureNotNull(
             request
                 .header("Authorization")
                 ?.takeIf { it.startsWith("Bearer ") }
@@ -214,3 +205,7 @@ fun authenticate(request: Request) =
                 ?.trim(),
         ) { MissingToken() },
     )
+
+context(r: Raise<Issue>)
+fun getUser(username: String) =
+    transaction { ensureNotNull(UserEntity.find { Users.username eq username }.firstOrNull()) { User.NotFound() }.toResponseModel() }

@@ -42,7 +42,7 @@ fun api(handler: suspend Raise<Issue>.(Request) -> Response): HttpHandler =
     }
 
 fun apiAuth(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> Response): HttpHandler =
-    { request -> runBlocking { either { handler(authenticate(request), request) }.fold({ it.toResponse() }, { it }) } }
+    { request -> runBlocking { either { handler(authenticate(request), request) }.mapLeft { it.toResponse() }.merge() } }
 
 context(r: Raise<Issue>)
 inline fun <reified T : Any> Request.model() =
@@ -85,10 +85,10 @@ fun rateLimit(
             synchronized(userHits) {
                 either {
                     userHits.removeIf { it < now - windowMillis }
-                    ensure(userHits.size < requests) { Issue.Server.RateLimited() }
+                    ensure(userHits.size < requests) { Issue.Server.RateLimited(userHits.first() + windowMillis - now) }
                     userHits.add(now)
                     next(request)
-                }.fold({ it.toResponse() }, { it })
+                }.mapLeft { it.toResponse() }.merge()
             }
         }
     }

@@ -18,3 +18,5 @@ suspend fun logout() = AuthSession.refreshToken?.let { post<RefreshRequestModel>
 suspend fun refresh() = AuthSession.refreshToken?.let { post<RefreshRequestModel, TokenResponseModel>("api/token/refresh", it.refresh) }
 
 suspend fun user() = getAuth<UserResponseModel>("api/me")
+
+suspend fun user(username: String) = getAuth<UserResponseModel>("api/users/$username")
