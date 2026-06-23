@@ -2,9 +2,11 @@ package xyz.malefic.kanman.api.util
 
 import arrow.core.Either
 import arrow.core.raise.Raise
+import arrow.core.raise.catch
 import arrow.core.raise.context.bind
 import arrow.core.raise.context.either
 import arrow.core.raise.context.ensure
+import arrow.core.raise.context.raise
 import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.serialization.json.Json
@@ -38,17 +40,14 @@ suspend fun <T> api(
     url: String,
     method: String = "GET",
     body: String? = null,
+    headers: Headers = Headers(),
     block: suspend (Response) -> T,
 ) = either {
-    val request = { RequestInit(method, Headers().also { it.set("Content-Type", "application/json") }, body) }
-    val response = fetch(url, request())
+    headers.set("Content-Type", "application/json")
+    val response = fetch("/api/$url", RequestInit(method, headers, body))
 
     ensure(response.ok) { response.error() }
-
-    Either
-        .catch { block(response) }
-        .mapLeft { BadResponse("Invalid JSON for response body: ${it.message}") }
-        .bind()
+    catch({ block(response) }) { raise(BadResponse("Invalid JSON for response body: ${it.message}")) }
 }
 
 suspend inline fun <reified T> get(url: String) =

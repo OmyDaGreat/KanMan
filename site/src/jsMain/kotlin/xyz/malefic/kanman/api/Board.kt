@@ -12,24 +12,24 @@ import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.Visibility.PUBLIC
 import kotlin.uuid.Uuid
 
-suspend fun board(id: Uuid) = getAuth<BoardModel>("api/board/$id")
+suspend fun board(id: Uuid) = getAuth<BoardModel>("board/$id")
 
-suspend fun board(board: BoardCreateModel) = postAuth<BoardCreateModel, BoardModel>("api/board", board)
+suspend fun board(board: BoardCreateModel) = postAuth<_, BoardModel>("board", board)
 
-suspend fun deleteBoard(id: Uuid) = deleteAuth("api/board/$id")
+suspend fun deleteBoard(id: Uuid) = deleteAuth("board/$id")
 
 suspend fun inviteToBoard(
     boardId: Uuid,
     userId: Uuid,
-) = postAuth<Unit, List<UserResponseModel>>("api/board/$boardId/invite/$userId", Unit)
+) = postAuth<_, List<UserResponseModel>>("board/$boardId/invite/$userId", Unit)
 
 suspend fun boards(
     visibility: Visibility? = null,
     user: UserResponseModel? = null,
 ) = get<List<BoardSummaryModel>>(
     if (visibility == PUBLIC && user == null) {
-        "api/boards/public"
+        "boards/public"
     } else {
-        "api/boards${if (user != null) "?user=${user.id}" else ""}${if (visibility != null) "${if (user != null) "&" else "?"}visibility=${visibility.name}" else ""}"
+        "boards${if (user != null) "?user=${user.id}" else ""}${if (visibility != null) "${if (user != null) "&" else "?"}visibility=${visibility.name}" else ""}"
     },
 )
