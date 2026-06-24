@@ -5,11 +5,6 @@ import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
 
 @Serializable
-data class ErrorModel(
-    val error: String,
-)
-
-@Serializable
 data class UserRequestModel(
     val username: String,
     val password: String,
@@ -74,3 +69,13 @@ data class BoardSummaryModel(
     val visibility: Visibility,
     val owner: UserResponseModel,
 )
+
+@Serializable
+data class InviteRequest(
+    @SerialName("user_id")
+    val userId: Uuid,
+) {
+    companion object {
+        val Uuid.invite get() = InviteRequest(this)
+    }
+}

@@ -9,10 +9,10 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.Column
+import xyz.malefic.kanman.data.model.InviteRequest
 import xyz.malefic.kanman.data.model.Issue.Board.InvalidId
-import xyz.malefic.kanman.data.model.Issue.Board.NotFound
-import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.data.model.Visibility.Companion.toVisibility
+import xyz.malefic.kanman.data.model.Visibility.PUBLIC
 import xyz.malefic.kanman.util.api
 import xyz.malefic.kanman.util.apiAuth
 import xyz.malefic.kanman.util.model
@@ -24,7 +24,7 @@ val boardRoutes =
         "/api/board/{id}" bind GET to
             apiAuth { user, request ->
                 val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
-                val board = ensureNotNull(user.boards.firstOrNull { it.id == id }) { NotFound() }
+                val board = user.boards.firstOrNull { it.id == id } ?: getBoard(id, user)
 
                 request.query("column")?.let {
                     return@apiAuth response(
@@ -50,23 +50,29 @@ val boardRoutes =
 
                 response(OK)
             },
-        "/api/board/{board_id}/invite/{user_id}" bind POST to
+        "/api/board/{id}/users" bind GET to
             apiAuth { user, request ->
-                val boardId = ensureNotNull(request.path("board_id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
-                val addUserId = ensureNotNull(request.path("user_id")?.let { Uuid.parseOrNull(it) }) { BadRequest("Missing username") }
+                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
 
-                response(OK, inviteToBoard(boardId, user.id, addUserId))
+                response(OK, getBoardUsers(id, user))
+            },
+        "/api/board/{id}/users" bind POST to
+            apiAuth { user, request ->
+                val boardId = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
+                val addUser = request.model<InviteRequest>()
+
+                response(OK, user.inviteToBoard(boardId, addUser))
             },
         "/api/boards/public" bind GET to
             api { _ ->
-                val boards = getBoards(null, null)
+                val boards = getBoards(visibility = PUBLIC)
 
                 response(OK, boards)
             },
         "/api/boards" bind GET to
             apiAuth { user, request ->
                 val visibility = request.query("visibility")?.toVisibility
-                val boards = getBoards(visibility, user)
+                val boards = getBoards(user, visibility)
 
                 response(OK, boards)
             },

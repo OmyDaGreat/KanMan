@@ -14,6 +14,7 @@ import xyz.malefic.kanman.data.db.Boards
 import xyz.malefic.kanman.data.db.UserEntity
 import xyz.malefic.kanman.data.db.Users
 import xyz.malefic.kanman.data.model.BoardCreateModel
+import xyz.malefic.kanman.data.model.InviteRequest
 import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.Issue.Auth.MissingToken
 import xyz.malefic.kanman.data.model.Issue.Board.AccessDenied
@@ -23,6 +24,17 @@ import xyz.malefic.kanman.data.model.Visibility.PRIVATE
 import xyz.malefic.kanman.data.model.Visibility.PUBLIC
 import xyz.malefic.kanman.util.ConnectionRegistry
 import kotlin.uuid.Uuid
+
+context(_: Raise<Issue>)
+fun getBoard(
+    id: Uuid,
+    user: UserResponseModel? = null,
+) = transaction {
+    ensureNotNull(BoardEntity.findById(id)) { Issue.Board.NotFound() }.toModel().also { board ->
+        ensure(board.visibility == PUBLIC || board.users.any { it.id == user?.id })
+        { AccessDenied("You don't have permission to view this board") }
+    }
+}
 
 fun createBoard(
     boardCreateModel: BoardCreateModel,
@@ -41,7 +53,7 @@ fun createBoard(
     createdBoard.toModel()
 }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun deleteBoard(
     id: Uuid,
     user: UserResponseModel,
@@ -54,18 +66,26 @@ fun deleteBoard(
     ConnectionRegistry.closeAll(id)
 }
 
-context(r: Raise<Issue>)
-fun inviteToBoard(
+context(_: Raise<Issue>)
+fun getBoardUsers(
+    id: Uuid,
+    user: UserResponseModel,
+) = transaction { getBoard(id, user).users }
+
+context(_: Raise<Issue>)
+fun UserResponseModel.inviteToBoard(
     boardId: Uuid,
-    inviteUserId: Uuid,
-    addUserId: Uuid,
+    inviteRequest: InviteRequest,
 ) = transaction {
     val board = ensureNotNull(BoardEntity.findById(boardId)) { Issue.Board.NotFound() }
 
-    ensure(board.owner.id.value == inviteUserId || (board.visibility == PUBLIC && board.users.any { it.id.value == inviteUserId }))
+    ensure(
+        board.owner.id.value == this@inviteToBoard.id ||
+            (board.visibility == PUBLIC && board.users.any { it.id.value == this@inviteToBoard.id }),
+    )
     { AccessDenied("You don't have permission to invite users") }
 
-    val addUser = ensureNotNull(UserEntity.find { Users.id eq addUserId }.firstOrNull()) { Issue.User.NotFound() }
+    val addUser = ensureNotNull(UserEntity.find { Users.id eq inviteRequest.userId }.firstOrNull()) { Issue.User.NotFound() }
 
     BoardUsers.insertIgnore {
         it[BoardUsers.user] = addUser.id
@@ -75,10 +95,10 @@ fun inviteToBoard(
     (board.users.map { it.toResponseModel() } + addUser.toResponseModel()).distinct()
 }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun getBoards(
-    visibility: Visibility?,
-    user: UserResponseModel?,
+    user: UserResponseModel? = null,
+    visibility: Visibility? = null,
 ) = transaction {
     when (visibility) {
         PUBLIC -> {

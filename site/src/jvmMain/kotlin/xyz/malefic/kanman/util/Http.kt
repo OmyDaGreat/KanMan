@@ -44,7 +44,7 @@ fun api(handler: suspend Raise<Issue>.(Request) -> Response): HttpHandler =
 fun apiAuth(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> Response): HttpHandler =
     { request -> runBlocking { either { handler(authenticate(request), request) }.mapLeft { it.toResponse() }.merge() } }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 inline fun <reified T : Any> Request.model() =
     catch({ lens<T>()(this) })
     { raise(Issue.Validation.BadRequest("Invalid JSON for request body: ${it.message}")) }
