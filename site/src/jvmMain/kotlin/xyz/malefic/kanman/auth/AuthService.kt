@@ -209,5 +209,5 @@ fun authenticate(request: Request) =
     )
 
 context(r: Raise<Issue>)
-fun getUser(username: String) =
-    transaction { ensureNotNull(UserEntity.find { Users.username eq username }.firstOrNull()) { User.NotFound() }.toResponseModel() }
+fun getUserSummary(username: String) =
+    transaction { ensureNotNull(UserEntity.find { Users.username eq username }.firstOrNull()) { User.NotFound() }.toSummaryModel() }

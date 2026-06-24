@@ -24,7 +24,7 @@ val boardRoutes =
         "/api/board/{id}" bind GET to
             apiAuth { user, request ->
                 val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
-                val board = user.boards.firstOrNull { it.id == id } ?: getBoard(id, user)
+                val board = getBoard(id, user)
 
                 request.query("column")?.let {
                     return@apiAuth response(

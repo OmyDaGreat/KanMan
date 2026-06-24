@@ -4,7 +4,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.browser.window
 import org.w3c.dom.WebSocket
 import xyz.malefic.kanman.api.util.AuthSession.accessToken
-import xyz.malefic.kanman.data.model.BoardModel
+import xyz.malefic.kanman.data.model.BoardResponseModel
 
 object WebSockets {
     val wsBaseUrl: String
@@ -12,7 +12,7 @@ object WebSockets {
             val protocol = if (window.location.protocol == "https:") "wss:" else "ws:"
             return "$protocol//${window.location.host}"
         }
-    val BoardModel.ws
+    val BoardResponseModel.ws
         get() =
             WebSocket("$wsBaseUrl/api/ws/$id?token=$accessToken").also { ws ->
                 ws.onmessage = {

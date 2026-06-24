@@ -23,6 +23,7 @@ import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.Visibility.PRIVATE
 import xyz.malefic.kanman.data.model.Visibility.PUBLIC
+import xyz.malefic.kanman.data.model.WsAction
 import xyz.malefic.kanman.data.model.WsEvent
 import xyz.malefic.kanman.util.ConnectionRegistry
 import kotlin.uuid.Uuid
@@ -94,7 +95,7 @@ fun UserResponseModel.inviteToBoard(
         it[BoardUsers.board] = board.id
     }
 
-    (board.users.map { it.toResponseModel() } + addUser.toResponseModel()).distinct()
+    (board.users + addUser).map { it.toSummaryModel() }.distinct()
 }
 
 context(_: Raise<Issue>)
@@ -132,11 +133,14 @@ fun getBoards(
 }
 
 context(_: Raise<Issue>)
-fun createSticky(
-    event: WsEvent.StickyCreate,
+fun UserResponseModel.createSticky(
+    event: WsAction.StickyCreate,
     boardId: Uuid,
 ) = transaction {
     val board = ensureNotNull(BoardEntity.findById(boardId)) { Issue.Board.NotFound() }
+
+    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == this@createSticky.id })
+    { AccessDenied("You don't have permission to view this board") }
 
     StickyNoteEntity
         .new {
@@ -148,9 +152,28 @@ fun createSticky(
 }
 
 context(_: Raise<Issue>)
-fun deleteSticky(
-    event: WsEvent.StickyDelete,
+fun UserResponseModel.deleteSticky(
+    event: WsAction.StickyDelete,
     boardId: Uuid,
 ) = transaction {
-    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board.id.value == boardId }) { Issue.Board.NotFound() }.delete()
+    val board = ensureNotNull(BoardEntity.findById(boardId)) { Issue.Board.NotFound() }
+
+    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == this@deleteSticky.id })
+    { AccessDenied("You don't have permission to view this board") }
+
+    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }?.delete()) { Issue.Board.NotFound() }
+}
+
+context(_: Raise<Issue>)
+fun UserResponseModel.moveSticky(
+    event: WsAction.StickyMove,
+    boardId: Uuid,
+) = transaction {
+    val board = ensureNotNull(BoardEntity.findById(boardId)) { Issue.Board.NotFound() }
+    val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
+
+    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == this@moveSticky.id })
+    { AccessDenied("You don't have permission to view this board") }
+
+    sticky.column = event.newColumn
 }

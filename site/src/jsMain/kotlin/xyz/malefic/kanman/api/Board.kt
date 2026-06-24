@@ -5,7 +5,7 @@ import xyz.malefic.kanman.api.util.get
 import xyz.malefic.kanman.api.util.getAuth
 import xyz.malefic.kanman.api.util.postAuth
 import xyz.malefic.kanman.data.model.BoardCreateModel
-import xyz.malefic.kanman.data.model.BoardModel
+import xyz.malefic.kanman.data.model.BoardResponseModel
 import xyz.malefic.kanman.data.model.BoardSummaryModel
 import xyz.malefic.kanman.data.model.InviteRequest
 import xyz.malefic.kanman.data.model.InviteRequest.Companion.invite
@@ -14,9 +14,9 @@ import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.Visibility.PUBLIC
 import kotlin.uuid.Uuid
 
-suspend fun board(id: Uuid) = getAuth<BoardModel>("board/$id")
+suspend fun board(id: Uuid) = getAuth<BoardResponseModel>("board/$id")
 
-suspend fun board(board: BoardCreateModel) = postAuth<_, BoardModel>("board", board)
+suspend fun board(board: BoardCreateModel) = postAuth<_, BoardResponseModel>("board", board)
 
 suspend fun deleteBoard(id: Uuid) = deleteAuth("board/$id")
 

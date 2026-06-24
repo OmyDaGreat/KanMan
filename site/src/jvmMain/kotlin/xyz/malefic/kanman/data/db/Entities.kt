@@ -3,10 +3,11 @@ package xyz.malefic.kanman.data.db
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.dao.UuidEntity
 import org.jetbrains.exposed.v1.dao.UuidEntityClass
-import xyz.malefic.kanman.data.model.BoardModel
+import xyz.malefic.kanman.data.model.BoardResponseModel
 import xyz.malefic.kanman.data.model.BoardSummaryModel
 import xyz.malefic.kanman.data.model.StickyNoteModel
 import xyz.malefic.kanman.data.model.UserResponseModel
+import xyz.malefic.kanman.data.model.UserSummaryModel
 import kotlin.uuid.Uuid
 
 class UserEntity(
@@ -20,7 +21,9 @@ class UserEntity(
     var lockUntil by Users.lockUntil
     var boards by BoardEntity via BoardUsers
 
-    fun toResponseModel(): UserResponseModel = UserResponseModel(id.value, username, boards.map { it.toModel() })
+    fun toSummaryModel() = UserSummaryModel(id.value, username)
+
+    fun toResponseModel() = UserResponseModel(id.value, username, boards.map { it.toSummaryModel() })
 }
 
 class AuthTokenEntity(
@@ -46,16 +49,16 @@ class BoardEntity(
     var users by UserEntity via BoardUsers
 
     fun toModel() =
-        BoardModel(
+        BoardResponseModel(
             id.value,
             title,
             visibility,
-            owner.toResponseModel(),
+            owner.toSummaryModel(),
             stickies.map { it.toModel() },
-            users.map { it.toResponseModel() },
+            users.map { it.toSummaryModel() },
         )
 
-    fun toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toResponseModel())
+    fun toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toSummaryModel())
 }
 
 class StickyNoteEntity(
