@@ -12,6 +12,6 @@ fun initDatabase() {
 
     transaction {
         addLogger(SQLKermit)
-        SchemaUtils.create(Users, AuthTokens, Boards, StickyNotes, BoardUsers)
+        SchemaUtils.create(Users, AuthTokens, Boards, StickyNotes, StickyNoteUsers, BoardUsers)
     }
 }

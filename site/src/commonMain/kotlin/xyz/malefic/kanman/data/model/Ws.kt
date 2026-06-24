@@ -26,6 +26,20 @@ sealed interface WsAction {
     data class StickyDelete(
         @SerialName("sticky_id") val stickyId: Uuid,
     ) : WsAction
+
+    @Serializable
+    @SerialName("assign_user")
+    data class AssignUser(
+        @SerialName("sticky_id") val stickyId: Uuid,
+        @SerialName("user_id") val userId: Uuid,
+    ) : WsAction
+
+    @Serializable
+    @SerialName("unassign_user")
+    data class UnassignUser(
+        @SerialName("sticky_id") val stickyId: Uuid,
+        @SerialName("user_id") val userId: Uuid,
+    ) : WsAction
 }
 
 @Serializable
@@ -62,5 +76,19 @@ sealed interface WsEvent {
     @SerialName("sticky_deleted")
     data class StickyDeleted(
         @SerialName("sticky_id") val stickyId: Uuid,
+    ) : WsEvent
+
+    @Serializable
+    @SerialName("assigned_user")
+    data class AssignedUser(
+        @SerialName("sticky_id") val stickyId: Uuid,
+        val user: UserSummaryModel,
+    ) : WsEvent
+
+    @Serializable
+    @SerialName("unassigned_user")
+    data class UnassignedUser(
+        @SerialName("sticky_id") val stickyId: Uuid,
+        val user: UserSummaryModel,
     ) : WsEvent
 }

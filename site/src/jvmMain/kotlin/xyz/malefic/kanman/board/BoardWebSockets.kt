@@ -2,7 +2,6 @@ package xyz.malefic.kanman.board
 
 import arrow.core.raise.catch
 import arrow.core.raise.either
-import arrow.core.raise.ensure
 import arrow.core.raise.ensureNotNull
 import co.touchlab.kermit.Logger
 import org.http4k.routing.path
@@ -10,16 +9,15 @@ import org.http4k.routing.websocket.bind
 import org.http4k.routing.websockets
 import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.data.db.BoardEntity
-import xyz.malefic.kanman.data.model.Issue.Board.AccessDenied
+import xyz.malefic.kanman.auth.getUserSummary
 import xyz.malefic.kanman.data.model.Issue.Board.InvalidId
-import xyz.malefic.kanman.data.model.Issue.Board.NotFound
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
-import xyz.malefic.kanman.data.model.Visibility.PUBLIC
 import xyz.malefic.kanman.data.model.WsAction
+import xyz.malefic.kanman.data.model.WsEvent.AssignedUser
 import xyz.malefic.kanman.data.model.WsEvent.StickyCreated
 import xyz.malefic.kanman.data.model.WsEvent.StickyDeleted
 import xyz.malefic.kanman.data.model.WsEvent.StickyMoved
+import xyz.malefic.kanman.data.model.WsEvent.UnassignedUser
 import xyz.malefic.kanman.data.model.WsEvent.UserJoin
 import xyz.malefic.kanman.data.model.WsEvent.UserLeave
 import xyz.malefic.kanman.util.ConnectionRegistry
@@ -33,10 +31,7 @@ val boardWs =
         "/api/ws/{id}" bind
             apiAuthWS { user, request ->
                 val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
-                transaction {
-                    val board = ensureNotNull(BoardEntity.findById(id)) { NotFound() }
-                    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == user.id }) { AccessDenied() }
-                }
+                transaction { user.getAccessibleBoard(id) }
                 val userSummary = user.toSummaryModel()
 
                 WsResponse { ws ->
@@ -63,6 +58,16 @@ val boardWs =
                                         is WsAction.StickyDelete -> {
                                             user.deleteSticky(action, id)
                                             StickyDeleted(action.stickyId)
+                                        }
+
+                                        is WsAction.AssignUser -> {
+                                            user.assignUser(action, id)
+                                            AssignedUser(action.stickyId, getUserSummary(action.userId))
+                                        }
+
+                                        is WsAction.UnassignUser -> {
+                                            user.unassignUser(action, id)
+                                            UnassignedUser(action.stickyId, getUserSummary(action.userId))
                                         }
                                     }
 

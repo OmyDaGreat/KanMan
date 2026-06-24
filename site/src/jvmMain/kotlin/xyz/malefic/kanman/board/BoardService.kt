@@ -3,9 +3,17 @@ package xyz.malefic.kanman.board
 import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
 import arrow.core.raise.context.ensureNotNull
+import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.dao.Entity
+import org.jetbrains.exposed.v1.dao.with
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
+import org.jetbrains.exposed.v1.jdbc.SizedCollection
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.auth.entity
 import xyz.malefic.kanman.data.db.BoardEntity
@@ -24,19 +32,42 @@ import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.Visibility.PRIVATE
 import xyz.malefic.kanman.data.model.Visibility.PUBLIC
 import xyz.malefic.kanman.data.model.WsAction
-import xyz.malefic.kanman.data.model.WsEvent
 import xyz.malefic.kanman.util.ConnectionRegistry
+import kotlin.reflect.KProperty1
 import kotlin.uuid.Uuid
+
+context(_: Raise<Issue>, _: JdbcTransaction)
+private fun fetchBoard(
+    id: Uuid,
+    vararg relations: KProperty1<out Entity<*>, Any?>,
+) = ensureNotNull(
+    BoardEntity.find { Boards.id eq id }.with(*relations).firstOrNull(),
+) { Issue.Board.NotFound() }
+
+context(_: Raise<AccessDenied>, _: JdbcTransaction)
+private fun UserResponseModel?.viewCheck(board: BoardEntity) {
+    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == this?.id })
+    { AccessDenied("You don't have permission to view this board") }
+}
+
+context(_: Raise<Issue>, _: JdbcTransaction)
+fun UserResponseModel?.getAccessibleBoard(
+    id: Uuid,
+    vararg relations: KProperty1<out Entity<*>, Any?>,
+) = fetchBoard(id, BoardEntity::users, *relations).also { viewCheck(it) }
 
 context(_: Raise<Issue>)
 fun getBoard(
     id: Uuid,
     user: UserResponseModel? = null,
 ) = transaction {
-    ensureNotNull(BoardEntity.findById(id)) { Issue.Board.NotFound() }.toModel().also { board ->
-        ensure(board.visibility == PUBLIC || board.users.any { it.id == user?.id })
-        { AccessDenied("You don't have permission to view this board") }
-    }
+    user
+        .getAccessibleBoard(
+            id,
+            BoardEntity::owner,
+            BoardEntity::stickies,
+            StickyNoteEntity::assignedUsers,
+        ).toModel()
 }
 
 fun createBoard(
@@ -61,7 +92,7 @@ fun deleteBoard(
     id: Uuid,
     user: UserResponseModel,
 ) = transaction {
-    val board = ensureNotNull(BoardEntity.findById(id)) { Issue.Board.NotFound() }
+    val board = fetchBoard(id, BoardEntity::owner)
 
     ensure(board.owner.id.value == user.id) { AccessDenied("You don't have permission to delete this board") }
 
@@ -73,20 +104,17 @@ context(_: Raise<Issue>)
 fun getBoardUsers(
     id: Uuid,
     user: UserResponseModel,
-) = transaction { getBoard(id, user).users }
+) = transaction { user.getAccessibleBoard(id).users.map { it.toSummaryModel() } }
 
 context(_: Raise<Issue>)
 fun UserResponseModel.inviteToBoard(
     boardId: Uuid,
     inviteRequest: InviteRequest,
 ) = transaction {
-    val board = ensureNotNull(BoardEntity.findById(boardId)) { Issue.Board.NotFound() }
+    val board = getAccessibleBoard(boardId)
 
-    ensure(
-        board.owner.id.value == this@inviteToBoard.id ||
-            (board.visibility == PUBLIC && board.users.any { it.id.value == this@inviteToBoard.id }),
-    )
-    { AccessDenied("You don't have permission to invite users") }
+    ensure(board.users.any { it.id.value == this@inviteToBoard.id })
+    { AccessDenied("You don't have permission to invite users to this board") }
 
     val addUser = ensureNotNull(UserEntity.find { Users.id eq inviteRequest.userId }.firstOrNull()) { Issue.User.NotFound() }
 
@@ -103,33 +131,36 @@ fun getBoards(
     user: UserResponseModel? = null,
     visibility: Visibility? = null,
 ) = transaction {
-    when (visibility) {
-        PUBLIC -> {
-            BoardEntity.find { Boards.visibility eq PUBLIC }.map { it.toSummaryModel() }
-        }
+    val query =
+        when (visibility) {
+            PUBLIC -> {
+                BoardEntity.find { Boards.visibility eq PUBLIC }
+            }
 
-        PRIVATE -> {
-            ensureNotNull(user) { MissingToken() }
-            BoardEntity
-                .find { Boards.visibility eq PRIVATE }
-                .filter { board -> board.users.any { u -> u.id.value == user.id } }
-                .map { it.toSummaryModel() }
-        }
+            PRIVATE -> {
+                ensureNotNull(user) { MissingToken() }
+                BoardEntity.wrapRows(
+                    (Boards innerJoin BoardUsers)
+                        .select(Boards.columns)
+                        .where { (Boards.visibility eq PRIVATE) and (BoardUsers.user eq user.id) },
+                )
+            }
 
-        else -> {
-            val public = BoardEntity.find { Boards.visibility eq PUBLIC }.map { it.toSummaryModel() }
-            if (user == null) {
-                public
-            } else {
-                val privateVisible =
-                    BoardEntity
-                        .find { Boards.visibility eq PRIVATE }
-                        .filter { board -> board.users.any { u -> u.id.value == user.id } }
-                        .map { it.toSummaryModel() }
-                (public + privateVisible).distinctBy { it.id }
+            else -> {
+                if (user == null) {
+                    BoardEntity.find { Boards.visibility eq PUBLIC }
+                } else {
+                    BoardEntity.wrapRows(
+                        Boards
+                            .join(BoardUsers, JoinType.LEFT, Boards.id, BoardUsers.board)
+                            .select(Boards.columns)
+                            .where { Boards.visibility eq PUBLIC or ((Boards.visibility eq PRIVATE) and (BoardUsers.user eq user.id)) },
+                    )
+                }
             }
         }
-    }
+
+    query.with(BoardEntity::owner).distinctBy { it.id }.map { it.toSummaryModel() }
 }
 
 context(_: Raise<Issue>)
@@ -137,10 +168,7 @@ fun UserResponseModel.createSticky(
     event: WsAction.StickyCreate,
     boardId: Uuid,
 ) = transaction {
-    val board = ensureNotNull(BoardEntity.findById(boardId)) { Issue.Board.NotFound() }
-
-    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == this@createSticky.id })
-    { AccessDenied("You don't have permission to view this board") }
+    val board = getAccessibleBoard(boardId)
 
     StickyNoteEntity
         .new {
@@ -156,12 +184,8 @@ fun UserResponseModel.deleteSticky(
     event: WsAction.StickyDelete,
     boardId: Uuid,
 ) = transaction {
-    val board = ensureNotNull(BoardEntity.findById(boardId)) { Issue.Board.NotFound() }
-
-    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == this@deleteSticky.id })
-    { AccessDenied("You don't have permission to view this board") }
-
-    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }?.delete()) { Issue.Board.NotFound() }
+    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId) }?.delete())
+    { Issue.Board.NotFound() }
 }
 
 context(_: Raise<Issue>)
@@ -169,11 +193,28 @@ fun UserResponseModel.moveSticky(
     event: WsAction.StickyMove,
     boardId: Uuid,
 ) = transaction {
-    val board = ensureNotNull(BoardEntity.findById(boardId)) { Issue.Board.NotFound() }
+    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId) })
+        { Issue.Board.NotFound() }.column = event.newColumn
+}
+
+context(_: Raise<Issue>)
+fun UserResponseModel.assignUser(
+    event: WsAction.AssignUser,
+    boardId: Uuid,
+) = transaction {
+    val board = getAccessibleBoard(boardId)
     val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
+    val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }
+    sticky.assignedUsers = SizedCollection(sticky.assignedUsers + user)
+}
 
-    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == this@moveSticky.id })
-    { AccessDenied("You don't have permission to view this board") }
-
-    sticky.column = event.newColumn
+context(_: Raise<Issue>)
+fun UserResponseModel.unassignUser(
+    event: WsAction.UnassignUser,
+    boardId: Uuid,
+) = transaction {
+    val board = getAccessibleBoard(boardId)
+    val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
+    val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }
+    sticky.assignedUsers = SizedCollection(sticky.assignedUsers - user)
 }

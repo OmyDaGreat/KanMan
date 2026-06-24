@@ -33,6 +33,12 @@ object StickyNotes : UuidTable("stickies") {
     val board = reference("board_id", Boards)
 }
 
+object StickyNoteUsers : Table("sticky_note_users") {
+    val sticky = reference("sticky_id", StickyNotes, onDelete = ReferenceOption.CASCADE)
+    val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
+    override val primaryKey = PrimaryKey(sticky, user)
+}
+
 object BoardUsers : Table("board_users") {
     val board = reference("board_id", Boards, onDelete = ReferenceOption.CASCADE)
     val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)

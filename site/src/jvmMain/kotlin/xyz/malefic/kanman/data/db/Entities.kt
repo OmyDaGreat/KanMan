@@ -69,7 +69,8 @@ class StickyNoteEntity(
     var title by StickyNotes.title
     var content by StickyNotes.content
     var column by StickyNotes.column
+    var assignedUsers by UserEntity via StickyNoteUsers
     var board by BoardEntity referencedOn StickyNotes.board
 
-    fun toModel(): StickyNoteModel = StickyNoteModel(id.value, title, content, column, board.id.value)
+    fun toModel() = StickyNoteModel(id.value, title, content, column, assignedUsers.map { it.id.value }, board.id.value)
 }

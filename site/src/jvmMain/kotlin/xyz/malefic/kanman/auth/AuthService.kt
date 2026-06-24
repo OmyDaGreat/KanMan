@@ -14,10 +14,12 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.dao.with
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.db.AuthTokenEntity
 import xyz.malefic.kanman.data.db.AuthTokens
+import xyz.malefic.kanman.data.db.BoardEntity
 import xyz.malefic.kanman.data.db.UserEntity
 import xyz.malefic.kanman.data.db.Users
 import xyz.malefic.kanman.data.model.Issue
@@ -172,7 +174,14 @@ fun getTokensFromLogin(user: UserRequestModel) =
 
 context(r: Raise<Issue>)
 fun getUserFromAccessToken(accessToken: String) =
-    transaction { ensureNotNull(UserEntity.findById(verifyAccessToken(accessToken))) { InvalidToken() }.toResponseModel() }
+    transaction {
+        ensureNotNull(
+            UserEntity
+                .find { Users.id eq verifyAccessToken(accessToken) }
+                .with(UserEntity::boards, BoardEntity::owner)
+                .firstOrNull(),
+        ) { InvalidToken() }.toResponseModel()
+    }
 
 context(_: JdbcTransaction)
 private fun revokeAccessTokensForUser(user: UserEntity) =
@@ -185,9 +194,7 @@ val UserResponseModel.entity
 context(r: Raise<Issue>)
 fun UserRequestModel.create() =
     transaction {
-        if (UserEntity.find { Users.username eq username }.any()) {
-            raise(User.AlreadyExists())
-        }
+        ensure(UserEntity.find { Users.username eq username }.empty()) { User.AlreadyExists() }
         issueTokenPair(
             UserEntity.new {
                 this.username = this@create.username
@@ -211,3 +218,6 @@ fun authenticate(request: Request) =
 context(r: Raise<Issue>)
 fun getUserSummary(username: String) =
     transaction { ensureNotNull(UserEntity.find { Users.username eq username }.firstOrNull()) { User.NotFound() }.toSummaryModel() }
+
+context(r: Raise<Issue>)
+fun getUserSummary(id: Uuid) = transaction { ensureNotNull(UserEntity.findById(id)) { User.NotFound() }.toSummaryModel() }
