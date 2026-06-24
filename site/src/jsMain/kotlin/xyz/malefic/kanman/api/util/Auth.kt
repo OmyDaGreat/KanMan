@@ -14,6 +14,7 @@ import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.data.model.RefreshRequestModel.Companion.refresh
 import xyz.malefic.kanman.data.model.TokenResponseModel
+import xyz.malefic.kanman.data.model.json
 
 object AuthSession {
     private const val TOKENS_KEY = "kanman_tokens"

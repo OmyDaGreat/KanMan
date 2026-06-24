@@ -7,6 +7,15 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @Serializable
+@SerialName("paginated_response")
+data class PaginatedResponse<T>(
+    val items: List<T>,
+    val page: Int,
+    val limit: Int,
+    val totalItems: Long,
+)
+
+@Serializable
 @SerialName("user_request")
 data class UserRequestModel(
     val username: String,

@@ -39,12 +39,8 @@ fun apiWS(handler: suspend Raise<Issue>.(Request) -> WsResponse): (Request) -> W
 fun apiAuthWS(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> WsResponse) =
     apiWS { request -> handler(authenticate(request), request) }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 inline fun <reified T : Any> WsMessage.model() =
     Either.catch { WsMessage.auto<T>().toLens()(this) }.mapLeft { BadRequest("Invalid JSON for request body: ${it.message}") }.bind()
 
 inline fun <reified T : Any> Websocket.send(obj: T) = send(WsMessage.auto<T>().toLens()(obj))
-
-fun Websocket.error(message: String = "Internal server error") = send(Internal(message))
-
-inline fun <reified T : Issue> Websocket.error(error: T) = send(error)

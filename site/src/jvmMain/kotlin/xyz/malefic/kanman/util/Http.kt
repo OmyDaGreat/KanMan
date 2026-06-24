@@ -24,6 +24,7 @@ import org.http4k.core.Status.Companion.UNAUTHORIZED
 import org.http4k.core.with
 import org.http4k.format.KotlinxSerialization.auto
 import xyz.malefic.kanman.auth.authenticate
+import xyz.malefic.kanman.auth.authenticateOptional
 import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.Issue.Auth
 import xyz.malefic.kanman.data.model.UserResponseModel
@@ -43,6 +44,9 @@ fun api(handler: suspend Raise<Issue>.(Request) -> Response): HttpHandler =
 
 fun apiAuth(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> Response): HttpHandler =
     { request -> runBlocking { either { handler(authenticate(request), request) }.mapLeft { it.toResponse() }.merge() } }
+
+fun apiAuthOptional(handler: suspend Raise<Issue>.(UserResponseModel?, Request) -> Response): HttpHandler =
+    { request -> runBlocking { either { handler(authenticateOptional(request), request) }.mapLeft { it.toResponse() }.merge() } }
 
 context(_: Raise<Issue>)
 inline fun <reified T : Any> Request.model() =

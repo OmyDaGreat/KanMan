@@ -1,9 +1,11 @@
 package xyz.malefic.kanman.auth
 
+import arrow.core.getOrElse
 import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
 import arrow.core.raise.context.ensureNotNull
 import arrow.core.raise.context.raise
+import arrow.core.raise.either
 import at.favre.lib.crypto.bcrypt.BCrypt
 import co.touchlab.kermit.Logger
 import com.auth0.jwt.JWT
@@ -87,7 +89,7 @@ private fun createAccessToken(user: UserEntity) =
         .withExpiresAt(Date(nowMs() + ACCESS_TOKEN_TTL_MILLIS))
         .sign(jwtAlgorithm)
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun verifyAccessToken(token: String) = ensureNotNull(Uuid.parseOrNull(jwtVerifier.verify(token).subject)) { InvalidToken() }
 
 context(_: JdbcTransaction)
@@ -109,7 +111,7 @@ fun issueTokenPair(user: UserEntity): TokenResponseModel {
     )
 }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun refreshTokens(refreshToken: String) =
     transaction {
         val (idPart, secret) = ensureNotNull(refreshToken.split(":").takeIf { it.size == 2 }) { BadRequest("Invalid refresh token format") }
@@ -141,7 +143,7 @@ fun janitor() =
             }.forEach { it.delete() }
     }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun revokeRefreshToken(refreshToken: String) =
     transaction {
         val idPart = refreshToken.substringBefore(":")
@@ -150,7 +152,7 @@ fun revokeRefreshToken(refreshToken: String) =
         AuthTokenEntity.findById(id)?.apply { revokedAt = nowMs() }
     }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun getTokensFromLogin(user: UserRequestModel) =
     transaction {
         val userEntity = ensureNotNull(UserEntity.find { Users.username eq user.username }.firstOrNull()) { InvalidCredentials() }
@@ -172,7 +174,7 @@ fun getTokensFromLogin(user: UserRequestModel) =
         issueTokenPair(userEntity)
     }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun getUserFromAccessToken(accessToken: String) =
     transaction {
         ensureNotNull(
@@ -191,7 +193,7 @@ context(_: JdbcTransaction)
 val UserResponseModel.entity
     get() = UserEntity.findById(id) ?: throw IllegalArgumentException("User with ID $id not found")
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun UserRequestModel.create() =
     transaction {
         ensure(UserEntity.find { Users.username eq username }.empty()) { User.AlreadyExists() }
@@ -203,7 +205,7 @@ fun UserRequestModel.create() =
         )
     }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun authenticate(request: Request) =
     getUserFromAccessToken(
         ensureNotNull(
@@ -215,9 +217,17 @@ fun authenticate(request: Request) =
         ) { MissingToken() },
     )
 
-context(r: Raise<Issue>)
+fun authenticateOptional(request: Request): UserResponseModel? =
+    request
+        .header("Authorization")
+        ?.takeIf { it.startsWith("Bearer ") }
+        ?.removePrefix("Bearer ")
+        ?.trim()
+        ?.let { token -> either { getUserFromAccessToken(token) }.getOrElse { null } }
+
+context(_: Raise<Issue>)
 fun getUserSummary(username: String) =
     transaction { ensureNotNull(UserEntity.find { Users.username eq username }.firstOrNull()) { User.NotFound() }.toSummaryModel() }
 
-context(r: Raise<Issue>)
+context(_: Raise<Issue>)
 fun getUserSummary(id: Uuid) = transaction { ensureNotNull(UserEntity.findById(id)) { User.NotFound() }.toSummaryModel() }
