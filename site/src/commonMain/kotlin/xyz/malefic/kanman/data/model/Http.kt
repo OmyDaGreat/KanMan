@@ -43,7 +43,7 @@ data class StickyNoteModel(
     val title: String,
     val content: String,
     val column: Column,
-    val board: BoardModel,
+    val boardId: Uuid,
 )
 
 @Serializable

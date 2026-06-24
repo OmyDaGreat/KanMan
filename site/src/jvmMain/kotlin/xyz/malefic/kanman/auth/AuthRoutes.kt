@@ -42,12 +42,12 @@ val authRoutes =
 
                 response(OK, tokens)
             },
-        "/api/me" bind GET to
-            apiAuth { user, _ ->
-                response(OK, user)
-            },
         "/api/users/{username}" bind POST to
             api { request ->
                 response(OK, getUser(ensureNotNull(request.path("username")) { BadRequest("Missing username") }))
+            },
+        "/api/me" bind GET to
+            apiAuth { user, _ ->
+                response(OK, user)
             },
     )

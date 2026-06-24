@@ -11,12 +11,12 @@ import org.http4k.routing.websockets
 import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.db.BoardEntity
-import xyz.malefic.kanman.data.db.StickyNoteEntity
 import xyz.malefic.kanman.data.model.Issue.Board.AccessDenied
 import xyz.malefic.kanman.data.model.Issue.Board.InvalidId
 import xyz.malefic.kanman.data.model.Issue.Board.NotFound
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
 import xyz.malefic.kanman.data.model.Visibility
+import xyz.malefic.kanman.data.model.WsEvent
 import xyz.malefic.kanman.data.model.WsEvent.StickyCreate
 import xyz.malefic.kanman.data.model.WsEvent.UserJoin
 import xyz.malefic.kanman.data.model.WsEvent.UserLeave
@@ -45,22 +45,19 @@ val boardWs =
 
                         ws.onMessage { msg ->
                             either {
-                                val stickyNoteRequest = msg.model<StickyCreate.Model>()
-                                val stickyNote =
-                                    transaction {
-                                        val boardEntity = BoardEntity.findById(id) ?: raise(NotFound())
-                                        StickyNoteEntity
-                                            .new {
-                                                this.title = stickyNoteRequest.title
-                                                this.content = stickyNoteRequest.content ?: ""
-                                                this.column = stickyNoteRequest.column
-                                                this.board = boardEntity
-                                            }.toModel()
-                                    }
-                                ConnectionRegistry.broadcast(id, StickyCreate(id, user, stickyNote))
-                            }.onLeft { error ->
-                                Logger.e(error, "WebSockets") { "Failed to handle message" }
-                                ws.error(error)
+                                val event = msg.model<WsEvent>()
+
+                                when (event) {
+                                    is StickyCreate -> createSticky(event, id)
+                                    is WsEvent.StickyDelete -> deleteSticky(event, id)
+                                    is WsEvent.StickyMove -> TODO()
+                                    is UserJoin -> TODO()
+                                    is UserLeave -> TODO()
+                                }
+                                ConnectionRegistry.broadcast(id, event)
+                            }.onLeft { e ->
+                                Logger.e(e, "WebSockets") { "Failed to handle message" }
+                                ws.error(e)
                             }
                         }
 

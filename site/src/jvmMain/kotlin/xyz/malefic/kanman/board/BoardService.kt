@@ -11,6 +11,7 @@ import xyz.malefic.kanman.auth.entity
 import xyz.malefic.kanman.data.db.BoardEntity
 import xyz.malefic.kanman.data.db.BoardUsers
 import xyz.malefic.kanman.data.db.Boards
+import xyz.malefic.kanman.data.db.StickyNoteEntity
 import xyz.malefic.kanman.data.db.UserEntity
 import xyz.malefic.kanman.data.db.Users
 import xyz.malefic.kanman.data.model.BoardCreateModel
@@ -22,6 +23,7 @@ import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.Visibility.PRIVATE
 import xyz.malefic.kanman.data.model.Visibility.PUBLIC
+import xyz.malefic.kanman.data.model.WsEvent
 import xyz.malefic.kanman.util.ConnectionRegistry
 import kotlin.uuid.Uuid
 
@@ -127,4 +129,28 @@ fun getBoards(
             }
         }
     }
+}
+
+context(_: Raise<Issue>)
+fun createSticky(
+    event: WsEvent.StickyCreate,
+    boardId: Uuid,
+) = transaction {
+    val board = ensureNotNull(BoardEntity.findById(boardId)) { Issue.Board.NotFound() }
+
+    StickyNoteEntity
+        .new {
+            title = event.title
+            content = event.content ?: ""
+            column = event.column
+            this.board = board
+        }.toModel()
+}
+
+context(_: Raise<Issue>)
+fun deleteSticky(
+    event: WsEvent.StickyDelete,
+    boardId: Uuid,
+) = transaction {
+    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board.id.value == boardId }) { Issue.Board.NotFound() }.delete()
 }
