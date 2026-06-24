@@ -4,6 +4,7 @@ import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
 import arrow.core.raise.context.ensureNotNull
 import org.jetbrains.exposed.v1.core.JoinType
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.or
@@ -17,6 +18,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.auth.entity
 import xyz.malefic.kanman.data.db.BoardEntity
+import xyz.malefic.kanman.data.db.BoardEvents
 import xyz.malefic.kanman.data.db.BoardUsers
 import xyz.malefic.kanman.data.db.Boards
 import xyz.malefic.kanman.data.db.StickyNoteEntity
@@ -67,7 +69,7 @@ fun getBoard(
             BoardEntity::owner,
             BoardEntity::stickies,
             StickyNoteEntity::assignedUsers,
-        ).toModel()
+        ).toResponseModel()
 }
 
 fun createBoard(
@@ -84,7 +86,7 @@ fun createBoard(
         it[BoardUsers.user] = user.id
         it[BoardUsers.board] = createdBoard.id
     }
-    createdBoard.toModel()
+    createdBoard.toResponseModel()
 }
 
 context(_: Raise<Issue>)
@@ -98,6 +100,19 @@ fun deleteBoard(
 
     board.delete()
     ConnectionRegistry.closeAll(id)
+}
+
+context(_: Raise<Issue>)
+fun getBoardHistory(
+    id: Uuid,
+    user: UserResponseModel,
+) = transaction {
+    user
+        .getAccessibleBoard(id)
+        .history
+        .orderBy(BoardEvents.timestamp to SortOrder.DESC)
+        .limit(100)
+        .map { it.toModel() }
 }
 
 context(_: Raise<Issue>)

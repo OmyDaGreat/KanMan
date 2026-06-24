@@ -50,6 +50,12 @@ val boardRoutes =
 
                 response(OK)
             },
+        "/api/board/{id}/history" bind GET to
+            apiAuth { user, request ->
+                val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }
+
+                response(OK, getBoardHistory(id, user))
+            },
         "/api/board/{id}/users" bind GET to
             apiAuth { user, request ->
                 val id = ensureNotNull(request.path("id")?.let { Uuid.parseOrNull(it) }) { InvalidId() }

@@ -2,6 +2,8 @@ package xyz.malefic.kanman.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -82,6 +84,16 @@ data class BoardSummaryModel(
     val title: String,
     val visibility: Visibility,
     val owner: UserSummaryModel,
+)
+
+@Serializable
+@SerialName("board_event")
+data class BoardEventModel(
+    val id: Uuid,
+    @SerialName("board_id") val boardId: Uuid,
+    val actor: UserSummaryModel,
+    val event: WsEvent,
+    val timestamp: Instant = Clock.System.now(),
 )
 
 @Serializable

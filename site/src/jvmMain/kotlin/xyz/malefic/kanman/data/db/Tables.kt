@@ -3,8 +3,13 @@ package xyz.malefic.kanman.data.db
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.dao.id.UuidTable
+import org.jetbrains.exposed.v1.datetime.CurrentTimestamp
+import org.jetbrains.exposed.v1.datetime.timestamp
+import org.jetbrains.exposed.v1.json.jsonb
 import xyz.malefic.kanman.data.model.Column
 import xyz.malefic.kanman.data.model.Visibility
+import xyz.malefic.kanman.data.model.WsEvent
+import xyz.malefic.kanman.data.model.json
 
 object Users : UuidTable("users") {
     val username = varchar("username", 128).uniqueIndex()
@@ -24,6 +29,13 @@ object Boards : UuidTable("boards") {
     val title = varchar("title", 128)
     val visibility = enumeration<Visibility>("visibility")
     val owner = reference("owner_id", Users)
+}
+
+object BoardEvents : UuidTable("board_events") {
+    val board = reference("board_id", Boards, onDelete = ReferenceOption.CASCADE)
+    val actor = reference("actor_id", Users, onDelete = ReferenceOption.CASCADE)
+    val event = jsonb<WsEvent>("event", json)
+    val timestamp = timestamp("timestamp").defaultExpression(CurrentTimestamp)
 }
 
 object StickyNotes : UuidTable("stickies") {

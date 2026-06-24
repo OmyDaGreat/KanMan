@@ -3,6 +3,7 @@ package xyz.malefic.kanman.data.db
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.dao.UuidEntity
 import org.jetbrains.exposed.v1.dao.UuidEntityClass
+import xyz.malefic.kanman.data.model.BoardEventModel
 import xyz.malefic.kanman.data.model.BoardResponseModel
 import xyz.malefic.kanman.data.model.BoardSummaryModel
 import xyz.malefic.kanman.data.model.StickyNoteModel
@@ -47,8 +48,9 @@ class BoardEntity(
     var owner by UserEntity referencedOn Boards.owner
     val stickies by StickyNoteEntity referrersOn StickyNotes.board
     var users by UserEntity via BoardUsers
+    val history by BoardEventEntity referrersOn BoardEvents.board
 
-    fun toModel() =
+    fun toResponseModel() =
         BoardResponseModel(
             id.value,
             title,
@@ -59,6 +61,26 @@ class BoardEntity(
         )
 
     fun toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toSummaryModel())
+}
+
+class BoardEventEntity(
+    id: EntityID<Uuid>,
+) : UuidEntity(id) {
+    companion object : UuidEntityClass<BoardEventEntity>(BoardEvents)
+
+    var board by BoardEntity referencedOn BoardEvents.board
+    var actor by UserEntity referencedOn BoardEvents.actor
+    var event by BoardEvents.event
+    var timestamp by BoardEvents.timestamp
+
+    fun toModel() =
+        BoardEventModel(
+            id.value,
+            board.id.value,
+            actor.toSummaryModel(),
+            event,
+            timestamp,
+        )
 }
 
 class StickyNoteEntity(

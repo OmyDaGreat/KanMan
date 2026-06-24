@@ -12,6 +12,7 @@ kobweb = "0.24.0"
 kutint = "1.0.1"
 jwt = "4.5.2"
 arrow = "2.2.2.1"
+datetime = "0.8.0"
 
 [libraries]
 http4k-bom = { group = "org.http4k", name = "http4k-bom", version.ref = "http4k" }
@@ -25,10 +26,14 @@ sqlite-jdbc = { group = "org.xerial", name = "sqlite-jdbc", version.ref = "sqlit
 exposed-core = { group = "org.jetbrains.exposed", name = "exposed-core", version.ref = "exposed" }
 exposed-dao = { group = "org.jetbrains.exposed", name = "exposed-dao", version.ref = "exposed" }
 exposed-jdbc = { group = "org.jetbrains.exposed", name = "exposed-jdbc", version.ref = "exposed" }
+exposed-json = { group = "org.jetbrains.exposed", name = "exposed-json", version.ref = "exposed" }
+exposed-datetime = { group = "org.jetbrains.exposed", name = "exposed-kotlin-datetime", version.ref = "exposed" }
 
 jwt = { group = "com.auth0", name = "java-jwt", version.ref = "jwt" }
 
 bcrypt = { group = "at.favre.lib", name = "bcrypt", version.ref = "bcrypt" }
+
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime" }
 
 compose-html-core = { module = "org.jetbrains.compose.html:html-core", version.ref = "jetbrains-compose" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "jetbrains-compose" }
@@ -67,6 +72,8 @@ storage = [
     "exposed-core",
     "exposed-dao",
     "exposed-jdbc",
+    "exposed-json",
+    "exposed-datetime"
 ]
 kobweb = ["kobweb-core", "kobweb-silk"]
 compose = ["compose-html-core", "compose-runtime"]

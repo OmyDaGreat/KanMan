@@ -9,7 +9,6 @@ import arrow.core.raise.context.ensure
 import arrow.core.raise.context.raise
 import kotlinx.browser.window
 import kotlinx.coroutines.await
-import kotlinx.serialization.json.Json
 import org.w3c.fetch.Headers
 import org.w3c.fetch.RequestInit
 import org.w3c.fetch.Response
@@ -17,8 +16,7 @@ import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.Issue.Client.Network
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
 import xyz.malefic.kanman.data.model.Issue.Validation.BadResponse
-
-val json = Json { ignoreUnknownKeys = true }
+import xyz.malefic.kanman.data.model.json
 
 suspend fun Response.error() =
     try {

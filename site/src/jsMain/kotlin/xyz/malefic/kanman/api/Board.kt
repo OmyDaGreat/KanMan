@@ -5,6 +5,7 @@ import xyz.malefic.kanman.api.util.get
 import xyz.malefic.kanman.api.util.getAuth
 import xyz.malefic.kanman.api.util.postAuth
 import xyz.malefic.kanman.data.model.BoardCreateModel
+import xyz.malefic.kanman.data.model.BoardEventModel
 import xyz.malefic.kanman.data.model.BoardResponseModel
 import xyz.malefic.kanman.data.model.BoardSummaryModel
 import xyz.malefic.kanman.data.model.InviteRequest
@@ -19,6 +20,8 @@ suspend fun board(id: Uuid) = getAuth<BoardResponseModel>("board/$id")
 suspend fun board(board: BoardCreateModel) = postAuth<_, BoardResponseModel>("board", board)
 
 suspend fun deleteBoard(id: Uuid) = deleteAuth("board/$id")
+
+suspend fun boardHistory(id: Uuid) = getAuth<List<BoardEventModel>>("board/$id/history")
 
 suspend fun boardUsers(id: Uuid) = getAuth<List<UserResponseModel>>("board/$id/users")
 
