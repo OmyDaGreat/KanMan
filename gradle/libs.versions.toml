@@ -12,7 +12,7 @@ kobweb = "0.24.0"
 kutint = "1.0.1"
 jwt = "4.5.2"
 arrow = "2.2.2.1"
-datetime = "0.8.0"
+datetime = "0.8.0-0.6.x-compat"
 
 [libraries]
 http4k-bom = { group = "org.http4k", name = "http4k-bom", version.ref = "http4k" }
