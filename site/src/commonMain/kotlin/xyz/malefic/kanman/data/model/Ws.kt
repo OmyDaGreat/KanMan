@@ -44,30 +44,33 @@ sealed interface WsAction {
 
 @Serializable
 sealed interface WsEvent {
+    val actor: UserSummaryModel
+
     @Serializable
     @SerialName("user_join")
     data class UserJoin(
+        override val actor: UserSummaryModel,
         @SerialName("board_id") val boardId: Uuid,
-        val user: UserSummaryModel,
     ) : WsEvent
 
     @Serializable
     @SerialName("user_leave")
     data class UserLeave(
+        override val actor: UserSummaryModel,
         @SerialName("board_id") val boardId: Uuid,
-        val user: UserSummaryModel,
     ) : WsEvent
 
     @Serializable
     @SerialName("sticky_created")
     data class StickyCreated(
+        override val actor: UserSummaryModel,
         val sticky: StickyNoteModel,
-        val creator: UserSummaryModel,
     ) : WsEvent
 
     @Serializable
     @SerialName("sticky_moved")
     data class StickyMoved(
+        override val actor: UserSummaryModel,
         @SerialName("sticky_id") val stickyId: Uuid,
         @SerialName("new_column") val newColumn: Column,
     ) : WsEvent
@@ -75,20 +78,23 @@ sealed interface WsEvent {
     @Serializable
     @SerialName("sticky_deleted")
     data class StickyDeleted(
+        override val actor: UserSummaryModel,
         @SerialName("sticky_id") val stickyId: Uuid,
     ) : WsEvent
 
     @Serializable
     @SerialName("assigned_user")
     data class AssignedUser(
+        override val actor: UserSummaryModel,
         @SerialName("sticky_id") val stickyId: Uuid,
-        val user: UserSummaryModel,
+        val target: UserSummaryModel,
     ) : WsEvent
 
     @Serializable
     @SerialName("unassigned_user")
     data class UnassignedUser(
+        override val actor: UserSummaryModel,
         @SerialName("sticky_id") val stickyId: Uuid,
-        val user: UserSummaryModel,
+        val target: UserSummaryModel,
     ) : WsEvent
 }

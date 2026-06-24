@@ -42,7 +42,7 @@ val authRoutes =
 
                 response(OK, tokens)
             },
-        "/api/users/{username}" bind POST to
+        "/api/users/{username}" bind GET to
             api { request ->
                 response(OK, getUserSummary(ensureNotNull(request.path("username")) { BadRequest("Missing username") }))
             },

@@ -38,7 +38,7 @@ val boardWs =
                     either {
                         catch({
                             ConnectionRegistry.register(id, ws)
-                            ConnectionRegistry.broadcast(id, UserJoin(id, userSummary))
+                            ConnectionRegistry.broadcast(id, UserJoin(userSummary, id))
                         }) { raise(Internal(it.message ?: "Connection registry failure")) }
 
                         ws.onMessage { msg ->
@@ -47,27 +47,27 @@ val boardWs =
                                     when (val action = msg.model<WsAction>()) {
                                         is WsAction.StickyCreate -> {
                                             val sticky = user.createSticky(action, id)
-                                            StickyCreated(sticky, userSummary)
+                                            StickyCreated(userSummary, sticky)
                                         }
 
                                         is WsAction.StickyMove -> {
                                             user.moveSticky(action, id)
-                                            StickyMoved(action.stickyId, action.newColumn)
+                                            StickyMoved(userSummary, action.stickyId, action.newColumn)
                                         }
 
                                         is WsAction.StickyDelete -> {
                                             user.deleteSticky(action, id)
-                                            StickyDeleted(action.stickyId)
+                                            StickyDeleted(userSummary, action.stickyId)
                                         }
 
                                         is WsAction.AssignUser -> {
                                             user.assignUser(action, id)
-                                            AssignedUser(action.stickyId, getUserSummary(action.userId))
+                                            AssignedUser(userSummary, action.stickyId, getUserSummary(action.userId))
                                         }
 
                                         is WsAction.UnassignUser -> {
                                             user.unassignUser(action, id)
-                                            UnassignedUser(action.stickyId, getUserSummary(action.userId))
+                                            UnassignedUser(userSummary, action.stickyId, getUserSummary(action.userId))
                                         }
                                     }
 
@@ -80,14 +80,14 @@ val boardWs =
 
                         ws.onClose {
                             if (ConnectionRegistry.unregister(id, ws)) {
-                                ConnectionRegistry.broadcast(id, UserLeave(id, userSummary))
+                                ConnectionRegistry.broadcast(id, UserLeave(userSummary, id))
                             }
                         }
 
                         ws.onError { e ->
                             Logger.e(e, "WebSockets") { "${user.username} disconnected with error" }
                             if (ConnectionRegistry.unregister(id, ws)) {
-                                ConnectionRegistry.broadcast(id, UserLeave(id, userSummary))
+                                ConnectionRegistry.broadcast(id, UserLeave(userSummary, id))
                             }
                         }
                     }.onLeft { issue ->
