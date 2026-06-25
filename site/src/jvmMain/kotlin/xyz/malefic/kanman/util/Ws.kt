@@ -3,11 +3,11 @@ package xyz.malefic.kanman.util
 import arrow.core.Either
 import arrow.core.merge
 import arrow.core.raise.Raise
+import arrow.core.raise.catch
 import arrow.core.raise.context.bind
 import arrow.core.raise.either
 import kotlinx.coroutines.runBlocking
 import org.http4k.core.Request
-import org.http4k.format.KotlinxSerialization.auto
 import org.http4k.websocket.Websocket
 import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
@@ -16,23 +16,20 @@ import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
 import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.data.model.UserResponseModel
+import xyz.malefic.kanman.data.model.json
 
 fun apiWS(handler: suspend Raise<Issue>.(Request) -> WsResponse): (Request) -> WsResponse =
     { request ->
         runBlocking {
-            val result: Either<Issue, WsResponse> =
-                try {
-                    either { handler(this, request) }
-                } catch (e: Exception) {
-                    Either.Left(Internal(e.message ?: "Internal server error"))
+            either {
+                catch({ handler(request) })
+                { e: Throwable -> if (e is Issue) raise(e) else raise(Internal(e.message ?: "Internal server error")) }
+            }.mapLeft { error ->
+                WsResponse { ws ->
+                    ws.send(error)
+                    ws.close()
                 }
-            result
-                .mapLeft { error ->
-                    WsResponse { ws ->
-                        ws.send(error)
-                        ws.close()
-                    }
-                }.merge()
+            }.merge()
         }
     }
 
@@ -41,6 +38,6 @@ fun apiAuthWS(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> WsRe
 
 context(_: Raise<Issue>)
 inline fun <reified T : Any> WsMessage.model() =
-    Either.catch { WsMessage.auto<T>().toLens()(this) }.mapLeft { BadRequest("Invalid JSON for request body: ${it.message}") }.bind()
+    Either.catch { json.decodeFromString<T>(bodyString()) }.mapLeft { BadRequest("Invalid JSON for request body: ${it.message}") }.bind()
 
-inline fun <reified T : Any> Websocket.send(obj: T) = send(WsMessage.auto<T>().toLens()(obj))
+inline fun <reified T : Any> Websocket.send(obj: T) = send(WsMessage(json.encodeToString(obj)))

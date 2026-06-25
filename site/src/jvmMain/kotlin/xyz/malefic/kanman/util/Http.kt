@@ -8,7 +8,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.runBlocking
-import org.http4k.core.Body
+import org.http4k.core.ContentType.Companion.APPLICATION_JSON
 import org.http4k.core.Filter
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
@@ -21,41 +21,61 @@ import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.TOO_MANY_REQUESTS
 import org.http4k.core.Status.Companion.UNAUTHORIZED
-import org.http4k.core.with
-import org.http4k.format.KotlinxSerialization.auto
+import org.http4k.lens.contentType
 import xyz.malefic.kanman.auth.authenticate
 import xyz.malefic.kanman.auth.authenticateOptional
 import xyz.malefic.kanman.data.model.Issue
-import xyz.malefic.kanman.data.model.Issue.Auth
 import xyz.malefic.kanman.data.model.UserResponseModel
+import xyz.malefic.kanman.data.model.json
 import java.util.concurrent.ConcurrentHashMap
 
 fun api(handler: suspend Raise<Issue>.(Request) -> Response): HttpHandler =
     { request ->
         runBlocking {
             either {
-                handler(request)
+                catch({ handler(request) })
+                { e: Throwable -> if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error")) }
             }.mapLeft {
                 Logger.e(it, "HTTP") { "Internal server error" }
-                Issue.Server.Internal(it.message).toResponse()
+                it.toResponse()
             }.merge()
         }
     }
 
 fun apiAuth(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> Response): HttpHandler =
-    { request -> runBlocking { either { handler(authenticate(request), request) }.mapLeft { it.toResponse() }.merge() } }
+    { request ->
+        runBlocking {
+            either {
+                catch({ handler(authenticate(request), request) })
+                { e: Throwable -> if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error")) }
+            }.mapLeft {
+                Logger.e(it, "HTTP") { "Internal server error" }
+                it.toResponse()
+            }.merge()
+        }
+    }
 
 fun apiAuthOptional(handler: suspend Raise<Issue>.(UserResponseModel?, Request) -> Response): HttpHandler =
-    { request -> runBlocking { either { handler(authenticateOptional(request), request) }.mapLeft { it.toResponse() }.merge() } }
+    { request ->
+        runBlocking {
+            either {
+                catch({ handler(authenticateOptional(request), request) })
+                { e: Throwable -> if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error")) }
+            }.mapLeft {
+                Logger.e(it, "HTTP") { "Internal server error" }
+                it.toResponse()
+            }.merge()
+        }
+    }
 
 context(_: Raise<Issue>)
 inline fun <reified T : Any> Request.model() =
-    catch({ lens<T>()(this) })
+    catch({ json.decodeFromString<T>(bodyString()) })
     { raise(Issue.Validation.BadRequest("Invalid JSON for request body: ${it.message}")) }
 
 fun Issue.toResponse(): Response =
     when (this) {
-        is Auth -> response(UNAUTHORIZED, this)
+        is Issue.Auth -> response(UNAUTHORIZED, this)
         is Issue.Access.Forbidden, is Issue.Board.AccessDenied -> response(FORBIDDEN, this)
         is Issue.Board.NotFound, is Issue.User.NotFound -> response(NOT_FOUND, this)
         is Issue.User.AlreadyExists, is Issue.Server.Conflict -> response(CONFLICT, this)
@@ -66,14 +86,12 @@ fun Issue.toResponse(): Response =
         is Issue.Client -> response(INTERNAL_SERVER_ERROR, Issue.Server.Internal(message))
     }
 
-inline fun <reified T : Any> lens() = Body.auto<T>().toLens()
-
 fun response(status: Status) = Response(status)
 
 inline fun <reified T : Any> response(
     status: Status,
     body: T,
-) = Response(status).with(lens<T>().of(body))
+) = Response(status).contentType(APPLICATION_JSON).body(json.encodeToString(body))
 
 fun rateLimit(
     requests: Int,
