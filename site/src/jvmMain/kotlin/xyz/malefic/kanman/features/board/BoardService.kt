@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.board
+package xyz.malefic.kanman.features.board
 
 import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
@@ -8,13 +8,14 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inSubQuery
 import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.with
+import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.SizedCollection
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.auth.entity
 import xyz.malefic.kanman.data.db.BoardEntity
 import xyz.malefic.kanman.data.db.BoardEvents
 import xyz.malefic.kanman.data.db.BoardUsers
@@ -33,8 +34,30 @@ import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.Visibility.PRIVATE
 import xyz.malefic.kanman.data.model.Visibility.PUBLIC
 import xyz.malefic.kanman.data.model.WsAction
-import xyz.malefic.kanman.util.ConnectionRegistry
+import xyz.malefic.kanman.features.auth.entity
+import xyz.malefic.kanman.infra.ws.Registry
+import kotlin.reflect.KProperty1
 import kotlin.uuid.Uuid
+
+context(_: Raise<Issue>, _: JdbcTransaction)
+private fun fetchBoard(
+    id: Uuid,
+    vararg relations: KProperty1<out Entity<*>, Any?>,
+) = ensureNotNull(
+    BoardEntity.find { Boards.id eq id }.with(*relations).firstOrNull(),
+) { Issue.Board.NotFound() }
+
+context(_: Raise<AccessDenied>, _: JdbcTransaction)
+private fun UserResponseModel?.viewCheck(board: BoardEntity) {
+    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == this?.id })
+    { AccessDenied("You don't have permission to view this board") }
+}
+
+context(_: Raise<Issue>, _: JdbcTransaction)
+fun UserResponseModel?.getAccessibleBoard(
+    id: Uuid,
+    vararg relations: KProperty1<out Entity<*>, Any?>,
+) = fetchBoard(id, BoardEntity::users, *relations).also { viewCheck(it) }
 
 context(_: Raise<Issue>)
 fun getBoard(
@@ -75,7 +98,7 @@ fun UserResponseModel.deleteBoard(id: Uuid) =
         ensure(board.owner.id.value == this@deleteBoard.id) { AccessDenied("You don't have permission to delete this board") }
 
         board.delete()
-        ConnectionRegistry.closeAll(id)
+        Registry.closeAll(id)
     }
 
 context(_: Raise<Issue>)

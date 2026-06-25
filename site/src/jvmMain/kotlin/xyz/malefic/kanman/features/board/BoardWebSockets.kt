@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.board
+package xyz.malefic.kanman.features.board
 
 import arrow.core.raise.catch
 import arrow.core.raise.either
@@ -7,7 +7,6 @@ import org.http4k.routing.websocket.bind
 import org.http4k.routing.websockets
 import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.auth.getUserSummary
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
 import xyz.malefic.kanman.data.model.WsAction
 import xyz.malefic.kanman.data.model.WsEvent.AssignedUser
@@ -17,9 +16,11 @@ import xyz.malefic.kanman.data.model.WsEvent.StickyMoved
 import xyz.malefic.kanman.data.model.WsEvent.UnassignedUser
 import xyz.malefic.kanman.data.model.WsEvent.UserJoin
 import xyz.malefic.kanman.data.model.WsEvent.UserLeave
-import xyz.malefic.kanman.util.ConnectionRegistry
-import xyz.malefic.kanman.util.model
-import xyz.malefic.kanman.util.send
+import xyz.malefic.kanman.features.auth.getUserSummary
+import xyz.malefic.kanman.infra.ws.Registry
+import xyz.malefic.kanman.infra.ws.apiBoardAuthWS
+import xyz.malefic.kanman.infra.ws.model
+import xyz.malefic.kanman.infra.ws.send
 
 val boardWs =
     websockets(
@@ -31,8 +32,8 @@ val boardWs =
                 WsResponse { ws ->
                     either {
                         catch({
-                            ConnectionRegistry.register(id, ws)
-                            ConnectionRegistry.broadcast(id, UserJoin(userSummary, id))
+                            Registry.register(id, ws)
+                            Registry.broadcast(id, UserJoin(userSummary, id))
                         }) { raise(Internal(it.message ?: "Connection registry failure")) }
 
                         ws.onMessage { msg ->
@@ -65,7 +66,7 @@ val boardWs =
                                         }
                                     }
 
-                                ConnectionRegistry.broadcast(id, event)
+                                Registry.broadcast(id, event)
                             }.onLeft { e ->
                                 Logger.e(e, "WebSockets") { "Failed to handle message" }
                                 ws.send(e)
@@ -73,15 +74,15 @@ val boardWs =
                         }
 
                         ws.onClose {
-                            if (ConnectionRegistry.unregister(id, ws)) {
-                                ConnectionRegistry.broadcast(id, UserLeave(userSummary, id))
+                            if (Registry.unregister(id, ws)) {
+                                Registry.broadcast(id, UserLeave(userSummary, id))
                             }
                         }
 
                         ws.onError { e ->
                             Logger.e(e, "WebSockets") { "${user.username} disconnected with error" }
-                            if (ConnectionRegistry.unregister(id, ws)) {
-                                ConnectionRegistry.broadcast(id, UserLeave(userSummary, id))
+                            if (Registry.unregister(id, ws)) {
+                                Registry.broadcast(id, UserLeave(userSummary, id))
                             }
                         }
                     }.onLeft { issue ->

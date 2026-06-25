@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.auth
+package xyz.malefic.kanman.features.auth
 
 import arrow.core.getOrElse
 import arrow.core.raise.Raise
@@ -34,7 +34,6 @@ import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.data.model.TokenResponseModel
 import xyz.malefic.kanman.data.model.UserRequestModel
 import xyz.malefic.kanman.data.model.UserResponseModel
-import xyz.malefic.kanman.util.nowMs
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Date
@@ -86,7 +85,7 @@ private fun createAccessToken(user: UserEntity) =
     JWT
         .create()
         .withSubject(user.id.value.toString())
-        .withExpiresAt(Date(nowMs() + ACCESS_TOKEN_TTL_MILLIS))
+        .withExpiresAt(Date(System.currentTimeMillis() + ACCESS_TOKEN_TTL_MILLIS))
         .sign(jwtAlgorithm)
 
 context(_: Raise<Issue>)
@@ -101,7 +100,7 @@ fun issueTokenPair(user: UserEntity): TokenResponseModel {
         AuthTokenEntity.new {
             this.user = user
             this.secretHash = hash(secret)
-            this.expiresAt = nowMs() + REFRESH_TOKEN_TTL_MILLIS
+            this.expiresAt = System.currentTimeMillis() + REFRESH_TOKEN_TTL_MILLIS
         }
 
     return TokenResponseModel(
@@ -117,7 +116,7 @@ fun refreshTokens(refreshToken: String) =
         val (idPart, secret) = ensureNotNull(refreshToken.split(":").takeIf { it.size == 2 }) { BadRequest("Invalid refresh token format") }
         val id = ensureNotNull(Uuid.parseOrNull(idPart)) { BadRequest("Invalid refresh token ID") }
         val token = ensureNotNull(AuthTokenEntity.findById(id)) { InvalidToken("Refresh token not found") }
-        val now = nowMs()
+        val now = System.currentTimeMillis()
 
         if (token.expiresAt < now || token.secretHash != hash(secret)) {
             token.revokedAt = now
@@ -134,7 +133,7 @@ fun refreshTokens(refreshToken: String) =
 
 fun janitor() =
     transaction {
-        val now = nowMs()
+        val now = System.currentTimeMillis()
         val graceLimit = now - REFRESH_GRACE_PERIOD_MILLIS
         AuthTokenEntity
             .find {
@@ -149,14 +148,14 @@ fun revokeRefreshToken(refreshToken: String) =
         val idPart = refreshToken.substringBefore(":")
         val id = ensureNotNull(Uuid.parseOrNull(idPart)) { BadRequest("Invalid refresh token ID") }
 
-        AuthTokenEntity.findById(id)?.apply { revokedAt = nowMs() }
+        AuthTokenEntity.findById(id)?.apply { revokedAt = System.currentTimeMillis() }
     }
 
 context(_: Raise<Issue>)
 fun getTokensFromLogin(user: UserRequestModel) =
     transaction {
         val userEntity = ensureNotNull(UserEntity.find { Users.username eq user.username }.firstOrNull()) { InvalidCredentials() }
-        val now = nowMs()
+        val now = System.currentTimeMillis()
 
         ensure(userEntity.lockUntil < now) { AccountLocked(userEntity.lockUntil) }
 
@@ -187,7 +186,7 @@ fun getUserFromAccessToken(accessToken: String) =
 
 context(_: JdbcTransaction)
 private fun revokeAccessTokensForUser(user: UserEntity) =
-    AuthTokenEntity.find { AuthTokens.user eq user.id }.forEach { it.revokedAt = it.revokedAt ?: nowMs() }
+    AuthTokenEntity.find { AuthTokens.user eq user.id }.forEach { it.revokedAt = it.revokedAt ?: System.currentTimeMillis() }
 
 context(_: JdbcTransaction)
 val UserResponseModel.entity

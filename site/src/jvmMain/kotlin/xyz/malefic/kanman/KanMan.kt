@@ -16,14 +16,14 @@ import org.http4k.routing.poly
 import org.http4k.routing.routes
 import org.http4k.server.Undertow
 import org.http4k.server.asServer
-import xyz.malefic.kanman.auth.authRoutes
-import xyz.malefic.kanman.auth.janitor
-import xyz.malefic.kanman.board.boardRoutes
-import xyz.malefic.kanman.board.boardWs
 import xyz.malefic.kanman.data.db.initDatabase
-import xyz.malefic.kanman.util.rateLimit
-import xyz.malefic.kanman.util.response
-import xyz.malefic.kanman.util.serveStaticFile
+import xyz.malefic.kanman.features.auth.authRoutes
+import xyz.malefic.kanman.features.auth.janitor
+import xyz.malefic.kanman.features.board.boardRoutes
+import xyz.malefic.kanman.features.board.boardWs
+import xyz.malefic.kanman.infra.http.rateLimit
+import xyz.malefic.kanman.infra.http.response
+import xyz.malefic.kanman.infra.http.serveStaticFile
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 

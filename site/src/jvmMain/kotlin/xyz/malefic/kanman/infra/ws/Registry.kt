@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.util
+package xyz.malefic.kanman.infra.ws
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +12,7 @@ import xyz.malefic.kanman.data.model.WsEvent
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.uuid.Uuid
 
-object ConnectionRegistry {
+object Registry {
     val connections = ConcurrentHashMap<Uuid, MutableSet<Websocket>>()
 
     fun register(
@@ -27,8 +27,8 @@ object ConnectionRegistry {
         CoroutineScope(Dispatchers.IO).launch {
             transaction {
                 BoardEventEntity.new {
-                    this.board = BoardEntity[boardId]
-                    this.actor = UserEntity[msg.actor.id]
+                    this.board = BoardEntity.Companion[boardId]
+                    this.actor = UserEntity.Companion[msg.actor.id]
                     this.event = msg
                 }
             }

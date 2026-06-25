@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.auth
+package xyz.malefic.kanman.features.auth
 
 import arrow.core.raise.ensureNotNull
 import org.http4k.core.Method.GET
@@ -9,10 +9,10 @@ import org.http4k.routing.path
 import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.data.model.RefreshRequestModel
 import xyz.malefic.kanman.data.model.UserRequestModel
-import xyz.malefic.kanman.util.api
-import xyz.malefic.kanman.util.apiAuth
-import xyz.malefic.kanman.util.model
-import xyz.malefic.kanman.util.response
+import xyz.malefic.kanman.infra.http.api
+import xyz.malefic.kanman.infra.http.apiAuth
+import xyz.malefic.kanman.infra.http.model
+import xyz.malefic.kanman.infra.http.response
 
 val authRoutes =
     arrayOf(

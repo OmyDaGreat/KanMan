@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.board
+package xyz.malefic.kanman.features.board
 
 import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
@@ -9,10 +9,12 @@ import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.Column
 import xyz.malefic.kanman.data.model.InviteRequest
 import xyz.malefic.kanman.data.model.Visibility.Companion.toVisibility
-import xyz.malefic.kanman.util.apiAuth
-import xyz.malefic.kanman.util.apiAuthOptional
-import xyz.malefic.kanman.util.model
-import xyz.malefic.kanman.util.response
+import xyz.malefic.kanman.infra.http.apiAuth
+import xyz.malefic.kanman.infra.http.apiAuthOptional
+import xyz.malefic.kanman.infra.http.apiBoardAuth
+import xyz.malefic.kanman.infra.http.model
+import xyz.malefic.kanman.infra.http.pagination
+import xyz.malefic.kanman.infra.http.response
 
 val boardRoutes =
     arrayOf(
