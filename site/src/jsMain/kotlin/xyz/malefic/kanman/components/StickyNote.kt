@@ -23,15 +23,17 @@ import org.jetbrains.compose.web.css.deg
 import org.jetbrains.compose.web.css.div
 import org.jetbrains.compose.web.css.percent
 import org.jetbrains.compose.web.css.px
+import org.jetbrains.compose.web.dom.H3
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
+import xyz.malefic.kanman.data.model.StickyNoteModel
 import xyz.malefic.kanman.styles.Color
 import xyz.malefic.kutint.KutintColor
 
 @Composable
 fun StickyNote(
     color: KutintColor<*>,
-    text: String,
+    stickyNote: StickyNoteModel,
 ) {
     val foldSize = 10.percent
 
@@ -61,8 +63,11 @@ fun StickyNote(
                 ),
             ).padding(18.px),
     ) {
+        H3(Modifier.color(Color.onTertiary).overflow(Overflow.Scroll).toAttrs()) {
+            Text(stickyNote.title)
+        }
         P(Modifier.color(Color.onTertiary).overflow(Overflow.Scroll).toAttrs()) {
-            Text(text)
+            Text(stickyNote.content)
         }
     }
 }

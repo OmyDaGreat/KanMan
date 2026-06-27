@@ -15,24 +15,28 @@ import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.css.vw
 import org.jetbrains.compose.web.dom.H2
 import org.jetbrains.compose.web.dom.Text
+import xyz.malefic.kanman.data.model.StickyNoteModel
 import xyz.malefic.kanman.styles.Color
 
 @Composable
-fun KanColumn(column: String) =
-    Column(
-        Modifier
-            .fillMaxHeight()
-            .width(20.vw)
-            .backgroundColor(Color.primaryContainer)
-            .padding(18.px)
-            .borderRadius(18.px)
-            .overflow(Overflow.Scroll),
-        Arrangement.Top,
-    ) {
-        H2 {
-            Text(column)
-        }
-        val stickyColor = listOf(Color.tertiary, Color.error, Color.primary, Color.secondary)
-        val selectedColor = stickyColor.random()
-        StickyNote(selectedColor, "this is content of sticky note")
+fun KanColumn(
+    column: String,
+    stickyNotes: List<StickyNoteModel>,
+) = Column(
+    Modifier
+        .fillMaxHeight()
+        .width(20.vw)
+        .backgroundColor(Color.primaryContainer)
+        .padding(18.px)
+        .borderRadius(18.px)
+        .overflow(Overflow.Scroll),
+    Arrangement.Top,
+) {
+    H2 {
+        Text(column)
     }
+    val stickyColors = listOf(Color.tertiary, Color.error, Color.primary, Color.secondary)
+    stickyNotes.forEach { stickyNote ->
+        StickyNote(stickyColors.random(), stickyNote)
+    }
+}
