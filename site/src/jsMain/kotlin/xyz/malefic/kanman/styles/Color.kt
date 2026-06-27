@@ -35,7 +35,7 @@ import com.varabyte.kobweb.silk.theme.colors.systemPreference
 import xyz.malefic.kutint.RGB
 import xyz.malefic.kutint.parseHex
 
-object Colors {
+object Color {
     @Composable
     fun colorModeAware(
         light: RGB,

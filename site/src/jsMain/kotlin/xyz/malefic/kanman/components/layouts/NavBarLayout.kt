@@ -26,7 +26,7 @@ import org.jetbrains.compose.web.css.vh
 import org.jetbrains.compose.web.dom.H1
 import org.jetbrains.compose.web.dom.Span
 import org.jetbrains.compose.web.dom.Text
-import xyz.malefic.kanman.styles.Colors
+import xyz.malefic.kanman.styles.Color
 
 @Layout
 @Composable
@@ -37,7 +37,7 @@ fun NavBarLayout(
     val currentRoute = ctx.route.path
 
     Row(Modifier.fillMaxSize().height(100.vh)) {
-        Surface(Modifier.fillMaxHeight().backgroundColor(Colors.surfaceContainerHigh)) {
+        Surface(Modifier.fillMaxHeight().backgroundColor(Color.surfaceContainerHigh)) {
             Column(
                 Modifier
                     .fillMaxWidth()
