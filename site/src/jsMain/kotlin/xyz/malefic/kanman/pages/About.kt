@@ -13,7 +13,7 @@ import org.jetbrains.compose.web.dom.Text
 @Page
 @Composable
 fun AboutPage() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxSize(), Alignment.Center) {
         Span {
             Text("THIS SITE WAS CREATED BY ")
             Link("https://github.com/OmyDaGreat", "MALEFIC")

@@ -6,10 +6,10 @@ import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentTimestamp
 import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.json.jsonb
+import xyz.malefic.kanman.api.util.json
 import xyz.malefic.kanman.data.model.Column
 import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.WsEvent
-import xyz.malefic.kanman.data.model.json
 
 object Users : UuidTable("users") {
     val username = varchar("username", 128).uniqueIndex()

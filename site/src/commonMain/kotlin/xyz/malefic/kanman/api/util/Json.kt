@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.data.model
+package xyz.malefic.kanman.api.util
 
 import kotlinx.serialization.json.Json
 

@@ -18,7 +18,14 @@ import xyz.malefic.kanman.infra.http.response
 
 val boardRoutes =
     arrayOf(
-        "/api/board/{id}" bind GET to
+        "/api/boards" bind GET to
+            apiAuthOptional { user, request ->
+                val visibility = request.query("visibility")?.toVisibility
+                val (page, limit) = request.pagination()
+
+                response(OK, getBoards(user, visibility, page, limit))
+            },
+        "/api/boards/{id}" bind GET to
             apiBoardAuth { user, id, request ->
                 val board = getBoard(id, user)
 
@@ -31,40 +38,33 @@ val boardRoutes =
 
                 response(OK, board)
             },
-        "/api/board" bind POST to
+        "/api/boards" bind POST to
             apiAuth { user, request ->
                 val boardRequest = request.model<BoardCreateModel>()
                 val boardResponse = createBoard(boardRequest, user)
 
                 response(OK, boardResponse)
             },
-        "/api/board/{id}" bind DELETE to
+        "/api/boards/{id}" bind DELETE to
             apiBoardAuth { user, id, _ ->
                 user.deleteBoard(id)
 
                 response(OK)
             },
-        "/api/board/{id}/history" bind GET to
+        "/api/boards/{id}/history" bind GET to
             apiBoardAuth { user, id, request ->
                 val (page, limit) = request.pagination()
 
                 response(OK, user.getBoardHistory(id, page, limit))
             },
-        "/api/board/{id}/users" bind GET to
+        "/api/boards/{id}/users" bind GET to
             apiBoardAuth { user, id, _ ->
                 response(OK, user.getBoardUsers(id))
             },
-        "/api/board/{id}/users" bind POST to
+        "/api/boards/{id}/users" bind POST to
             apiBoardAuth { user, id, request ->
                 val addUser = request.model<InviteRequest>()
 
                 response(OK, user.inviteToBoard(id, addUser))
-            },
-        "/api/boards" bind GET to
-            apiAuthOptional { user, request ->
-                val visibility = request.query("visibility")?.toVisibility
-                val (page, limit) = request.pagination()
-
-                response(OK, getBoards(user, visibility, page, limit))
             },
     )

@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.pages
+package xyz.malefic.kanman.pages.boards
 
 import androidx.compose.runtime.Composable
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
@@ -8,21 +8,21 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.core.Page
-import com.varabyte.kobweb.core.rememberPageContext
+import com.varabyte.kobweb.core.PageContext
 import org.jetbrains.compose.web.css.px
-import xyz.malefic.kanman.api.board
+import xyz.malefic.kanman.api.getBoard
 import xyz.malefic.kanman.api.util.Request
 import xyz.malefic.kanman.components.KanColumn
+import xyz.malefic.kanman.components.Spinner
 import xyz.malefic.kanman.data.model.Column
 import kotlin.uuid.Uuid
 
-@Page
+@Page("{id}")
 @Composable
-fun BoardPage() {
-    val ctx = rememberPageContext()
-    val boardId = ctx.route.params["id"]?.let { Uuid.parse(it) } ?: return
+fun BoardPage(ctx: PageContext) {
+    val boardId = ctx.route.params["id"]?.let { Uuid.parse(it) } ?: return Spinner()
 
-    Request(boardId, request = { board(boardId) }) { board ->
+    ctx.Request(boardId, request = { getBoard(boardId) }) { board ->
         Row(
             Modifier.fillMaxSize().padding(12.px),
             Arrangement.SpaceEvenly,

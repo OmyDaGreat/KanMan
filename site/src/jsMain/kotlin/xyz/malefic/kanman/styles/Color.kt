@@ -5,6 +5,7 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Color
 import com.varabyte.kobweb.compose.ui.graphics.Color.Companion.rgba
 import com.varabyte.kobweb.compose.ui.modifiers.setVariable
+import com.varabyte.kobweb.silk.components.forms.ButtonVars
 import com.varabyte.kobweb.silk.components.navigation.LinkVars
 import com.varabyte.kobweb.silk.init.InitSilk
 import com.varabyte.kobweb.silk.init.InitSilkContext
@@ -364,6 +365,7 @@ fun initColor(ctx: InitSilkContext) {
         ctx.stylesheet.registerStyleBase(".${colorMode.cssClass}") {
             val palette = colorMode.toPalette()
             Modifier
+                .setVariable(ButtonVars.Color, if (colorMode.isLight) onPrimaryLight.color else onPrimaryDark.color)
                 .setVariable(BackgroundColorVar, palette.background)
                 .setVariable(ColorVar, palette.color)
                 .setVariable(BorderColorVar, palette.border)

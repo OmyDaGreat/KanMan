@@ -11,9 +11,9 @@ import org.http4k.core.Request
 import org.http4k.websocket.Websocket
 import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
+import xyz.malefic.kanman.api.util.json
 import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.UserResponseModel
-import xyz.malefic.kanman.data.model.json
 import xyz.malefic.kanman.features.auth.authenticate
 import xyz.malefic.kanman.infra.http.boardId
 import kotlin.uuid.Uuid
@@ -39,9 +39,8 @@ fun apiAuthWS(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> WsRe
 context(_: Raise<Issue>)
 inline fun <reified T : Any> WsMessage.model() =
     Either
-        .catch {
-            json.decodeFromString<T>(bodyString())
-        }.mapLeft { Issue.Validation.BadRequest("Invalid JSON for request body: ${it.message}") }
+        .catch { json.decodeFromString<T>(bodyString()) }
+        .mapLeft { Issue.Validation.BadRequest("Invalid JSON for request body: ${it.message}") }
         .bind()
 
 inline fun <reified T : Any> Websocket.send(obj: T) = send(WsMessage(json.encodeToString(obj)))

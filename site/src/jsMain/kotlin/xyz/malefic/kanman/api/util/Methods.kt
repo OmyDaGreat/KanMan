@@ -16,7 +16,6 @@ import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.Issue.Client.Network
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
 import xyz.malefic.kanman.data.model.Issue.Validation.BadResponse
-import xyz.malefic.kanman.data.model.json
 
 suspend fun Response.error() =
     try {

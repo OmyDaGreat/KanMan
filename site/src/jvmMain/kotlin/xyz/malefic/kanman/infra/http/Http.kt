@@ -17,9 +17,9 @@ import org.http4k.core.Response
 import org.http4k.core.Status
 import org.http4k.lens.contentType
 import org.http4k.routing.path
+import xyz.malefic.kanman.api.util.json
 import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.UserResponseModel
-import xyz.malefic.kanman.data.model.json
 import xyz.malefic.kanman.features.auth.authenticate
 import xyz.malefic.kanman.features.auth.authenticateOptional
 import java.util.concurrent.ConcurrentHashMap

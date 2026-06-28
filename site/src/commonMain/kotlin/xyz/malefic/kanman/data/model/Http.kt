@@ -7,7 +7,6 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @Serializable
-@SerialName("paginated_response")
 data class PaginatedResponse<T>(
     val items: List<T>,
     val page: Int,
@@ -16,14 +15,12 @@ data class PaginatedResponse<T>(
 )
 
 @Serializable
-@SerialName("user_request")
 data class UserRequestModel(
     val username: String,
     val password: String,
 )
 
 @Serializable
-@SerialName("user")
 data class UserResponseModel(
     val id: Uuid,
     val username: String,
@@ -33,14 +30,12 @@ data class UserResponseModel(
 }
 
 @Serializable
-@SerialName("user_summary")
 data class UserSummaryModel(
     val id: Uuid,
     val username: String,
 )
 
 @Serializable
-@SerialName("refresh_request")
 data class RefreshRequestModel(
     @SerialName("refresh_token") val refreshToken: String,
 ) {
@@ -50,7 +45,6 @@ data class RefreshRequestModel(
 }
 
 @Serializable
-@SerialName("token_response")
 data class TokenResponseModel(
     @SerialName("access_token") val accessToken: String,
     @SerialName("refresh_token") val refreshToken: String,
@@ -58,7 +52,6 @@ data class TokenResponseModel(
 )
 
 @Serializable
-@SerialName("sticky_note")
 data class StickyNoteModel(
     val id: Uuid,
     val title: String,
@@ -69,14 +62,12 @@ data class StickyNoteModel(
 )
 
 @Serializable
-@SerialName("board_create")
 data class BoardCreateModel(
     val title: String,
     val visibility: Visibility,
 )
 
 @Serializable
-@SerialName("board")
 data class BoardResponseModel(
     val id: Uuid,
     val title: String,
@@ -87,7 +78,6 @@ data class BoardResponseModel(
 )
 
 @Serializable
-@SerialName("board_summary")
 data class BoardSummaryModel(
     val id: Uuid,
     val title: String,
@@ -96,7 +86,6 @@ data class BoardSummaryModel(
 )
 
 @Serializable
-@SerialName("board_event")
 data class BoardEventModel(
     val id: Uuid,
     @SerialName("board_id") val boardId: Uuid,
@@ -106,7 +95,6 @@ data class BoardEventModel(
 )
 
 @Serializable
-@SerialName("invite_request")
 data class InviteRequest(
     @SerialName("user_id") val userId: Uuid,
 ) {

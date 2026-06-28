@@ -39,7 +39,6 @@ import com.varabyte.kobweb.silk.theme.modifyStyle
 import org.jetbrains.compose.web.css.AnimationTimingFunction
 import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.em
-import org.jetbrains.compose.web.css.percent
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.css.s
 
@@ -63,7 +62,7 @@ fun initStyles(ctx: InitSilkContext) {
         base {
             Modifier
                 .letterSpacing(0.02.em)
-                .borderRadius(100.percent)
+                .borderRadius(16.px)
                 .padding(topBottom = 12.px, leftRight = 28.px)
                 .transition {
                     property("all")
@@ -78,7 +77,7 @@ fun initStyles(ctx: InitSilkContext) {
 
     ctx.theme.modifyStyle(SwitchStyle) {
         base {
-            Modifier.borderRadius(100.percent)
+            Modifier.borderRadius(16.px)
         }
     }
 
