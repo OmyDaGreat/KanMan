@@ -1,5 +1,6 @@
 package xyz.malefic.kanman.data.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -88,6 +89,7 @@ sealed class Issue : Error() {
         @Serializable
         data class Internal(
             override val message: String = "Internal server error",
+            @SerialName("cause") val trace: String? = null,
         ) : Server()
 
         @Serializable

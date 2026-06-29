@@ -23,7 +23,9 @@ fun apiWS(handler: suspend Raise<Issue>.(Request) -> WsResponse): (Request) -> W
         runBlocking {
             either {
                 catch({ handler(request) })
-                { e: Throwable -> if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error")) }
+                { e: Throwable ->
+                    if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error", e.stackTraceToString()))
+                }
             }.mapLeft { error ->
                 WsResponse.Companion { ws ->
                     ws.send(error)

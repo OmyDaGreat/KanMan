@@ -2,6 +2,7 @@ package xyz.malefic.kanman.pages
 
 import androidx.compose.runtime.Composable
 import com.varabyte.kobweb.compose.foundation.layout.Box
+import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.core.Page
@@ -16,7 +17,7 @@ import xyz.malefic.kanman.data.model.Visibility
 @Composable
 fun HomePage(ctx: PageContext) =
     ctx.Request(request = { createBoard(BoardCreateModel("Test", Visibility.PUBLIC)) }) { board ->
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
             Link(
                 path = "/boards/${board.id}",
                 text = "Go to Board: ${board.title}",

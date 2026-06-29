@@ -30,7 +30,9 @@ fun api(handler: suspend Raise<Issue>.(Request) -> Response): HttpHandler =
         runBlocking {
             either {
                 catch({ handler(request) })
-                { e: Throwable -> if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error")) }
+                { e: Throwable ->
+                    if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error", e.stackTraceToString()))
+                }
             }.mapLeft {
                 Logger.e(it, "HTTP") { "Internal server error" }
                 it.toResponse()
