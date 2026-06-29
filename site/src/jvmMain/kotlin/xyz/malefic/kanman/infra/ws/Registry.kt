@@ -41,5 +41,7 @@ object Registry {
         ws: Websocket,
     ) = connections[boardId]?.remove(ws) == true
 
-    fun closeAll(boardId: Uuid) = connections.remove(boardId)?.forEach { it.close() }
+    fun closeAll(boardId: Uuid) {
+        connections.remove(boardId)?.forEach { it.close() }
+    }
 }

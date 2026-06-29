@@ -6,15 +6,17 @@ import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.foundation.layout.Row
+import com.varabyte.kobweb.compose.foundation.layout.Spacer
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxHeight
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
-import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
 import com.varabyte.kobweb.compose.ui.modifiers.height
+import com.varabyte.kobweb.compose.ui.modifiers.margin
 import com.varabyte.kobweb.compose.ui.modifiers.overflow
 import com.varabyte.kobweb.compose.ui.modifiers.padding
+import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.PageContext
 import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.layout.Surface
@@ -24,9 +26,12 @@ import com.varabyte.kobweb.silk.style.toAttrs
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.css.vh
 import org.jetbrains.compose.web.dom.H1
+import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Span
 import org.jetbrains.compose.web.dom.Text
+import xyz.malefic.kanman.api.user
 import xyz.malefic.kanman.api.util.AuthSession
+import xyz.malefic.kanman.api.util.Request
 import xyz.malefic.kanman.styles.Color
 
 @Layout
@@ -39,13 +44,8 @@ fun NavBarLayout(
 
     Row(Modifier.fillMaxSize().height(100.vh)) {
         Surface(Modifier.fillMaxHeight().backgroundColor(Color.surfaceContainerHigh)) {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(0.px, 20.px),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                H1 {
+            Column(Modifier.fillMaxSize().padding(16.px), horizontalAlignment = Alignment.CenterHorizontally) {
+                H1(Modifier.margin(16.px).toAttrs()) {
                     Text("KanMan")
                 }
 
@@ -61,10 +61,22 @@ fun NavBarLayout(
                             }
                         }
                     }
-                    if (AuthSession.accessToken != null) {
-                        // TODO: Make a little profile box at the bottom of the column
-                        Link("/logout") {
-                            Text("Log Out")
+                }
+
+                if (AuthSession.accessToken != null) {
+                    ctx.Request(Unit, request = { user() }) { user ->
+                        Spacer()
+                        Column(
+                            Modifier.padding(16.px).backgroundColor(Color.secondaryContainer),
+                            verticalArrangement = Arrangement.spacedBy(12.px),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            P(Modifier.margin(0.px).toAttrs()) {
+                                Text(user.username)
+                            }
+                            Link("/logout") {
+                                Text("Log Out")
+                            }
                         }
                     }
                 }

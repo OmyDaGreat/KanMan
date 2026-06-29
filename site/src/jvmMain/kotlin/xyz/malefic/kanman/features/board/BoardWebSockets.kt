@@ -32,8 +32,7 @@ val boardWs =
                 WsResponse { ws ->
                     either {
                         catch({
-                            Registry.register(id, ws)
-                            Registry.broadcast(id, UserJoin(userSummary, id))
+                            if (Registry.register(id, ws)) Registry.broadcast(id, UserJoin(userSummary, id))
                         }) { raise(Internal(it.message ?: "Connection registry failure")) }
 
                         ws.onMessage { msg ->

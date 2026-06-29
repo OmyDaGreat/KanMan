@@ -1,5 +1,6 @@
 package xyz.malefic.kanman.features.auth
 
+import arrow.core.Either
 import arrow.core.getOrElse
 import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
@@ -106,7 +107,13 @@ private fun UserEntity.createAccessToken() =
         .sign(jwtAlgorithm)
 
 context(_: Raise<Issue>)
-fun verifyAccessToken(token: String) = ensureNotNull(Uuid.parseOrNull(jwtVerifier.verify(token).subject)) { InvalidToken() }
+fun verifyAccessToken(token: String) =
+    ensureNotNull(
+        Either
+            .catch { jwtVerifier.verify(token).subject }
+            .getOrElse { raise(it.message?.let { message -> InvalidToken(message) } ?: InvalidToken()) }
+            ?.let { Uuid.parseOrNull(it) },
+    ) { InvalidToken() }
 
 context(_: JdbcTransaction)
 fun UserEntity.issueTokenPair(): TokenModel {

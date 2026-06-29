@@ -1,5 +1,6 @@
 package xyz.malefic.kanman.infra.http
 
+import arrow.core.getOrElse
 import arrow.core.merge
 import arrow.core.raise.Raise
 import arrow.core.raise.catch
@@ -59,10 +60,10 @@ fun apiAuthOptional(handler: suspend Raise<Issue>.(UserResponseModel?, Request) 
             either {
                 catch({ handler(authenticateOptional(request), request) })
                 { e: Throwable -> if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error")) }
-            }.mapLeft {
+            }.getOrElse {
                 Logger.e(it, "HTTP") { "Internal server error" }
                 it.toResponse()
-            }.merge()
+            }
         }
     }
 
@@ -108,7 +109,7 @@ fun rateLimit(
                     ensure(userHits.size < requests) { Issue.Server.RateLimited(userHits.first() + windowMillis - now) }
                     userHits.add(now)
                     next(request)
-                }.mapLeft { it.toResponse() }.merge()
+                }.getOrElse { it.toResponse() }
             }
         }
     }
