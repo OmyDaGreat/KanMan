@@ -81,14 +81,22 @@ fun LoginPage(ctx: PageContext) =
                         { issue -> loginStatus = ApiState.Error(issue) },
                         {
                             loginStatus = ApiState.Success(Unit)
-                            ctx.router.navigateTo("/") // TODO: Save previous page (send as routing data?)
+                            ctx.router.navigateTo(ctx.route.params["redirect"] ?: "/")
                         },
                     )
                 }
             }
 
             DisposableEffect(Unit) {
-                val handler: (Event) -> Unit = { event -> if ((event as KeyboardEvent).key == "Enter") submit() }
+                val handler: (Event) -> Unit = { event ->
+                    if ((event as KeyboardEvent).key == "Enter" && loginStatus !is ApiState.Loading &&
+                        username.isNotEmpty() &&
+                        password.isNotEmpty()
+                    ) {
+                        event.preventDefault()
+                        submit()
+                    }
+                }
                 document.addEventListener("keydown", handler)
                 onDispose { document.removeEventListener("keydown", handler) }
             }

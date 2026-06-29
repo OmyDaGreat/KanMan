@@ -23,6 +23,7 @@ import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.features.auth.authenticate
 import xyz.malefic.kanman.features.auth.authenticateOptional
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.Uuid
 
 fun api(handler: suspend Raise<Issue>.(Request) -> Response): HttpHandler =
@@ -46,18 +47,20 @@ inline fun <reified T : Any> Request.model() =
     catch({ json.decodeFromString<T>(bodyString()) })
     { raise(Issue.Validation.BadRequest("Invalid JSON for request body: ${it.message}")) }
 
-fun Issue.toResponse(): Response =
-    when (this) {
-        is Issue.Auth -> response(Status.UNAUTHORIZED, this)
-        is Issue.Access.Forbidden, is Issue.Board.AccessDenied -> response(Status.FORBIDDEN, this)
-        is Issue.Board.NotFound, is Issue.User.NotFound -> response(Status.NOT_FOUND, this)
-        is Issue.User.AlreadyExists, is Issue.Server.Conflict -> response(Status.CONFLICT, this)
-        is Issue.Board.InvalidId, is Issue.Validation.BadRequest -> response(Status.BAD_REQUEST, this)
-        is Issue.Server.RateLimited -> response(Status.TOO_MANY_REQUESTS, this)
-        is Issue.Server.Internal -> response(Status.INTERNAL_SERVER_ERROR, this)
-        is Issue.Validation.BadResponse -> response(Status.INTERNAL_SERVER_ERROR, Issue.Server.Internal(message))
-        is Issue.Client -> response(Status.INTERNAL_SERVER_ERROR, Issue.Server.Internal(message))
-    }
+fun Issue.toResponse(): Response {
+    val status =
+        when (this) {
+            is Issue.Auth -> Status.UNAUTHORIZED
+            is Issue.Access.Forbidden, is Issue.Board.AccessDenied -> Status.FORBIDDEN
+            is Issue.Board.NotFound, is Issue.User.NotFound -> Status.NOT_FOUND
+            is Issue.User.AlreadyExists, is Issue.Server.Conflict -> Status.CONFLICT
+            is Issue.Board.InvalidId, is Issue.Validation.BadRequest -> Status.BAD_REQUEST
+            is Issue.Server.RateLimited -> Status.TOO_MANY_REQUESTS
+            is Issue.Server.Internal, is Issue.Validation.BadResponse, is Issue.Client -> Status.INTERNAL_SERVER_ERROR
+        }
+    val body = if (this is Issue.Validation.BadResponse || this is Issue.Client) Issue.Server.Internal(message) else this
+    return response<Issue>(status, body)
+}
 
 fun response(status: Status) = Response.Companion(status)
 
@@ -80,7 +83,7 @@ fun rateLimit(
             synchronized(userHits) {
                 either {
                     userHits.removeIf { it < now - windowMillis }
-                    ensure(userHits.size < requests) { Issue.Server.RateLimited(userHits.first() + windowMillis - now) }
+                    ensure(userHits.size < requests) { Issue.Server.RateLimited((userHits.first() + windowMillis - now).milliseconds) }
                     userHits.add(now)
                     next(request)
                 }.getOrElse { it.toResponse() }

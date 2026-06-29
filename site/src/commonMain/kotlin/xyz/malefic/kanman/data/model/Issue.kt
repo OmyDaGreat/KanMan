@@ -2,6 +2,7 @@ package xyz.malefic.kanman.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration
 
 @Serializable
 sealed class Issue : Error() {
@@ -106,9 +107,9 @@ sealed class Issue : Error() {
 
         @Serializable
         data class RateLimited(
-            val retryAfterMs: Long? = null,
+            @SerialName("retry_after_ms") val retryAfterMs: Duration? = null,
         ) : Server() {
-            override val message = "Rate limited" + (retryAfterMs?.let { " (retry after ${it}ms)" } ?: "")
+            override val message = "Rate limited" + (retryAfterMs?.let { " (retry after $it)" } ?: "")
         }
     }
 

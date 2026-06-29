@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import arrow.core.Either
+import com.varabyte.kobweb.browser.uri.encodeURIComponent
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
@@ -50,12 +51,21 @@ fun <T> PageContext.Request(
         }
 
         is ApiState.Error -> {
-            val error = (state as ApiState.Error).issue
-            if (error is Issue.Auth) {
-                router.navigateTo("/login")
-            } else {
-                Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    Text("Error: ${error.message}")
+            when (val error = (state as ApiState.Error).issue) {
+                is Issue.Auth -> {
+                    router.navigateTo("/login?redirect=${encodeURIComponent(route.path)}")
+                }
+
+                is Issue.Server.RateLimited -> {
+                    Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        Text("Too many requests. Please wait ${error.retryAfterMs ?: "a moment"}.")
+                    }
+                }
+
+                else -> {
+                    Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        Text("Error: ${error.message}")
+                    }
                 }
             }
         }
