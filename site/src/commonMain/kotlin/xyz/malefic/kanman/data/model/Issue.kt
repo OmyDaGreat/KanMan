@@ -90,7 +90,14 @@ sealed class Issue : Error() {
         data class Internal(
             override val message: String = "Internal server error",
             @SerialName("cause") val trace: String? = null,
-        ) : Server()
+        ) : Server() {
+            companion object {
+                fun from(
+                    e: Throwable,
+                    message: String = "Internal server error",
+                ) = e as? Issue ?: Internal(e.message ?: message, e.stackTraceToString())
+            }
+        }
 
         @Serializable
         data class Conflict(

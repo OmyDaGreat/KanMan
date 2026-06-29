@@ -1,7 +1,6 @@
 package xyz.malefic.kanman.infra.http
 
 import arrow.core.getOrElse
-import arrow.core.merge
 import arrow.core.raise.Raise
 import arrow.core.raise.catch
 import arrow.core.raise.context.ensureNotNull
@@ -29,43 +28,18 @@ import kotlin.uuid.Uuid
 fun api(handler: suspend Raise<Issue>.(Request) -> Response): HttpHandler =
     { request ->
         runBlocking {
-            either {
-                catch({ handler(request) })
-                { e: Throwable ->
-                    if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error", e.stackTraceToString()))
-                }
-            }.mapLeft {
-                Logger.e(it, "HTTP") { "Internal server error" }
-                it.toResponse()
-            }.merge()
-        }
-    }
-
-fun apiAuth(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> Response): HttpHandler =
-    { request ->
-        runBlocking {
-            either {
-                catch({ handler(authenticate(request), request) })
-                { e: Throwable -> if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error")) }
-            }.mapLeft {
-                Logger.e(it, "HTTP") { "Internal server error" }
-                it.toResponse()
-            }.merge()
-        }
-    }
-
-fun apiAuthOptional(handler: suspend Raise<Issue>.(UserResponseModel?, Request) -> Response): HttpHandler =
-    { request ->
-        runBlocking {
-            either {
-                catch({ handler(authenticateOptional(request), request) })
-                { e: Throwable -> if (e is Issue) raise(e) else raise(Issue.Server.Internal(e.message ?: "Internal server error")) }
-            }.getOrElse {
+            either { catch({ handler(request) }) { e: Throwable -> raise(Issue.Server.Internal.from(e)) } }.getOrElse {
                 Logger.e(it, "HTTP") { "Internal server error" }
                 it.toResponse()
             }
         }
     }
+
+fun apiAuth(handler: suspend Raise<Issue>.(UserResponseModel, Request) -> Response): HttpHandler =
+    api { request -> handler(request.authenticate(), request) }
+
+fun apiAuthOptional(handler: suspend Raise<Issue>.(UserResponseModel?, Request) -> Response): HttpHandler =
+    api { request -> handler(request.authenticateOptional(), request) }
 
 context(_: Raise<Issue>)
 inline fun <reified T : Any> Request.model() =

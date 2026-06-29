@@ -20,8 +20,8 @@ import xyz.malefic.kanman.data.model.Issue.Validation.BadResponse
 suspend fun Response.error() =
     try {
         json.decodeFromString<Issue>(text().await())
-    } catch (_: Exception) {
-        Internal(statusText)
+    } catch (e: Exception) {
+        Internal.from(e)
     }
 
 context(_: Raise<Issue>)

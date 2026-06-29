@@ -210,6 +210,7 @@ fun getUserFromAccessToken(accessToken: String) =
 
 context(_: JdbcTransaction)
 private fun UserEntity.revokeAllRefreshTokens() =
+    // TODO: Add global sign out
     AuthTokenEntity.find { AuthTokens.user eq id }.forEach { it.revokedAt = it.revokedAt ?: System.currentTimeMillis() }
 
 context(_: JdbcTransaction)
@@ -228,24 +229,24 @@ fun UserRequestModel.create() =
     }
 
 context(_: Raise<Issue>)
-fun authenticate(request: Request) =
+fun Request.authenticate() =
     getUserFromAccessToken(
-        request
-            .header("Authorization")
+        header("Authorization")
             ?.takeIf { it.startsWith("Bearer ") }
             ?.removePrefix("Bearer ")
             ?.trim()
-            ?: request.query("token")
+            ?: query("token")
             ?: raise(MissingToken()),
     )
 
-fun authenticateOptional(request: Request): UserResponseModel? =
-    request
-        .header("Authorization")
-        ?.takeIf { it.startsWith("Bearer ") }
-        ?.removePrefix("Bearer ")
-        ?.trim()
-        ?.let { token -> either { getUserFromAccessToken(token) }.getOrElse { null } }
+fun Request.authenticateOptional() =
+    (
+        header("Authorization")
+            ?.takeIf { it.startsWith("Bearer ") }
+            ?.removePrefix("Bearer ")
+            ?.trim()
+            ?: query("token")
+    )?.let { token -> either { getUserFromAccessToken(token) }.getOrElse { null } }
 
 context(_: Raise<Issue>)
 fun getUserSummary(username: String) =
