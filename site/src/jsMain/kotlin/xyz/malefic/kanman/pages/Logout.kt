@@ -15,7 +15,7 @@ import xyz.malefic.kanman.api.util.Request
 @Page
 @Composable
 fun LogoutPage(ctx: PageContext) =
-    ctx.Request(request = { AuthSession.logout() }) {
+    ctx.Request(request = { AuthSession.signout() }) {
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             P { Text("Successfully logged out") }
         }

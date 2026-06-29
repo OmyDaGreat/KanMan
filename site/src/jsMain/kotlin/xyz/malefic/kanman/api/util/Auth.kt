@@ -13,10 +13,11 @@ import org.w3c.dom.get
 import org.w3c.dom.set
 import org.w3c.fetch.Headers
 import org.w3c.fetch.Response
+import xyz.malefic.kanman.api.logout
+import xyz.malefic.kanman.api.refresh
 import xyz.malefic.kanman.api.register
 import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
-import xyz.malefic.kanman.data.model.RefreshRequestModel.Companion.refresh
 import xyz.malefic.kanman.data.model.TokenResponseModel
 import xyz.malefic.kanman.data.model.UserRequestModel
 import xyz.malefic.kanman.api.login as apilogin
@@ -59,15 +60,13 @@ object AuthSession {
 
     context(_: Raise<Issue>)
     suspend fun tryRefresh() {
-        val rt = ensureNotNull(refreshToken) { BadRequest("No refresh token available") }
-        updateTokens(post<_, TokenResponseModel>("token/refresh", rt.refresh).onLeft { logout() }.bind())
+        ensureNotNull(refreshToken) { BadRequest("No refresh token available") }
+        updateTokens(refresh()!!.onLeft { signout() }.bind())
     }
 
-    suspend fun logout() =
+    suspend fun signout() =
         either {
-            xyz.malefic.kanman.api
-                .logout()
-                ?.bind() ?: Unit
+            logout()?.bind()
             updateTokens(null)
         }
 }

@@ -207,13 +207,13 @@ fun UserRequestModel.create() =
 context(_: Raise<Issue>)
 fun authenticate(request: Request) =
     getUserFromAccessToken(
-        ensureNotNull(
-            request
-                .header("Authorization")
-                ?.takeIf { it.startsWith("Bearer ") }
-                ?.removePrefix("Bearer ")
-                ?.trim(),
-        ) { MissingToken() },
+        request
+            .header("Authorization")
+            ?.takeIf { it.startsWith("Bearer ") }
+            ?.removePrefix("Bearer ")
+            ?.trim()
+            ?: request.query("token")
+            ?: raise(MissingToken()),
     )
 
 fun authenticateOptional(request: Request): UserResponseModel? =
