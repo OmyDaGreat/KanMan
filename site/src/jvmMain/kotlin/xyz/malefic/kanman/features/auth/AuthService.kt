@@ -11,6 +11,10 @@ import co.touchlab.kermit.Logger
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import org.http4k.core.Request
+import org.http4k.core.Response
+import org.http4k.core.cookie.Cookie
+import org.http4k.core.cookie.SameSite
+import org.http4k.core.cookie.cookie
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNotNull
@@ -31,7 +35,7 @@ import xyz.malefic.kanman.data.model.Issue.Auth.InvalidToken
 import xyz.malefic.kanman.data.model.Issue.Auth.MissingToken
 import xyz.malefic.kanman.data.model.Issue.User
 import xyz.malefic.kanman.data.model.Issue.Validation.BadRequest
-import xyz.malefic.kanman.data.model.TokenResponseModel
+import xyz.malefic.kanman.data.model.TokenModel
 import xyz.malefic.kanman.data.model.UserRequestModel
 import xyz.malefic.kanman.data.model.UserResponseModel
 import java.security.MessageDigest
@@ -70,6 +74,19 @@ private val jwtAlgorithm =
     )
 private val jwtVerifier = JWT.require(jwtAlgorithm).build()
 
+fun Response.withRefreshCookie(token: String?) =
+    cookie(
+        Cookie(
+            "refresh_token",
+            token ?: "",
+            token?.let { REFRESH_TOKEN_TTL_MILLIS / 1000 },
+            path = "/api",
+            httpOnly = true,
+            secure = true,
+            sameSite = SameSite.Strict,
+        ),
+    )
+
 fun hashPassword(password: String): String = bcrypt.hashToString(12, password.toCharArray())
 
 private fun verifyPassword(
@@ -81,10 +98,10 @@ private fun hash(text: String) = MessageDigest.getInstance("SHA-256").digest(tex
 
 private fun generateSecret(bytes: Int = 32) = ByteArray(bytes).also { secureRandom.nextBytes(it) }.let { base64.encode(it) }
 
-private fun createAccessToken(user: UserEntity) =
+private fun UserEntity.createAccessToken() =
     JWT
         .create()
-        .withSubject(user.id.value.toString())
+        .withSubject(id.value.toString())
         .withExpiresAt(Date(System.currentTimeMillis() + ACCESS_TOKEN_TTL_MILLIS))
         .sign(jwtAlgorithm)
 
@@ -92,18 +109,18 @@ context(_: Raise<Issue>)
 fun verifyAccessToken(token: String) = ensureNotNull(Uuid.parseOrNull(jwtVerifier.verify(token).subject)) { InvalidToken() }
 
 context(_: JdbcTransaction)
-fun issueTokenPair(user: UserEntity): TokenResponseModel {
-    val accessToken = createAccessToken(user)
+fun UserEntity.issueTokenPair(): TokenModel {
+    val accessToken = createAccessToken()
     val secret = generateSecret()
 
     val entity =
         AuthTokenEntity.new {
-            this.user = user
+            this.user = this@issueTokenPair
             this.secretHash = hash(secret)
             this.expiresAt = System.currentTimeMillis() + REFRESH_TOKEN_TTL_MILLIS
         }
 
-    return TokenResponseModel(
+    return TokenModel(
         accessToken = accessToken,
         refreshToken = "${entity.id.value}:$secret",
         expiresIn = ACCESS_TOKEN_TTL_MILLIS / 1000,
@@ -128,7 +145,7 @@ fun refreshTokens(refreshToken: String) =
         }
 
         token.revokedAt = now
-        issueTokenPair(token.user)
+        token.user.issueTokenPair()
     }
 
 fun janitor() =
@@ -145,10 +162,11 @@ fun janitor() =
 context(_: Raise<Issue>)
 fun revokeRefreshToken(refreshToken: String) =
     transaction {
-        val idPart = refreshToken.substringBefore(":")
-        val id = ensureNotNull(Uuid.parseOrNull(idPart)) { BadRequest("Invalid refresh token ID") }
+        val id = Uuid.parseOrNull(refreshToken.substringBefore(":")) ?: return@transaction
 
-        AuthTokenEntity.findById(id)?.apply { revokedAt = System.currentTimeMillis() }
+        AuthTokenEntity.findById(id)?.apply {
+            if (revokedAt == null) revokedAt = System.currentTimeMillis()
+        }
     }
 
 context(_: Raise<Issue>)
@@ -169,8 +187,7 @@ fun getTokensFromLogin(user: UserRequestModel) =
 
         userEntity.failedAttempts = 0
         userEntity.lockUntil = 0
-        revokeAccessTokensForUser(userEntity)
-        issueTokenPair(userEntity)
+        userEntity.issueTokenPair()
     }
 
 context(_: Raise<Issue>)
@@ -185,8 +202,8 @@ fun getUserFromAccessToken(accessToken: String) =
     }
 
 context(_: JdbcTransaction)
-private fun revokeAccessTokensForUser(user: UserEntity) =
-    AuthTokenEntity.find { AuthTokens.user eq user.id }.forEach { it.revokedAt = it.revokedAt ?: System.currentTimeMillis() }
+private fun UserEntity.revokeAllRefreshTokens() =
+    AuthTokenEntity.find { AuthTokens.user eq id }.forEach { it.revokedAt = it.revokedAt ?: System.currentTimeMillis() }
 
 context(_: JdbcTransaction)
 val UserResponseModel.entity
@@ -196,12 +213,11 @@ context(_: Raise<Issue>)
 fun UserRequestModel.create() =
     transaction {
         ensure(UserEntity.find { Users.username eq username }.empty()) { User.AlreadyExists() }
-        issueTokenPair(
-            UserEntity.new {
+        UserEntity
+            .new {
                 this.username = this@create.username
                 this.hashedPassword = hashPassword(this@create.password)
-            },
-        )
+            }.issueTokenPair()
     }
 
 context(_: Raise<Issue>)

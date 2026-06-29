@@ -36,18 +36,17 @@ data class UserSummaryModel(
 )
 
 @Serializable
-data class RefreshRequestModel(
+data class TokenModel(
+    @SerialName("access_token") val accessToken: String,
     @SerialName("refresh_token") val refreshToken: String,
+    @SerialName("expires_in") val expiresIn: Long,
 ) {
-    companion object {
-        val String.refresh get() = RefreshRequestModel(this)
-    }
+    val response = TokenResponseModel(accessToken, expiresIn)
 }
 
 @Serializable
 data class TokenResponseModel(
     @SerialName("access_token") val accessToken: String,
-    @SerialName("refresh_token") val refreshToken: String,
     @SerialName("expires_in") val expiresIn: Long,
 )
 

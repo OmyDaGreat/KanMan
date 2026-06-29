@@ -61,7 +61,8 @@ fun NavBarLayout(
                             }
                         }
                     }
-                    if (AuthSession.tokens != null) {
+                    if (AuthSession.accessToken != null) {
+                        // TODO: Make a little profile box at the bottom of the column
                         Link("/logout") {
                             Text("Log Out")
                         }

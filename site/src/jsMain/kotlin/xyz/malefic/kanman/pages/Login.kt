@@ -1,6 +1,8 @@
 package xyz.malefic.kanman.pages
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,12 +26,15 @@ import com.varabyte.kobweb.core.PageContext
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.forms.Switch
 import com.varabyte.kobweb.silk.components.forms.TextInput
+import kotlinx.browser.document
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.H2
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
+import org.w3c.dom.events.Event
+import org.w3c.dom.events.KeyboardEvent
 import xyz.malefic.kanman.api.util.ApiState
 import xyz.malefic.kanman.api.util.AuthSession
 import xyz.malefic.kanman.styles.Color
@@ -51,6 +56,12 @@ fun LoginPage(ctx: PageContext) =
         var password by remember { mutableStateOf("") }
         var loginStatus by remember { mutableStateOf<ApiState<Unit>?>(null) }
 
+        LaunchedEffect(AuthSession.accessToken) {
+            if (AuthSession.accessToken != null) {
+                ctx.router.navigateTo("/")
+            }
+        }
+
         Column(
             Modifier
                 .backgroundColor(Color.surfaceContainerHigh)
@@ -59,6 +70,29 @@ fun LoginPage(ctx: PageContext) =
                 .border(1.px, LineStyle.Solid, Color.outlineVariant),
             Arrangement.spacedBy(24.px),
         ) {
+            fun submit() {
+                scope.launch {
+                    loginStatus = ApiState.Loading
+                    if (loginMode == Login.LOGIN) {
+                        AuthSession.login(username, password)
+                    } else {
+                        AuthSession.signup(username, password)
+                    }.fold(
+                        { issue -> loginStatus = ApiState.Error(issue) },
+                        {
+                            loginStatus = ApiState.Success(Unit)
+                            ctx.router.navigateTo("/") // TODO: Save previous page (send as routing data?)
+                        },
+                    )
+                }
+            }
+
+            DisposableEffect(Unit) {
+                val handler: (Event) -> Unit = { event -> if ((event as KeyboardEvent).key == "Enter") submit() }
+                document.addEventListener("keydown", handler)
+                onDispose { document.removeEventListener("keydown", handler) }
+            }
+
             H2 { Text(loginMode.string) }
 
             TextInput(
@@ -82,22 +116,7 @@ fun LoginPage(ctx: PageContext) =
             }
 
             Button(
-                {
-                    scope.launch {
-                        loginStatus = ApiState.Loading
-                        if (loginMode == Login.LOGIN) {
-                            AuthSession.login(username, password)
-                        } else {
-                            AuthSession.signup(username, password)
-                        }.fold(
-                            { issue -> loginStatus = ApiState.Error(issue) },
-                            {
-                                loginStatus = ApiState.Success(Unit)
-                                ctx.router.navigateTo("/") // TODO: Save previous page (send as routing data?)
-                            },
-                        )
-                    }
-                },
+                { submit() },
                 enabled = loginStatus !is ApiState.Loading && username.isNotEmpty() && password.isNotEmpty(),
             ) {
                 Text(if (loginStatus is ApiState.Loading) "Loading..." else "Submit")

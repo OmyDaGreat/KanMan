@@ -93,6 +93,26 @@ suspend inline fun <reified T> postAuth(
     body: T,
 ) = apiAuth(url, method = "POST", body = json.encodeToString(body)) { }
 
+suspend inline fun <reified R> post(url: String) =
+    api(url, method = "POST") { response ->
+        response
+            .text()
+            .await()
+            .let { json.decodeFromString<R>(it) }
+    }
+
+suspend inline fun <reified R> postAuth(url: String) =
+    apiAuth(url, method = "POST") { response ->
+        response
+            .text()
+            .await()
+            .let { json.decodeFromString<R>(it) }
+    }
+
+suspend inline fun post(url: String) = api(url, method = "POST") { }
+
+suspend inline fun postAuth(url: String) = apiAuth(url, method = "POST") { }
+
 suspend fun delete(url: String) = api(url, method = "DELETE") { }
 
 suspend fun deleteAuth(url: String) = apiAuth(url, method = "DELETE") { }

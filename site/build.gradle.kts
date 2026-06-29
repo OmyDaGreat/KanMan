@@ -37,7 +37,10 @@ kobweb {
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-parameters")
+        freeCompilerArgs.apply {
+            add("-Xcontext-parameters")
+            add("-Xreturn-value-checker=full")
+        }
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
 
