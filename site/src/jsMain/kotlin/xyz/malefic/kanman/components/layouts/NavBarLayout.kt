@@ -26,6 +26,7 @@ import org.jetbrains.compose.web.css.vh
 import org.jetbrains.compose.web.dom.H1
 import org.jetbrains.compose.web.dom.Span
 import org.jetbrains.compose.web.dom.Text
+import xyz.malefic.kanman.api.util.AuthSession
 import xyz.malefic.kanman.styles.Color
 
 @Layout
@@ -58,6 +59,11 @@ fun NavBarLayout(
                             Link(page.route) {
                                 Text(page.value)
                             }
+                        }
+                    }
+                    if (AuthSession.tokens != null) {
+                        Link("/logout") {
+                            Text("Log Out")
                         }
                     }
                 }

@@ -24,7 +24,11 @@ import xyz.malefic.kanman.api.login as apilogin
 object AuthSession {
     private const val TOKENS_KEY = "kanman_tokens"
 
-    var tokens: TokenResponseModel? by mutableStateOf(localStorage[TOKENS_KEY]?.let { json.decodeFromString<TokenResponseModel>(it) })
+    var tokens: TokenResponseModel? by mutableStateOf(
+        localStorage[TOKENS_KEY]?.let {
+            runCatching { json.decodeFromString<TokenResponseModel>(it) }.getOrNull()
+        },
+    )
         private set
 
     val accessToken: String? get() = tokens?.accessToken
@@ -59,9 +63,13 @@ object AuthSession {
         updateTokens(post<_, TokenResponseModel>("token/refresh", rt.refresh).onLeft { logout() }.bind())
     }
 
-    fun logout() {
-        updateTokens(null)
-    }
+    suspend fun logout() =
+        either {
+            xyz.malefic.kanman.api
+                .logout()
+                ?.bind() ?: Unit
+            updateTokens(null)
+        }
 }
 
 suspend fun <T> apiAuth(
