@@ -4,9 +4,9 @@ import arrow.core.raise.Raise
 import arrow.core.raise.context.ensureNotNull
 import arrow.core.raise.context.raise
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.server.data.db.AssignedUserEntity
-import xyz.malefic.kanman.server.data.db.StickyNoteEntity
-import xyz.malefic.kanman.server.data.db.UserEntity
+import xyz.malefic.kanman.server.data.AssignedUserEntity
+import xyz.malefic.kanman.server.data.StickyNoteEntity
+import xyz.malefic.kanman.server.data.UserEntity
 import xyz.malefic.kanman.shared.data.model.BoardAction.EDIT_STICKY
 import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.UserResponseModel

@@ -23,10 +23,11 @@ import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.server.data.db.AuthTokenEntity
-import xyz.malefic.kanman.server.data.db.AuthTokens
-import xyz.malefic.kanman.server.data.db.UserEntity
-import xyz.malefic.kanman.server.data.db.Users
+import xyz.malefic.kanman.server.data.AuthTokenEntity
+import xyz.malefic.kanman.server.data.AuthTokens
+import xyz.malefic.kanman.server.data.UserEntity
+import xyz.malefic.kanman.server.data.Users
+import xyz.malefic.kanman.server.features.user.getUserFromAccessToken
 import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.Issue.Auth.AccountLocked
 import xyz.malefic.kanman.shared.data.model.Issue.Auth.InvalidCredentials
@@ -207,7 +208,7 @@ fun UserRequestModel.create() =
 
 context(_: Raise<Issue>)
 fun Request.authenticate() =
-    xyz.malefic.kanman.server.features.user.getUserFromAccessToken(
+    getUserFromAccessToken(
         header("Authorization")
             ?.takeIf { it.startsWith("Bearer ") }
             ?.removePrefix("Bearer ")
@@ -225,7 +226,6 @@ fun Request.authenticateOptional() =
             ?: query("token")
     )?.let { token ->
         either {
-            xyz.malefic.kanman.server.features.user
-                .getUserFromAccessToken(token)
+            getUserFromAccessToken(token)
         }.getOrElse { null }
     }

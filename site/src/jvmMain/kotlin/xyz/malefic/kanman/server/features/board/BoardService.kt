@@ -13,16 +13,16 @@ import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.with
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.select
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.server.data.db.AssignedUserEntity
-import xyz.malefic.kanman.server.data.db.AssignedUsers
-import xyz.malefic.kanman.server.data.db.BoardEntity
-import xyz.malefic.kanman.server.data.db.BoardEvents
-import xyz.malefic.kanman.server.data.db.BoardUserEntity
-import xyz.malefic.kanman.server.data.db.BoardUsers
-import xyz.malefic.kanman.server.data.db.Boards
-import xyz.malefic.kanman.server.data.db.StickyNoteEntity
-import xyz.malefic.kanman.server.data.db.StickyNotes
+import xyz.malefic.kanman.server.data.AssignedUserEntity
+import xyz.malefic.kanman.server.data.AssignedUsers
+import xyz.malefic.kanman.server.data.BoardEntity
+import xyz.malefic.kanman.server.data.BoardEvents
+import xyz.malefic.kanman.server.data.BoardUserEntity
+import xyz.malefic.kanman.server.data.BoardUsers
+import xyz.malefic.kanman.server.data.Boards
+import xyz.malefic.kanman.server.data.StickyNoteEntity
+import xyz.malefic.kanman.server.data.StickyNotes
+import xyz.malefic.kanman.server.data.transaction
 import xyz.malefic.kanman.server.features.user.entity
 import xyz.malefic.kanman.server.infra.ws.Registry
 import xyz.malefic.kanman.shared.data.model.BoardAction
@@ -47,9 +47,8 @@ context(_: Raise<Issue>, _: JdbcTransaction)
 private fun fetchBoard(
     id: Uuid,
     vararg relations: KProperty1<out Entity<*>, Any?>,
-) = ensureNotNull(
-    BoardEntity.find { Boards.id eq id }.with(*relations).firstOrNull(),
-) { Issue.Board.NotFound() }
+) = ensureNotNull(BoardEntity.find { Boards.id eq id }.with(*relations).firstOrNull())
+    { Issue.Board.NotFound() }
 
 context(_: Raise<AccessDenied>, _: JdbcTransaction)
 private fun UserResponseModel?.permissionCheck(
@@ -82,17 +81,16 @@ fun getAccessibleBoard(
     id: Uuid,
     action: BoardAction = VIEW_BOARD,
     user: UserResponseModel? = null,
-) = transaction {
-    user
-        .getAccessibleBoard(
-            id,
-            action,
-            BoardEntity::owner,
-            BoardEntity::stickies,
-            BoardEntity::memberships,
-            StickyNoteEntity::assignedUsers,
-            AssignedUserEntity::user,
-        ).toResponseModel()
+) = user.transaction {
+    getAccessibleBoard(
+        id,
+        action,
+        BoardEntity::owner,
+        BoardEntity::stickies,
+        BoardEntity::memberships,
+        StickyNoteEntity::assignedUsers,
+        AssignedUserEntity::user,
+    ).toResponseModel()
 }
 
 fun UserResponseModel.createBoard(boardCreateModel: BoardCreateModel) =
@@ -101,9 +99,9 @@ fun UserResponseModel.createBoard(boardCreateModel: BoardCreateModel) =
             BoardEntity.new {
                 title = boardCreateModel.title
                 visibility = boardCreateModel.visibility
-                owner = this@createBoard.entity
+                owner = entity
             }
-        BoardUserEntity.new(createdBoard, this@createBoard.entity, Role.OWNER)
+        BoardUserEntity.new(createdBoard, entity, Role.OWNER)
         createdBoard.toResponseModel()
     }
 
@@ -145,7 +143,7 @@ fun UserResponseModel.kick(
     val board = getAccessibleBoard(boardId, INVITE_USER)
 
     ensure(board.owner.id.value != targetId) {
-        if (this@kick.id == targetId) {
+        if (id == targetId) {
             AccessDenied("Please specify another board owner before leaving")
         } else {
             AccessDenied("A board owner cannot be uninvited")
@@ -168,14 +166,14 @@ context(_: Raise<Issue>, _: JdbcTransaction)
 private fun UserResponseModel.changeOwner(
     boardId: Uuid,
     targetId: Uuid,
-) {
+) = transaction {
     val board = getAccessibleBoard(boardId, DELETE_BOARD)
 
-    ensure(board.owner.id.value == this@changeOwner.id) { AccessDenied("Only the board owner can change the owner") }
+    ensure(board.owner.id.value == id) { AccessDenied("Only the board owner can change the owner") }
     ensure(board.owner.id.value != targetId) { AccessDenied("User is already the board owner") }
 
     val target = ensureNotNull(board.memberships.firstOrNull { it.user.id.value == targetId }) { Issue.User.NotFound() }
-    val user = ensureNotNull(board.memberships.firstOrNull { it.user.id.value == this@changeOwner.id }) { Issue.User.NotFound() }
+    val user = ensureNotNull(board.memberships.firstOrNull { it.user.id.value == id }) { Issue.User.NotFound() }
 
     user.role = Role.ADMIN
     target.role = Role.OWNER
@@ -202,7 +200,7 @@ fun getBoards(
     visibility: Visibility? = null,
     page: Int = 1,
     limit: Int = 50,
-) = transaction {
+) = user.transaction {
     val query =
         when (visibility) {
             PUBLIC -> {
@@ -210,19 +208,19 @@ fun getBoards(
             }
 
             PRIVATE -> {
-                ensureNotNull(user) { MissingToken() }
+                ensureNotNull(this) { MissingToken() }
                 (Boards innerJoin BoardUsers)
                     .select(Boards.columns)
-                    .where { (Boards.visibility eq PRIVATE) and (BoardUsers.user eq user.id) }
+                    .where { (Boards.visibility eq PRIVATE) and (BoardUsers.user eq id) }
             }
 
             else -> {
-                if (user == null) {
+                if (this == null) {
                     Boards.select(Boards.columns).where { Boards.visibility eq PUBLIC }
                 } else {
                     Boards.select(Boards.columns).where {
                         (Boards.visibility eq PUBLIC) or
-                            (Boards.id inSubQuery BoardUsers.select(BoardUsers.board).where { BoardUsers.user eq user.id })
+                            (Boards.id inSubQuery BoardUsers.select(BoardUsers.board).where { BoardUsers.user eq id })
                     }
                 }
             }

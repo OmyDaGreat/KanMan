@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.server.data.db
+package xyz.malefic.kanman.server.data
 
 import org.jetbrains.exposed.v1.core.dao.id.CompositeID
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
@@ -110,8 +110,6 @@ class StickyNoteEntity(
 
     fun toModel() = StickyNoteModel(id.value, title, content, column, assignedUsers.map { it.toModel() }, board.id.value)
 }
-
-fun <A : CompositeEntityClass<B>, B : CompositeEntity> A.findById(id: (CompositeID) -> Unit) = findById(CompositeID(id))
 
 class AssignedUserEntity(
     id: EntityID<CompositeID>,

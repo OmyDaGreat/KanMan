@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.server.data.db
+package xyz.malefic.kanman.server.data
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.dao.id.CompositeIdTable

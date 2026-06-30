@@ -16,7 +16,7 @@ import org.http4k.routing.poly
 import org.http4k.routing.routes
 import org.http4k.server.Undertow
 import org.http4k.server.asServer
-import xyz.malefic.kanman.server.data.db.initDatabase
+import xyz.malefic.kanman.server.data.initDatabase
 import xyz.malefic.kanman.server.features.auth.authRoutes
 import xyz.malefic.kanman.server.features.auth.janitor
 import xyz.malefic.kanman.server.features.board.boardRoutes

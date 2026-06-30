@@ -6,9 +6,9 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.dao.with
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.server.data.db.BoardEntity
-import xyz.malefic.kanman.server.data.db.UserEntity
-import xyz.malefic.kanman.server.data.db.Users
+import xyz.malefic.kanman.server.data.BoardEntity
+import xyz.malefic.kanman.server.data.UserEntity
+import xyz.malefic.kanman.server.data.Users
 import xyz.malefic.kanman.server.features.auth.verifyAccessToken
 import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.Issue.Auth.InvalidToken

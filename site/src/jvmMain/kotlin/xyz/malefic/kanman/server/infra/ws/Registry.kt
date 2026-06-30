@@ -5,9 +5,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.http4k.websocket.Websocket
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.server.data.db.BoardEntity
-import xyz.malefic.kanman.server.data.db.BoardEventEntity
-import xyz.malefic.kanman.server.data.db.UserEntity
+import xyz.malefic.kanman.server.data.BoardEntity
+import xyz.malefic.kanman.server.data.BoardEventEntity
+import xyz.malefic.kanman.server.data.UserEntity
 import xyz.malefic.kanman.shared.data.model.WsEvent
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.uuid.Uuid

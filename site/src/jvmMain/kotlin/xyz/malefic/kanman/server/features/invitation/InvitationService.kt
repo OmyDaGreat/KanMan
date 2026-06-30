@@ -4,11 +4,11 @@ import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
 import arrow.core.raise.context.ensureNotNull
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import xyz.malefic.kanman.server.data.db.BoardUserEntity
-import xyz.malefic.kanman.server.data.db.InvitationEntity
-import xyz.malefic.kanman.server.data.db.Invitations
-import xyz.malefic.kanman.server.data.db.UserEntity
+import xyz.malefic.kanman.server.data.BoardUserEntity
+import xyz.malefic.kanman.server.data.InvitationEntity
+import xyz.malefic.kanman.server.data.Invitations
+import xyz.malefic.kanman.server.data.UserEntity
+import xyz.malefic.kanman.server.data.transaction
 import xyz.malefic.kanman.server.features.board.getAccessibleBoard
 import xyz.malefic.kanman.server.features.user.entity
 import xyz.malefic.kanman.shared.data.model.BoardAction.INVITE_USER
@@ -20,10 +20,7 @@ import xyz.malefic.kanman.shared.data.model.UserResponseModel
 import kotlin.uuid.Uuid
 
 context(_: Raise<Issue>)
-fun UserResponseModel.getInvites() =
-    transaction {
-        InvitationEntity.find { Invitations.receiver eq this@getInvites.id }.map { it.toModel() }
-    }
+fun UserResponseModel.getInvites() = transaction { InvitationEntity.find { Invitations.receiver eq id }.map { it.toModel() } }
 
 context(_: Raise<Issue>)
 fun UserResponseModel.invite(
@@ -37,7 +34,7 @@ fun UserResponseModel.invite(
 
     InvitationEntity.new {
         this.board = board
-        sender = this@invite.entity
+        sender = entity
         receiver = addUser
         role = inviteRequest.role
     }
@@ -48,7 +45,7 @@ fun UserResponseModel.acceptInvite(inviteId: Uuid) =
     transaction {
         val invite = ensureNotNull(InvitationEntity.findById(inviteId)) { Issue.Board.NotFound() }
 
-        ensure(invite.receiver.id.value == this@acceptInvite.id) { AccessDenied("You are not invited to this board") }
+        ensure(invite.receiver.id.value == id) { AccessDenied("You are not invited to this board") }
 
         BoardUserEntity.new(invite)
         val result = (invite.board.memberships.map { it.user } + invite.receiver).map { it.toSummaryModel() }.distinct()
@@ -60,6 +57,6 @@ context(_: Raise<Issue>)
 fun UserResponseModel.declineInvite(inviteId: Uuid) =
     transaction {
         val invite = ensureNotNull(InvitationEntity.findById(inviteId)) { Issue.Board.NotFound() }
-        ensure(invite.receiver.id.value == this@declineInvite.id) { AccessDenied("You are not invited to this board") }
+        ensure(invite.receiver.id.value == id) { AccessDenied("You are not invited to this board") }
         invite.delete()
     }
