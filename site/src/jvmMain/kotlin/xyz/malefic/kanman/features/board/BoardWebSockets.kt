@@ -7,6 +7,7 @@ import org.http4k.routing.websocket.bind
 import org.http4k.routing.websockets
 import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import xyz.malefic.kanman.data.model.BoardAction.VIEW_BOARD
 import xyz.malefic.kanman.data.model.Issue.Server.Internal
 import xyz.malefic.kanman.data.model.WsAction
 import xyz.malefic.kanman.data.model.WsEvent.AssignedUser
@@ -26,7 +27,7 @@ val boardWs =
     websockets(
         "/api/ws/{id}" bind
             apiBoardAuthWS { user, id, _ ->
-                transaction { user.getAccessibleBoard(id) }
+                transaction { user.getAccessibleBoard(id, VIEW_BOARD) }
                 val userSummary = user.toSummaryModel()
 
                 WsResponse { ws ->
