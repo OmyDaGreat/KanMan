@@ -27,7 +27,7 @@ val boardRoutes =
             },
         "/api/boards/{id}" bind GET to
             apiBoardAuth { user, id, request ->
-                val board = getBoard(id, user)
+                val board = getBoard(id, user = user)
 
                 request.query("column")?.let {
                     return@apiBoardAuth response(
@@ -41,7 +41,7 @@ val boardRoutes =
         "/api/boards" bind POST to
             apiAuth { user, request ->
                 val boardRequest = request.model<BoardCreateModel>()
-                val boardResponse = createBoard(boardRequest, user)
+                val boardResponse = user.createBoard(boardRequest)
 
                 response(OK, boardResponse)
             },

@@ -61,6 +61,12 @@ data class StickyNoteModel(
 )
 
 @Serializable
+data class BoardUserResponseModel(
+    val user: UserSummaryModel,
+    val role: Role,
+)
+
+@Serializable
 data class BoardCreateModel(
     val title: String,
     val visibility: Visibility,
@@ -73,7 +79,7 @@ data class BoardResponseModel(
     val visibility: Visibility,
     val owner: UserSummaryModel,
     val stickies: List<StickyNoteModel>,
-    val users: List<UserSummaryModel>,
+    val users: List<BoardUserResponseModel>,
 )
 
 @Serializable
@@ -96,8 +102,5 @@ data class BoardEventModel(
 @Serializable
 data class InviteRequest(
     @SerialName("user_id") val userId: Uuid,
-) {
-    companion object {
-        val Uuid.invite get() = InviteRequest(this)
-    }
-}
+    val role: Role,
+)

@@ -6,6 +6,7 @@ import org.jetbrains.exposed.v1.dao.UuidEntityClass
 import xyz.malefic.kanman.data.model.BoardEventModel
 import xyz.malefic.kanman.data.model.BoardResponseModel
 import xyz.malefic.kanman.data.model.BoardSummaryModel
+import xyz.malefic.kanman.data.model.BoardUserResponseModel
 import xyz.malefic.kanman.data.model.StickyNoteModel
 import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.model.UserSummaryModel
@@ -48,6 +49,7 @@ class BoardEntity(
     var owner by UserEntity referencedOn Boards.owner
     val stickies by StickyNoteEntity referrersOn StickyNotes.board
     var users by UserEntity via BoardUsers
+    val userRoles by BoardUserEntity referrersOn BoardUsers.board
     val history by BoardEventEntity referrersOn BoardEvents.board
 
     fun toResponseModel() =
@@ -57,7 +59,7 @@ class BoardEntity(
             visibility,
             owner.toSummaryModel(),
             stickies.map { it.toModel() },
-            users.map { it.toSummaryModel() },
+            userRoles.map { it.toResponseModel() },
         )
 
     fun toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toSummaryModel())
@@ -73,14 +75,7 @@ class BoardEventEntity(
     var event by BoardEvents.event
     var timestamp by BoardEvents.timestamp
 
-    fun toModel() =
-        BoardEventModel(
-            id.value,
-            board.id.value,
-            actor.toSummaryModel(),
-            event,
-            timestamp,
-        )
+    fun toModel() = BoardEventModel(id.value, board.id.value, actor.toSummaryModel(), event, timestamp)
 }
 
 class StickyNoteEntity(
@@ -95,4 +90,16 @@ class StickyNoteEntity(
     var board by BoardEntity referencedOn StickyNotes.board
 
     fun toModel() = StickyNoteModel(id.value, title, content, column, assignedUsers.map { it.id.value }, board.id.value)
+}
+
+class BoardUserEntity(
+    id: EntityID<Uuid>,
+) : UuidEntity(id) {
+    companion object : UuidEntityClass<BoardUserEntity>(BoardUsers)
+
+    var board by BoardEntity referencedOn BoardUsers.board
+    var user by UserEntity referencedOn BoardUsers.user
+    var role by BoardUsers.role
+
+    fun toResponseModel() = BoardUserResponseModel(user.toSummaryModel(), role)
 }

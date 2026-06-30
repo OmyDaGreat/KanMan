@@ -12,23 +12,27 @@ import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.with
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.SizedCollection
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.db.BoardEntity
 import xyz.malefic.kanman.data.db.BoardEvents
+import xyz.malefic.kanman.data.db.BoardUserEntity
 import xyz.malefic.kanman.data.db.BoardUsers
 import xyz.malefic.kanman.data.db.Boards
 import xyz.malefic.kanman.data.db.StickyNoteEntity
 import xyz.malefic.kanman.data.db.UserEntity
 import xyz.malefic.kanman.data.db.Users
+import xyz.malefic.kanman.data.model.BoardAction
+import xyz.malefic.kanman.data.model.BoardAction.EDIT_STICKY
+import xyz.malefic.kanman.data.model.BoardAction.INVITE_USER
+import xyz.malefic.kanman.data.model.BoardAction.VIEW_BOARD
 import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.InviteRequest
 import xyz.malefic.kanman.data.model.Issue
 import xyz.malefic.kanman.data.model.Issue.Auth.MissingToken
 import xyz.malefic.kanman.data.model.Issue.Board.AccessDenied
 import xyz.malefic.kanman.data.model.PaginatedResponse
+import xyz.malefic.kanman.data.model.Role
 import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.Visibility.PRIVATE
@@ -48,47 +52,59 @@ private fun fetchBoard(
 ) { Issue.Board.NotFound() }
 
 context(_: Raise<AccessDenied>, _: JdbcTransaction)
-private fun UserResponseModel?.viewCheck(board: BoardEntity) {
-    ensure(board.visibility == PUBLIC || board.users.any { it.id.value == this?.id })
-    { AccessDenied("You don't have permission to view this board") }
+private fun UserResponseModel?.permissionCheck(
+    board: BoardEntity,
+    action: BoardAction,
+) {
+    val userRole = board.userRoles.find { it.user.id.value == this?.id }
+
+    if (board.visibility == PRIVATE) {
+        ensure(userRole != null) { AccessDenied("You don't have permission to access this board") }
+    }
+
+    val role = userRole?.role ?: Role.GUEST
+
+    ensure(role.permission(action)) { AccessDenied("You don't have permission to perform this action") }
 }
 
 context(_: Raise<Issue>, _: JdbcTransaction)
 fun UserResponseModel?.getAccessibleBoard(
     id: Uuid,
+    action: BoardAction,
     vararg relations: KProperty1<out Entity<*>, Any?>,
-) = fetchBoard(id, BoardEntity::users, *relations).also { viewCheck(it) }
+) = fetchBoard(id, BoardEntity::userRoles, BoardUserEntity::user, *relations).also { permissionCheck(it, action) }
 
 context(_: Raise<Issue>)
 fun getBoard(
     id: Uuid,
+    action: BoardAction = VIEW_BOARD,
     user: UserResponseModel? = null,
 ) = transaction {
     user
         .getAccessibleBoard(
             id,
+            action,
             BoardEntity::owner,
             BoardEntity::stickies,
             StickyNoteEntity::assignedUsers,
         ).toResponseModel()
 }
 
-fun createBoard(
-    boardCreateModel: BoardCreateModel,
-    user: UserResponseModel,
-) = transaction {
-    val createdBoard =
-        BoardEntity.new {
-            title = boardCreateModel.title
-            visibility = boardCreateModel.visibility
-            owner = user.entity
+fun UserResponseModel.createBoard(boardCreateModel: BoardCreateModel) =
+    transaction {
+        val createdBoard =
+            BoardEntity.new {
+                title = boardCreateModel.title
+                visibility = boardCreateModel.visibility
+                owner = this@createBoard.entity
+            }
+        BoardUserEntity.new {
+            this.board = createdBoard
+            this.user = this@createBoard.entity
+            this.role = Role.OWNER
         }
-    BoardUsers.insert {
-        it[BoardUsers.user] = user.id
-        it[BoardUsers.board] = createdBoard.id
+        createdBoard.toResponseModel()
     }
-    createdBoard.toResponseModel()
-}
 
 context(_: Raise<Issue>)
 fun UserResponseModel.deleteBoard(id: Uuid) =
@@ -107,7 +123,7 @@ fun UserResponseModel.getBoardHistory(
     page: Int = 1,
     limit: Int = 50,
 ) = transaction {
-    val board = getAccessibleBoard(id)
+    val board = getAccessibleBoard(id, VIEW_BOARD)
     val total = board.history.count()
     val items =
         board
@@ -121,26 +137,24 @@ fun UserResponseModel.getBoardHistory(
 }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.getBoardUsers(id: Uuid) = transaction { getAccessibleBoard(id).users.map { it.toSummaryModel() } }
+fun UserResponseModel.getBoardUsers(id: Uuid) = transaction { getAccessibleBoard(id, VIEW_BOARD).users.map { it.toSummaryModel() } }
 
 context(_: Raise<Issue>)
 fun UserResponseModel.inviteToBoard(
     boardId: Uuid,
     inviteRequest: InviteRequest,
 ) = transaction {
-    val board = getAccessibleBoard(boardId)
-
-    ensure(board.users.any { it.id.value == this@inviteToBoard.id })
-    { AccessDenied("You don't have permission to invite users to this board") }
-
+    val board = getAccessibleBoard(boardId, INVITE_USER, BoardEntity::userRoles, BoardUserEntity::user)
+    val userRoles = board.userRoles
     val addUser = ensureNotNull(UserEntity.find { Users.id eq inviteRequest.userId }.firstOrNull()) { Issue.User.NotFound() }
 
-    BoardUsers.insertIgnore {
-        it[BoardUsers.user] = addUser.id
-        it[BoardUsers.board] = board.id
+    BoardUserEntity.new {
+        this.board = board
+        this.user = addUser
+        this.role = inviteRequest.role
     }
 
-    (board.users + addUser).map { it.toSummaryModel() }.distinct()
+    (userRoles.map { it.user } + addUser).map { it.toSummaryModel() }.distinct()
 }
 
 context(_: Raise<Issue>)
@@ -187,7 +201,7 @@ fun UserResponseModel.createSticky(
     event: WsAction.StickyCreate,
     boardId: Uuid,
 ) = transaction {
-    val board = getAccessibleBoard(boardId)
+    val board = getAccessibleBoard(boardId, EDIT_STICKY)
 
     StickyNoteEntity
         .new {
@@ -203,7 +217,7 @@ fun UserResponseModel.deleteSticky(
     event: WsAction.StickyDelete,
     boardId: Uuid,
 ) = transaction {
-    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId) }?.delete())
+    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId, EDIT_STICKY) }?.delete())
     { Issue.Board.NotFound() }
 }
 
@@ -212,7 +226,7 @@ fun UserResponseModel.moveSticky(
     event: WsAction.StickyMove,
     boardId: Uuid,
 ) = transaction {
-    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId) })
+    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId, EDIT_STICKY) })
         { Issue.Board.NotFound() }.column = event.newColumn
 }
 
@@ -221,7 +235,7 @@ fun UserResponseModel.assignUser(
     event: WsAction.AssignUser,
     boardId: Uuid,
 ) = transaction {
-    val board = getAccessibleBoard(boardId)
+    val board = getAccessibleBoard(boardId, EDIT_STICKY)
     val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
     val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }
     sticky.assignedUsers = SizedCollection(sticky.assignedUsers + user)
@@ -232,7 +246,7 @@ fun UserResponseModel.unassignUser(
     event: WsAction.UnassignUser,
     boardId: Uuid,
 ) = transaction {
-    val board = getAccessibleBoard(boardId)
+    val board = getAccessibleBoard(boardId, EDIT_STICKY)
     val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
     val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }
     sticky.assignedUsers = SizedCollection(sticky.assignedUsers - user)

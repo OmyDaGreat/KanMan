@@ -209,11 +209,6 @@ fun getUserFromAccessToken(accessToken: String) =
     }
 
 context(_: JdbcTransaction)
-private fun UserEntity.revokeAllRefreshTokens() =
-    // TODO: Add global sign out
-    AuthTokenEntity.find { AuthTokens.user eq id }.forEach { it.revokedAt = it.revokedAt ?: System.currentTimeMillis() }
-
-context(_: JdbcTransaction)
 val UserResponseModel.entity
     get() = UserEntity.findById(id) ?: throw IllegalArgumentException("User with ID $id not found")
 

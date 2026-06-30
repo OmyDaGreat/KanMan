@@ -64,7 +64,7 @@ suspend fun <T> apiAuth(
     val headers = { Headers().apply { AuthSession.accessToken?.let { set("Authorization", "Bearer $it") } } }
 
     val result = api(url, method, body, headers(), block)
-    if (result is Either.Left && result.value is Issue.Auth) {
+    if (result is Either.Left && result.value is Issue.Auth && AuthSession.accessToken != null) {
         AuthSession.tryRefresh()
         api(url, method, body, headers(), block).bind()
     } else {

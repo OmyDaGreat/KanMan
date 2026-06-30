@@ -8,8 +8,8 @@ import xyz.malefic.kanman.data.model.BoardEventModel
 import xyz.malefic.kanman.data.model.BoardResponseModel
 import xyz.malefic.kanman.data.model.BoardSummaryModel
 import xyz.malefic.kanman.data.model.InviteRequest
-import xyz.malefic.kanman.data.model.InviteRequest.Companion.invite
 import xyz.malefic.kanman.data.model.PaginatedResponse
+import xyz.malefic.kanman.data.model.Role
 import xyz.malefic.kanman.data.model.UserSummaryModel
 import xyz.malefic.kanman.data.model.Visibility
 import kotlin.uuid.Uuid
@@ -39,4 +39,5 @@ suspend fun boardUsers(id: Uuid) = getAuth<List<UserSummaryModel>>("boards/$id/u
 suspend fun inviteToBoard(
     boardId: Uuid,
     userId: Uuid,
-) = postAuth<InviteRequest, List<UserSummaryModel>>("boards/$boardId/users", userId.invite)
+    role: Role,
+) = postAuth<InviteRequest, List<UserSummaryModel>>("boards/$boardId/users", InviteRequest(userId, role))

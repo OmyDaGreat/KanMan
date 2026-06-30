@@ -8,6 +8,7 @@ import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.json.jsonb
 import xyz.malefic.kanman.api.util.json
 import xyz.malefic.kanman.data.model.Column
+import xyz.malefic.kanman.data.model.Role
 import xyz.malefic.kanman.data.model.Visibility
 import xyz.malefic.kanman.data.model.WsEvent
 
@@ -51,8 +52,21 @@ object StickyNoteUsers : Table("sticky_note_users") {
     override val primaryKey = PrimaryKey(sticky, user)
 }
 
-object BoardUsers : Table("board_users") {
+object BoardUsers : UuidTable("board_users") {
     val board = reference("board_id", Boards, onDelete = ReferenceOption.CASCADE)
     val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
-    override val primaryKey = PrimaryKey(board, user)
+    val role = enumeration<Role>("role")
+
+    init {
+        uniqueIndex(board, user)
+    }
 }
+
+// TODO: Implement recent boards
+// object RecentBoards : Table("recent_boards") {
+//    val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
+//    val board = reference("board_id", Boards, onDelete = ReferenceOption.CASCADE)
+//    val lastViewedAt = timestamp("last_viewed_at").defaultExpression(CurrentTimestamp)
+//
+//    override val primaryKey = PrimaryKey(user, board)
+// }
