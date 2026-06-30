@@ -3,6 +3,7 @@ package xyz.malefic.kanman.features.board
 import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
 import arrow.core.raise.context.ensureNotNull
+import arrow.core.raise.context.raise
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -11,9 +12,9 @@ import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.with
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
-import org.jetbrains.exposed.v1.jdbc.SizedCollection
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import xyz.malefic.kanman.data.db.AssignedUserEntity
 import xyz.malefic.kanman.data.db.BoardEntity
 import xyz.malefic.kanman.data.db.BoardEvents
 import xyz.malefic.kanman.data.db.BoardUserEntity
@@ -92,6 +93,7 @@ fun getBoard(
             BoardEntity::owner,
             BoardEntity::stickies,
             StickyNoteEntity::assignedUsers,
+            AssignedUserEntity::user,
         ).toResponseModel()
 }
 
@@ -231,12 +233,14 @@ context(_: Raise<Issue>)
 fun UserResponseModel.assignUser(
     event: WsAction.AssignUser,
     boardId: Uuid,
-) = transaction {
-    val board = getAccessibleBoard(boardId, EDIT_STICKY)
-    val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
-    val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }
-    sticky.assignedUsers = SizedCollection(sticky.assignedUsers + user)
-}
+): Unit =
+    transaction {
+        val board = getAccessibleBoard(boardId, EDIT_STICKY)
+        val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
+        val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }
+        val old = AssignedUserEntity.findById(sticky.id.value, user.id.value)
+        if (old != null) old.due = event.due else AssignedUserEntity.new(sticky, user, event.due)
+    }
 
 context(_: Raise<Issue>)
 fun UserResponseModel.unassignUser(
@@ -246,5 +250,5 @@ fun UserResponseModel.unassignUser(
     val board = getAccessibleBoard(boardId, EDIT_STICKY)
     val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
     val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }
-    sticky.assignedUsers = SizedCollection(sticky.assignedUsers - user)
+    AssignedUserEntity.findById(sticky.id.value, user.id.value)?.delete() ?: raise(Issue.Board.NotFound())
 }

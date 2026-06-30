@@ -6,6 +6,7 @@ import org.jetbrains.exposed.v1.dao.CompositeEntity
 import org.jetbrains.exposed.v1.dao.CompositeEntityClass
 import org.jetbrains.exposed.v1.dao.UuidEntity
 import org.jetbrains.exposed.v1.dao.UuidEntityClass
+import xyz.malefic.kanman.data.model.AssignedUserModel
 import xyz.malefic.kanman.data.model.BoardEventModel
 import xyz.malefic.kanman.data.model.BoardResponseModel
 import xyz.malefic.kanman.data.model.BoardSummaryModel
@@ -14,6 +15,7 @@ import xyz.malefic.kanman.data.model.Role
 import xyz.malefic.kanman.data.model.StickyNoteModel
 import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.model.UserSummaryModel
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 class UserEntity(
@@ -102,18 +104,54 @@ class StickyNoteEntity(
     var title by StickyNotes.title
     var content by StickyNotes.content
     var column by StickyNotes.column
-    var assignedUsers by UserEntity via StickyNoteUsers
+    val assignedUsers by AssignedUserEntity referrersOn AssignedUsers.sticky
     var board by BoardEntity referencedOn StickyNotes.board
 
-    fun toModel() = StickyNoteModel(id.value, title, content, column, assignedUsers.map { it.id.value }, board.id.value)
+    fun toModel() = StickyNoteModel(id.value, title, content, column, assignedUsers.map { it.toModel() }, board.id.value)
+}
+
+fun <A : CompositeEntityClass<B>, B : CompositeEntity> A.findById(id: (CompositeID) -> Unit) = findById(CompositeID(id))
+
+class AssignedUserEntity(
+    id: EntityID<CompositeID>,
+) : CompositeEntity(id) {
+    companion object : CompositeEntityClass<AssignedUserEntity>(AssignedUsers) {
+        fun findById(
+            stickyId: Uuid,
+            userId: Uuid,
+        ) = findById {
+            it[AssignedUsers.sticky] = stickyId
+            it[AssignedUsers.user] = userId
+        }
+
+        @IgnorableReturnValue
+        fun new(
+            sticky: StickyNoteEntity,
+            user: UserEntity,
+            due: Instant?,
+        ) = new(
+            CompositeID {
+                it[AssignedUsers.sticky] = sticky.id
+                it[AssignedUsers.user] = user.id
+            },
+        ) {
+            this.sticky = sticky
+            this.user = user
+            this.due = due
+        }
+    }
+
+    var sticky by StickyNoteEntity referencedOn AssignedUsers.sticky
+    var user by UserEntity referencedOn AssignedUsers.user
+    var due by AssignedUsers.due
+
+    fun toModel() = AssignedUserModel(user.id.value, due)
 }
 
 class BoardUserEntity(
     id: EntityID<CompositeID>,
 ) : CompositeEntity(id) {
     companion object : CompositeEntityClass<BoardUserEntity>(BoardUsers) {
-        fun findById(id: (CompositeID) -> Unit) = findById(CompositeID(id))
-
         fun findById(
             id: Uuid,
             userId: Uuid,

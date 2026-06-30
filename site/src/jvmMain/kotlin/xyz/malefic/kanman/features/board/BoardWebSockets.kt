@@ -56,7 +56,7 @@ val boardWs =
 
                                         is WsAction.AssignUser -> {
                                             user.assignUser(action, id)
-                                            AssignedUser(userSummary, action.stickyId, getUserSummary(action.userId))
+                                            AssignedUser(userSummary, action.stickyId, getUserSummary(action.userId), action.due)
                                         }
 
                                         is WsAction.UnassignUser -> {

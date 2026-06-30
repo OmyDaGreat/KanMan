@@ -56,8 +56,14 @@ data class StickyNoteModel(
     val title: String,
     val content: String,
     val column: Column,
-    @SerialName("assigned_users") val assignedUsers: List<Uuid>,
+    @SerialName("assigned_users") val assignedUsers: List<AssignedUserModel>,
     @SerialName("board_id") val boardId: Uuid,
+)
+
+@Serializable
+data class AssignedUserModel(
+    @SerialName("user_id") val userId: Uuid,
+    val due: Instant? = null,
 )
 
 @Serializable

@@ -1,7 +1,6 @@
 package xyz.malefic.kanman.data.db
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.dao.id.CompositeIdTable
 import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentTimestamp
@@ -47,9 +46,16 @@ object StickyNotes : UuidTable("stickies") {
     val board = reference("board_id", Boards)
 }
 
-object StickyNoteUsers : Table("sticky_note_users") {
+object AssignedUsers : CompositeIdTable("assigned_stickies") {
     val sticky = reference("sticky_id", StickyNotes, onDelete = ReferenceOption.CASCADE)
     val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
+    val due = timestamp("due").nullable()
+
+    init {
+        addIdColumn(sticky)
+        addIdColumn(user)
+    }
+
     override val primaryKey = PrimaryKey(sticky, user)
 }
 

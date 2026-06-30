@@ -2,6 +2,7 @@ package xyz.malefic.kanman.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -28,6 +29,7 @@ sealed interface WsAction {
     data class AssignUser(
         @SerialName("sticky_id") val stickyId: Uuid,
         @SerialName("user_id") val userId: Uuid,
+        val due: Instant? = null,
     ) : WsAction
 
     @Serializable
@@ -77,6 +79,7 @@ sealed interface WsEvent {
         override val actor: UserSummaryModel,
         @SerialName("sticky_id") val stickyId: Uuid,
         val target: UserSummaryModel,
+        val due: Instant? = null,
     ) : WsEvent
 
     @Serializable
