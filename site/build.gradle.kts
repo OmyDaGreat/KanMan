@@ -57,7 +57,7 @@ kotlin {
         }
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         mainRun {
-            mainClass.set("xyz.malefic.kanman.KanManKt")
+            mainClass.set("xyz.malefic.kanman.server.KanManKt")
         }
     }
 
