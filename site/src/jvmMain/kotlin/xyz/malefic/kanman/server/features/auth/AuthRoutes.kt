@@ -1,14 +1,12 @@
 package xyz.malefic.kanman.server.features.auth
 
 import arrow.core.raise.ensureNotNull
-import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.core.cookie.cookie
 import org.http4k.core.cookie.invalidateCookie
 import org.http4k.routing.bind
 import xyz.malefic.kanman.server.infra.http.api
-import xyz.malefic.kanman.server.infra.http.apiAuth
 import xyz.malefic.kanman.server.infra.http.model
 import xyz.malefic.kanman.server.infra.http.response
 import xyz.malefic.kanman.shared.data.model.Issue
@@ -39,9 +37,5 @@ val authRoutes =
                 val tokens = refreshTokens(ensureNotNull(request.cookie("refresh_token")?.value) { Issue.Auth.MissingToken() })
 
                 response(OK, tokens.response).withRefreshCookie(tokens.refreshToken)
-            },
-        "/api/me" bind GET to
-            apiAuth { user, _ ->
-                response(OK, user)
             },
     )
