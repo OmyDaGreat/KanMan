@@ -1,5 +1,8 @@
 package xyz.malefic.kanman.data.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class Column {
     BACKLOG,
     PLANNING,
@@ -7,6 +10,7 @@ enum class Column {
     DONE,
 }
 
+@Serializable
 enum class Visibility {
     PUBLIC,
     PRIVATE,
@@ -23,6 +27,7 @@ enum class Visibility {
     }
 }
 
+@Serializable
 enum class BoardAction {
     DELETE_BOARD,
     INVITE_USER,
@@ -30,6 +35,7 @@ enum class BoardAction {
     VIEW_BOARD,
 }
 
+@Serializable
 enum class Role(
     val permission: (BoardAction) -> Boolean,
 ) {
