@@ -5,6 +5,7 @@ import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.routing.bind
+import org.http4k.routing.path
 import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.Column
 import xyz.malefic.kanman.data.model.InviteRequest
@@ -15,6 +16,7 @@ import xyz.malefic.kanman.infra.http.apiBoardAuth
 import xyz.malefic.kanman.infra.http.model
 import xyz.malefic.kanman.infra.http.pagination
 import xyz.malefic.kanman.infra.http.response
+import kotlin.uuid.Uuid
 
 val boardRoutes =
     arrayOf(
@@ -66,7 +68,8 @@ val boardRoutes =
                 response(OK, user.invite(id, request.model<InviteRequest>()))
             },
         "/api/boards/{id}/users/{userId}" bind DELETE to
-            apiBoardAuth { user, id, _ ->
-                response(OK, user.uninvite(id, user.id))
+            apiBoardAuth { user, id, request ->
+                val targetId = Uuid.parse(request.path("userId")!!)
+                response(OK, user.uninvite(id, targetId))
             },
     )

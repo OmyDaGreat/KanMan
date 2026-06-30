@@ -46,7 +46,7 @@ object StickyNotes : UuidTable("stickies") {
     val board = reference("board_id", Boards)
 }
 
-object AssignedUsers : CompositeIdTable("assigned_stickies") {
+object AssignedUsers : CompositeIdTable("assigned_users") {
     val sticky = reference("sticky_id", StickyNotes, onDelete = ReferenceOption.CASCADE)
     val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
     val due = timestamp("due").nullable()
