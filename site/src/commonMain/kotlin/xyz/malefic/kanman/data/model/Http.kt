@@ -64,6 +64,7 @@ data class StickyNoteModel(
 data class BoardUserResponseModel(
     val user: UserSummaryModel,
     val role: Role,
+    val lastViewedAt: Instant,
 )
 
 @Serializable
@@ -79,7 +80,7 @@ data class BoardResponseModel(
     val visibility: Visibility,
     val owner: UserSummaryModel,
     val stickies: List<StickyNoteModel>,
-    val users: List<BoardUserResponseModel>,
+    val memberships: List<BoardUserResponseModel>,
 )
 
 @Serializable
@@ -88,6 +89,7 @@ data class BoardSummaryModel(
     val title: String,
     val visibility: Visibility,
     val owner: UserSummaryModel,
+    val lastViewedAt: Instant? = null,
 )
 
 @Serializable

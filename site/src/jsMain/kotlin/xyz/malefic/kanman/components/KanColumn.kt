@@ -21,7 +21,7 @@ import xyz.malefic.kanman.styles.Color
 @Composable
 fun KanColumn(
     column: String,
-    stickyNotes: List<StickyNoteModel>,
+    stickies: List<StickyNoteModel>,
 ) = Column(
     Modifier
         .fillMaxHeight()
@@ -36,7 +36,7 @@ fun KanColumn(
         Text(column)
     }
     val stickyColors = listOf(Color.tertiary, Color.error, Color.primary, Color.secondary)
-    stickyNotes.forEach { stickyNote ->
+    stickies.forEach { stickyNote ->
         StickyNote(stickyColors.random(), stickyNote)
     }
 }

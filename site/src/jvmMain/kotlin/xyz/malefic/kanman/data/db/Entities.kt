@@ -1,12 +1,16 @@
 package xyz.malefic.kanman.data.db
 
+import org.jetbrains.exposed.v1.core.dao.id.CompositeID
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.dao.CompositeEntity
+import org.jetbrains.exposed.v1.dao.CompositeEntityClass
 import org.jetbrains.exposed.v1.dao.UuidEntity
 import org.jetbrains.exposed.v1.dao.UuidEntityClass
 import xyz.malefic.kanman.data.model.BoardEventModel
 import xyz.malefic.kanman.data.model.BoardResponseModel
 import xyz.malefic.kanman.data.model.BoardSummaryModel
 import xyz.malefic.kanman.data.model.BoardUserResponseModel
+import xyz.malefic.kanman.data.model.Role
 import xyz.malefic.kanman.data.model.StickyNoteModel
 import xyz.malefic.kanman.data.model.UserResponseModel
 import xyz.malefic.kanman.data.model.UserSummaryModel
@@ -25,7 +29,7 @@ class UserEntity(
 
     fun toSummaryModel() = UserSummaryModel(id.value, username)
 
-    fun toResponseModel() = UserResponseModel(id.value, username, boards.map { it.toSummaryModel() })
+    fun toResponseModel() = UserResponseModel(id.value, username, boards.map { it.toSummaryModel(id.value) })
 }
 
 class AuthTokenEntity(
@@ -48,8 +52,7 @@ class BoardEntity(
     var visibility by Boards.visibility
     var owner by UserEntity referencedOn Boards.owner
     val stickies by StickyNoteEntity referrersOn StickyNotes.board
-    var users by UserEntity via BoardUsers
-    val userRoles by BoardUserEntity referrersOn BoardUsers.board
+    val memberships by BoardUserEntity referrersOn BoardUsers.board
     val history by BoardEventEntity referrersOn BoardEvents.board
 
     fun toResponseModel() =
@@ -59,10 +62,23 @@ class BoardEntity(
             visibility,
             owner.toSummaryModel(),
             stickies.map { it.toModel() },
-            userRoles.map { it.toResponseModel() },
+            memberships.map { it.toResponseModel() },
         )
 
-    fun toSummaryModel() = BoardSummaryModel(id.value, title, visibility, owner.toSummaryModel())
+    fun toSummaryModel(userId: Uuid? = null) =
+        BoardSummaryModel(
+            id.value,
+            title,
+            visibility,
+            owner.toSummaryModel(),
+            userId?.let {
+                memberships
+                    .find {
+                        it.user.id.value ==
+                            userId
+                    }?.lastViewedAt
+            },
+        )
 }
 
 class BoardEventEntity(
@@ -93,13 +109,40 @@ class StickyNoteEntity(
 }
 
 class BoardUserEntity(
-    id: EntityID<Uuid>,
-) : UuidEntity(id) {
-    companion object : UuidEntityClass<BoardUserEntity>(BoardUsers)
+    id: EntityID<CompositeID>,
+) : CompositeEntity(id) {
+    companion object : CompositeEntityClass<BoardUserEntity>(BoardUsers) {
+        fun findById(id: (CompositeID) -> Unit) = findById(CompositeID(id))
+
+        fun findById(
+            id: Uuid,
+            userId: Uuid,
+        ) = findById {
+            it[BoardUsers.board] = id
+            it[BoardUsers.user] = userId
+        }
+
+        @IgnorableReturnValue
+        fun new(
+            board: BoardEntity,
+            user: UserEntity,
+            role: Role,
+        ) = new(
+            CompositeID {
+                it[BoardUsers.board] = board.id
+                it[BoardUsers.user] = user.id
+            },
+        ) {
+            this.board = board
+            this.user = user
+            this.role = role
+        }
+    }
 
     var board by BoardEntity referencedOn BoardUsers.board
     var user by UserEntity referencedOn BoardUsers.user
     var role by BoardUsers.role
+    var lastViewedAt by BoardUsers.lastViewedAt
 
-    fun toResponseModel() = BoardUserResponseModel(user.toSummaryModel(), role)
+    fun toResponseModel() = BoardUserResponseModel(user.toSummaryModel(), role, lastViewedAt)
 }

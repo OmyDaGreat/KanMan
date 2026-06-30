@@ -23,6 +23,7 @@ import xyz.malefic.kanman.data.db.StickyNoteEntity
 import xyz.malefic.kanman.data.db.UserEntity
 import xyz.malefic.kanman.data.db.Users
 import xyz.malefic.kanman.data.model.BoardAction
+import xyz.malefic.kanman.data.model.BoardAction.DELETE_BOARD
 import xyz.malefic.kanman.data.model.BoardAction.EDIT_STICKY
 import xyz.malefic.kanman.data.model.BoardAction.INVITE_USER
 import xyz.malefic.kanman.data.model.BoardAction.VIEW_BOARD
@@ -41,6 +42,7 @@ import xyz.malefic.kanman.data.model.WsAction
 import xyz.malefic.kanman.features.auth.entity
 import xyz.malefic.kanman.infra.ws.Registry
 import kotlin.reflect.KProperty1
+import kotlin.time.Clock
 import kotlin.uuid.Uuid
 
 context(_: Raise<Issue>, _: JdbcTransaction)
@@ -56,7 +58,7 @@ private fun UserResponseModel?.permissionCheck(
     board: BoardEntity,
     action: BoardAction,
 ) {
-    val userRole = board.userRoles.find { it.user.id.value == this?.id }
+    val userRole = board.memberships.find { it.user.id.value == this?.id }
 
     if (board.visibility == PRIVATE) {
         ensure(userRole != null) { AccessDenied("You don't have permission to access this board") }
@@ -72,7 +74,10 @@ fun UserResponseModel?.getAccessibleBoard(
     id: Uuid,
     action: BoardAction,
     vararg relations: KProperty1<out Entity<*>, Any?>,
-) = fetchBoard(id, BoardEntity::userRoles, BoardUserEntity::user, *relations).also { permissionCheck(it, action) }
+) = fetchBoard(id, BoardEntity::memberships, BoardUserEntity::user, *relations).also { board ->
+    permissionCheck(board, action)
+    this?.let { user -> BoardUserEntity.findById(board.id.value, user.id)?.lastViewedAt = Clock.System.now() }
+}
 
 context(_: Raise<Issue>)
 fun getBoard(
@@ -98,22 +103,14 @@ fun UserResponseModel.createBoard(boardCreateModel: BoardCreateModel) =
                 visibility = boardCreateModel.visibility
                 owner = this@createBoard.entity
             }
-        BoardUserEntity.new {
-            this.board = createdBoard
-            this.user = this@createBoard.entity
-            this.role = Role.OWNER
-        }
+        BoardUserEntity.new(createdBoard, this@createBoard.entity, Role.OWNER)
         createdBoard.toResponseModel()
     }
 
 context(_: Raise<Issue>)
 fun UserResponseModel.deleteBoard(id: Uuid) =
     transaction {
-        val board = fetchBoard(id, BoardEntity::owner)
-
-        ensure(board.owner.id.value == this@deleteBoard.id) { AccessDenied("You don't have permission to delete this board") }
-
-        board.delete()
+        getAccessibleBoard(id, DELETE_BOARD).delete()
         Registry.closeAll(id)
     }
 
@@ -137,24 +134,20 @@ fun UserResponseModel.getBoardHistory(
 }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.getBoardUsers(id: Uuid) = transaction { getAccessibleBoard(id, VIEW_BOARD).users.map { it.toSummaryModel() } }
+fun UserResponseModel.getBoardUsers(id: Uuid) =
+    transaction { getAccessibleBoard(id, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
 
 context(_: Raise<Issue>)
 fun UserResponseModel.inviteToBoard(
     boardId: Uuid,
     inviteRequest: InviteRequest,
 ) = transaction {
-    val board = getAccessibleBoard(boardId, INVITE_USER, BoardEntity::userRoles, BoardUserEntity::user)
-    val userRoles = board.userRoles
+    val board = getAccessibleBoard(boardId, INVITE_USER)
     val addUser = ensureNotNull(UserEntity.find { Users.id eq inviteRequest.userId }.firstOrNull()) { Issue.User.NotFound() }
 
-    BoardUserEntity.new {
-        this.board = board
-        this.user = addUser
-        this.role = inviteRequest.role
-    }
+    BoardUserEntity.new(board, addUser, inviteRequest.role)
 
-    (userRoles.map { it.user } + addUser).map { it.toSummaryModel() }.distinct()
+    (board.memberships.map { it.user } + addUser).map { it.toSummaryModel() }.distinct()
 }
 
 context(_: Raise<Issue>)
@@ -191,7 +184,11 @@ fun getBoards(
 
     val total = query.count()
 
-    val items = BoardEntity.wrapRows(query.offset((page - 1L) * limit).limit(limit)).with(BoardEntity::owner).map { it.toSummaryModel() }
+    val items =
+        BoardEntity
+            .wrapRows(query.offset((page - 1L) * limit).limit(limit))
+            .with(BoardEntity::owner, BoardEntity::memberships)
+            .map { it.toSummaryModel(user?.id) }
 
     PaginatedResponse(items, page, limit, total)
 }

@@ -2,6 +2,7 @@ package xyz.malefic.kanman.data.db
 
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Table
+import org.jetbrains.exposed.v1.core.dao.id.CompositeIdTable
 import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.CurrentTimestamp
 import org.jetbrains.exposed.v1.datetime.timestamp
@@ -52,21 +53,16 @@ object StickyNoteUsers : Table("sticky_note_users") {
     override val primaryKey = PrimaryKey(sticky, user)
 }
 
-object BoardUsers : UuidTable("board_users") {
+object BoardUsers : CompositeIdTable("board_users") {
     val board = reference("board_id", Boards, onDelete = ReferenceOption.CASCADE)
     val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
     val role = enumeration<Role>("role")
+    val lastViewedAt = timestamp("last_viewed_at").defaultExpression(CurrentTimestamp)
 
     init {
-        uniqueIndex(board, user)
+        addIdColumn(board)
+        addIdColumn(user)
     }
-}
 
-// TODO: Implement recent boards
-// object RecentBoards : Table("recent_boards") {
-//    val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
-//    val board = reference("board_id", Boards, onDelete = ReferenceOption.CASCADE)
-//    val lastViewedAt = timestamp("last_viewed_at").defaultExpression(CurrentTimestamp)
-//
-//    override val primaryKey = PrimaryKey(user, board)
-// }
+    override val primaryKey = PrimaryKey(board, user)
+}
