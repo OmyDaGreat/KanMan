@@ -1,4 +1,4 @@
-@file:Layout(".components.layouts.NavBarLayout")
+@file:Layout("xyz.malefic.kanman.client.components.layouts.NavBarLayout")
 
 package xyz.malefic.kanman.client.pages
 
