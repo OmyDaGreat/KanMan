@@ -63,8 +63,10 @@ val boardRoutes =
             },
         "/api/boards/{id}/users" bind POST to
             apiBoardAuth { user, id, request ->
-                val addUser = request.model<InviteRequest>()
-
-                response(OK, user.inviteToBoard(id, addUser))
+                response(OK, user.invite(id, request.model<InviteRequest>()))
+            },
+        "/api/boards/{id}/users/{userId}" bind DELETE to
+            apiBoardAuth { user, id, _ ->
+                response(OK, user.uninvite(id, user.id))
             },
     )

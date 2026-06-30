@@ -15,12 +15,14 @@ import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.data.db.AssignedUserEntity
+import xyz.malefic.kanman.data.db.AssignedUsers
 import xyz.malefic.kanman.data.db.BoardEntity
 import xyz.malefic.kanman.data.db.BoardEvents
 import xyz.malefic.kanman.data.db.BoardUserEntity
 import xyz.malefic.kanman.data.db.BoardUsers
 import xyz.malefic.kanman.data.db.Boards
 import xyz.malefic.kanman.data.db.StickyNoteEntity
+import xyz.malefic.kanman.data.db.StickyNotes
 import xyz.malefic.kanman.data.db.UserEntity
 import xyz.malefic.kanman.data.db.Users
 import xyz.malefic.kanman.data.model.BoardAction
@@ -140,7 +142,7 @@ fun UserResponseModel.getBoardUsers(id: Uuid) =
     transaction { getAccessibleBoard(id, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.inviteToBoard(
+fun UserResponseModel.invite(
     boardId: Uuid,
     inviteRequest: InviteRequest,
 ) = transaction {
@@ -150,6 +152,28 @@ fun UserResponseModel.inviteToBoard(
     BoardUserEntity.new(board, addUser, inviteRequest.role)
 
     (board.memberships.map { it.user } + addUser).map { it.toSummaryModel() }.distinct()
+}
+
+context(_: Raise<Issue>)
+fun UserResponseModel.uninvite(
+    boardId: Uuid,
+    userId: Uuid,
+) = transaction {
+    val board = getAccessibleBoard(boardId, INVITE_USER)
+
+    ensure(board.owner.id.value != userId) { AccessDenied("The board owner cannot be uninvited") }
+
+    val removeUser = ensureNotNull(UserEntity.find { Users.id eq userId }.firstOrNull()) { Issue.User.NotFound() }
+
+    BoardUserEntity.findById(board.id.value, userId)?.delete() ?: raise(Issue.Board.NotFound())
+
+    AssignedUserEntity
+        .find {
+            (AssignedUsers.user eq userId) and
+                (AssignedUsers.sticky inSubQuery StickyNotes.select(StickyNotes.id).where { StickyNotes.board eq boardId })
+        }.forEach { it.delete() }
+
+    (board.memberships.map { it.user } - removeUser).map { it.toSummaryModel() }
 }
 
 context(_: Raise<Issue>)

@@ -36,8 +36,13 @@ suspend fun boardHistory(
 
 suspend fun boardUsers(id: Uuid) = getAuth<List<UserSummaryModel>>("boards/$id/users")
 
-suspend fun inviteToBoard(
+suspend fun invite(
     boardId: Uuid,
     userId: Uuid,
     role: Role,
 ) = postAuth<InviteRequest, List<UserSummaryModel>>("boards/$boardId/users", InviteRequest(userId, role))
+
+suspend fun uninvite(
+    boardId: Uuid,
+    userId: Uuid,
+) = deleteAuth("boards/$boardId/users/$userId")
