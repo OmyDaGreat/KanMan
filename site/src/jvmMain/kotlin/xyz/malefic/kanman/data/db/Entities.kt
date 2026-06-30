@@ -11,6 +11,7 @@ import xyz.malefic.kanman.data.model.BoardEventModel
 import xyz.malefic.kanman.data.model.BoardResponseModel
 import xyz.malefic.kanman.data.model.BoardSummaryModel
 import xyz.malefic.kanman.data.model.BoardUserResponseModel
+import xyz.malefic.kanman.data.model.Invitation
 import xyz.malefic.kanman.data.model.Role
 import xyz.malefic.kanman.data.model.StickyNoteModel
 import xyz.malefic.kanman.data.model.UserResponseModel
@@ -175,6 +176,19 @@ class BoardUserEntity(
             this.user = user
             this.role = role
         }
+
+        @IgnorableReturnValue
+        fun new(invite: InvitationEntity) =
+            new(
+                CompositeID {
+                    it[BoardUsers.board] = invite.board.id
+                    it[BoardUsers.user] = invite.receiver.id
+                },
+            ) {
+                this.board = invite.board
+                this.user = invite.receiver
+                this.role = invite.role
+            }
     }
 
     var board by BoardEntity referencedOn BoardUsers.board
@@ -183,4 +197,17 @@ class BoardUserEntity(
     var lastViewedAt by BoardUsers.lastViewedAt
 
     fun toResponseModel() = BoardUserResponseModel(user.toSummaryModel(), role, lastViewedAt)
+}
+
+class InvitationEntity(
+    id: EntityID<Uuid>,
+) : UuidEntity(id) {
+    companion object : UuidEntityClass<InvitationEntity>(Invitations)
+
+    var board by BoardEntity referencedOn Invitations.board
+    var sender by UserEntity referencedOn Invitations.sender
+    var receiver by UserEntity referencedOn Invitations.receiver
+    var role by Invitations.role
+
+    fun toModel() = Invitation(id.value, board.id.value, sender.id.value, receiver.id.value, role)
 }

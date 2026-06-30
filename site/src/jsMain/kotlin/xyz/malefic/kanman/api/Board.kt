@@ -42,7 +42,7 @@ suspend fun invite(
     role: Role,
 ) = postAuth<InviteRequest, List<UserSummaryModel>>("boards/$boardId/users", InviteRequest(userId, role))
 
-suspend fun uninvite(
+suspend fun kick(
     boardId: Uuid,
     userId: Uuid,
 ) = deleteAuth("boards/$boardId/users/$userId")

@@ -72,7 +72,7 @@ val boardRoutes =
         "/api/boards/{id}/users/{userId}" bind DELETE to
             apiBoardAuth { user, id, request ->
                 val targetId = Uuid.parse(request.path("userId")!!)
-                response(OK, user.uninvite(id, targetId))
+                response(OK, user.kick(id, targetId))
             },
         "/api/boards/{id}/users/{userId}" bind PATCH to
             apiBoardAuth { user, id, request ->

@@ -72,3 +72,14 @@ object BoardUsers : CompositeIdTable("board_users") {
 
     override val primaryKey = PrimaryKey(board, user)
 }
+
+object Invitations : UuidTable("invitations") {
+    val board = reference("board_id", Boards, onDelete = ReferenceOption.CASCADE)
+    val sender = reference("sender_id", Users, onDelete = ReferenceOption.CASCADE)
+    val receiver = reference("receiver_id", Users, onDelete = ReferenceOption.CASCADE)
+    val role = enumeration<Role>("role")
+
+    init {
+        uniqueIndex(sender, receiver, board)
+    }
+}

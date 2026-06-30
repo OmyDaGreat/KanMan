@@ -21,6 +21,8 @@ import xyz.malefic.kanman.data.db.BoardEvents
 import xyz.malefic.kanman.data.db.BoardUserEntity
 import xyz.malefic.kanman.data.db.BoardUsers
 import xyz.malefic.kanman.data.db.Boards
+import xyz.malefic.kanman.data.db.InvitationEntity
+import xyz.malefic.kanman.data.db.Invitations
 import xyz.malefic.kanman.data.db.StickyNoteEntity
 import xyz.malefic.kanman.data.db.StickyNotes
 import xyz.malefic.kanman.data.db.UserEntity
@@ -142,28 +144,57 @@ fun UserResponseModel.getBoardUsers(id: Uuid) =
     transaction { getAccessibleBoard(id, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.invite( // TODO: Add acceptance to invite system
+fun UserResponseModel.getInvites() =
+    transaction {
+        InvitationEntity.find { Invitations.receiver eq this@getInvites.id }.map { it.toModel() }
+    }
+
+context(_: Raise<Issue>)
+fun UserResponseModel.invite(
     boardId: Uuid,
     inviteRequest: InviteRequest,
 ) = transaction {
     ensure(inviteRequest.role != Role.OWNER) { AccessDenied("A board owner cannot be invited") }
+
     val board = getAccessibleBoard(boardId, INVITE_USER)
     val addUser = ensureNotNull(UserEntity.findById(inviteRequest.userId)) { Issue.User.NotFound() }
 
-    BoardUserEntity.new(board, addUser, inviteRequest.role)
-
-    (board.memberships.map { it.user } + addUser).map { it.toSummaryModel() }.distinct()
+    InvitationEntity.new {
+        this.board = board
+        sender = this@invite.entity
+        receiver = addUser
+        role = inviteRequest.role
+    }
 }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.uninvite(
+fun UserResponseModel.acceptInvite(inviteId: Uuid) =
+    transaction {
+        val invite = ensureNotNull(InvitationEntity.findById(inviteId)) { Issue.Board.NotFound() }
+
+        ensure(invite.receiver.id.value == this@acceptInvite.id) { AccessDenied("You are not invited to this board") }
+
+        BoardUserEntity.new(invite)
+        (invite.board.memberships.map { it.user } + invite.receiver).map { it.toSummaryModel() }.distinct()
+    }
+
+context(_: Raise<Issue>)
+fun UserResponseModel.declineInvite(inviteId: Uuid) =
+    transaction {
+        val invite = ensureNotNull(InvitationEntity.findById(inviteId)) { Issue.Board.NotFound() }
+        ensure(invite.receiver.id.value == this@declineInvite.id) { AccessDenied("You are not invited to this board") }
+        invite.delete()
+    }
+
+context(_: Raise<Issue>)
+fun UserResponseModel.kick(
     boardId: Uuid,
     targetId: Uuid,
 ) = transaction {
     val board = getAccessibleBoard(boardId, INVITE_USER)
 
     ensure(board.owner.id.value != targetId) {
-        if (this@uninvite.id == targetId) {
+        if (this@kick.id == targetId) {
             AccessDenied("Please specify another board owner before leaving")
         } else {
             AccessDenied("A board owner cannot be uninvited")
