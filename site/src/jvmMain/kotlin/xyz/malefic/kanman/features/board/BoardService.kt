@@ -74,7 +74,7 @@ private fun UserResponseModel?.permissionCheck(
 context(_: Raise<Issue>, _: JdbcTransaction)
 fun UserResponseModel?.getAccessibleBoard(
     id: Uuid,
-    action: BoardAction,
+    action: BoardAction = VIEW_BOARD,
     vararg relations: KProperty1<out Entity<*>, Any?>,
 ) = fetchBoard(id, BoardEntity::memberships, BoardUserEntity::user, *relations).also { board ->
     permissionCheck(board, action)
@@ -82,7 +82,7 @@ fun UserResponseModel?.getAccessibleBoard(
 }
 
 context(_: Raise<Issue>)
-fun getBoard(
+fun getAccessibleBoard(
     id: Uuid,
     action: BoardAction = VIEW_BOARD,
     user: UserResponseModel? = null,
@@ -93,6 +93,7 @@ fun getBoard(
             action,
             BoardEntity::owner,
             BoardEntity::stickies,
+            BoardEntity::memberships,
             StickyNoteEntity::assignedUsers,
             AssignedUserEntity::user,
         ).toResponseModel()
@@ -141,7 +142,7 @@ fun UserResponseModel.getBoardUsers(id: Uuid) =
     transaction { getAccessibleBoard(id, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.invite(
+fun UserResponseModel.invite( // TODO: Add acceptance to invite system
     boardId: Uuid,
     inviteRequest: InviteRequest,
 ) = transaction {
@@ -157,22 +158,60 @@ fun UserResponseModel.invite(
 context(_: Raise<Issue>)
 fun UserResponseModel.uninvite(
     boardId: Uuid,
-    userId: Uuid,
+    targetId: Uuid,
 ) = transaction {
-    val board = getAccessibleBoard(boardId, INVITE_USER, AssignedUserEntity::user)
+    val board = getAccessibleBoard(boardId, INVITE_USER)
 
-    ensure(board.owner.id.value != userId) { AccessDenied("A board owner cannot be uninvited") }
+    ensure(board.owner.id.value != targetId) {
+        if (this@uninvite.id == targetId) {
+            AccessDenied("Please specify another board owner before leaving")
+        } else {
+            AccessDenied("A board owner cannot be uninvited")
+        }
+    }
 
-    BoardUserEntity.findById(board.id.value, userId)?.delete() ?: raise(Issue.Board.NotFound())
+    BoardUserEntity.findById(board.id.value, targetId)?.delete() ?: raise(Issue.Board.NotFound())
 
     AssignedUserEntity
         .wrapRows(
             (AssignedUsers innerJoin StickyNotes)
                 .select(AssignedUsers.columns)
-                .where { (AssignedUsers.user eq userId) and (StickyNotes.board eq boardId) },
+                .where { (AssignedUsers.user eq targetId) and (StickyNotes.board eq boardId) },
         ).forEach { it.delete() }
 
-    board.memberships.filter { it.user.id.value != userId }.map { it.user.toSummaryModel() }
+    board.memberships.filter { it.user.id.value != targetId }.map { it.user.toSummaryModel() }
+}
+
+context(_: Raise<Issue>, _: JdbcTransaction)
+private fun UserResponseModel.changeOwner(
+    boardId: Uuid,
+    targetId: Uuid,
+) {
+    val board = getAccessibleBoard(boardId, DELETE_BOARD)
+
+    ensure(board.owner.id.value == this@changeOwner.id) { AccessDenied("Only the board owner can change the owner") }
+    ensure(board.owner.id.value != targetId) { AccessDenied("User is already the board owner") }
+
+    val target = ensureNotNull(board.memberships.firstOrNull { it.user.id.value == targetId }) { Issue.User.NotFound() }
+    val user = ensureNotNull(board.memberships.firstOrNull { it.user.id.value == this@changeOwner.id }) { Issue.User.NotFound() }
+
+    user.role = Role.ADMIN
+    target.role = Role.OWNER
+    target.lastViewedAt = Clock.System.now()
+    board.owner = target.user
+}
+
+context(_: Raise<Issue>)
+fun UserResponseModel.updateUserRole(
+    boardId: Uuid,
+    targetId: Uuid,
+    role: Role,
+) = transaction {
+    if (role == Role.OWNER) return@transaction changeOwner(boardId, targetId)
+    val board = getAccessibleBoard(boardId, INVITE_USER)
+    val target = ensureNotNull(board.memberships.firstOrNull { it.user.id.value == targetId }) { Issue.User.NotFound() }
+    ensure(target.role != Role.OWNER) { AccessDenied("A board owner cannot be changed") }
+    target.role = role
 }
 
 context(_: Raise<Issue>)

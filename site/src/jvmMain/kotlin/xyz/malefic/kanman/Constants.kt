@@ -2,6 +2,7 @@ package xyz.malefic.kanman
 
 import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
+import org.http4k.core.Method.PATCH
 import org.http4k.core.Method.POST
 import org.http4k.filter.AllowAllOriginPolicy
 import org.http4k.filter.CorsPolicy
@@ -12,7 +13,7 @@ import java.nio.file.Paths
 val corsPolicy =
     CorsPolicy(
         headers = listOf("Content-Type", "Authorization"),
-        methods = listOf(GET, POST, DELETE),
+        methods = listOf(GET, POST, DELETE, PATCH),
         originPolicy = AllowAllOriginPolicy,
     )
 

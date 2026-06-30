@@ -112,3 +112,8 @@ data class InviteRequest(
     @SerialName("user_id") val userId: Uuid,
     val role: Role,
 )
+
+@Serializable
+data class RoleUpdateRequest(
+    val role: Role,
+)

@@ -98,6 +98,6 @@ fun Request.boardId(field: String = "id"): Uuid = ensureNotNull(path(field)?.let
 fun Request.pagination() = (query("page")?.toIntOrNull() ?: 1) to (query("limit")?.toIntOrNull() ?: 50)
 
 fun apiBoardAuth(
-    field: String = "id",
+    idField: String = "id",
     handler: suspend Raise<Issue>.(UserResponseModel, Uuid, Request) -> Response,
-) = apiAuth { user, request -> handler(user, request.boardId(field), request) }
+) = apiAuth { user, request -> handler(user, request.boardId(idField), request) }

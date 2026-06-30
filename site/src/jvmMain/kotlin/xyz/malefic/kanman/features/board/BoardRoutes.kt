@@ -2,6 +2,7 @@ package xyz.malefic.kanman.features.board
 
 import org.http4k.core.Method.DELETE
 import org.http4k.core.Method.GET
+import org.http4k.core.Method.PATCH
 import org.http4k.core.Method.POST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.routing.bind
@@ -9,6 +10,7 @@ import org.http4k.routing.path
 import xyz.malefic.kanman.data.model.BoardCreateModel
 import xyz.malefic.kanman.data.model.Column
 import xyz.malefic.kanman.data.model.InviteRequest
+import xyz.malefic.kanman.data.model.RoleUpdateRequest
 import xyz.malefic.kanman.data.model.Visibility.Companion.toVisibility
 import xyz.malefic.kanman.infra.http.apiAuth
 import xyz.malefic.kanman.infra.http.apiAuthOptional
@@ -29,7 +31,7 @@ val boardRoutes =
             },
         "/api/boards/{id}" bind GET to
             apiBoardAuth { user, id, request ->
-                val board = getBoard(id, user = user)
+                val board = getAccessibleBoard(id, user = user)
 
                 request.query("column")?.let {
                     return@apiBoardAuth response(
@@ -71,5 +73,10 @@ val boardRoutes =
             apiBoardAuth { user, id, request ->
                 val targetId = Uuid.parse(request.path("userId")!!)
                 response(OK, user.uninvite(id, targetId))
+            },
+        "/api/boards/{id}/users/{userId}" bind PATCH to
+            apiBoardAuth { user, id, request ->
+                val targetId = Uuid.parse(request.path("userId")!!)
+                response(OK, user.updateUserRole(id, targetId, request.model<RoleUpdateRequest>().role))
             },
     )
