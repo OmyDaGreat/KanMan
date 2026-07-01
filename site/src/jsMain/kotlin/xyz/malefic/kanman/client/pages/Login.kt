@@ -48,7 +48,7 @@ enum class Login(
 
 @Page
 @Composable
-fun LoginPage(ctx: PageContext) =
+fun Login(ctx: PageContext) =
     Box(Modifier.fillMaxSize(), Alignment.Center) {
         val scope = rememberCoroutineScope()
         var loginMode by remember { mutableStateOf(Login.LOGIN) }

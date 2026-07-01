@@ -1,4 +1,4 @@
-package xyz.malefic.kanman.client.pages.boards
+package xyz.malefic.kanman.client.pages.boards.drive
 
 import androidx.compose.runtime.Composable
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
@@ -19,7 +19,7 @@ import kotlin.uuid.Uuid
 
 @Page("{id}")
 @Composable
-fun BoardPage(ctx: PageContext) {
+fun Board(ctx: PageContext) {
     val boardId = ctx.route.params["id"]?.let { Uuid.parse(it) } ?: return Spinner()
 
     ctx.Request(boardId, request = { getBoard(boardId) }) { board ->

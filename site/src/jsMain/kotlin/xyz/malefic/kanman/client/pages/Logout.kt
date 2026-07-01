@@ -21,7 +21,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Page
 @Composable
-fun LogoutPage(ctx: PageContext) =
+fun Logout(ctx: PageContext) =
     Box(Modifier.fillMaxSize(), Alignment.Center) {
         var signedOut by remember { mutableStateOf(false) }
         LaunchedEffect(Unit) {

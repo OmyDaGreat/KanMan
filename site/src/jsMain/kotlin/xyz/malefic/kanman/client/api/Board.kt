@@ -9,6 +9,7 @@ import xyz.malefic.kanman.shared.data.model.BoardEventModel
 import xyz.malefic.kanman.shared.data.model.BoardResponseModel
 import xyz.malefic.kanman.shared.data.model.BoardSummaryModel
 import xyz.malefic.kanman.shared.data.model.Column
+import xyz.malefic.kanman.shared.data.model.Invitation
 import xyz.malefic.kanman.shared.data.model.InviteRequest
 import xyz.malefic.kanman.shared.data.model.PaginatedResponse
 import xyz.malefic.kanman.shared.data.model.Role
@@ -45,7 +46,7 @@ suspend fun invite(
     boardId: Uuid,
     userId: Uuid,
     role: Role,
-) = postAuth<InviteRequest, List<UserSummaryModel>>("boards/$boardId/users", InviteRequest(userId, role))
+) = postAuth<InviteRequest, Invitation>("boards/$boardId/users", InviteRequest(userId, role))
 
 suspend fun updateRole(
     boardId: Uuid,

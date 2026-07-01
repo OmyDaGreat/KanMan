@@ -12,7 +12,7 @@ import org.jetbrains.compose.web.dom.Text
 
 @Page
 @Composable
-fun AboutPage() {
+fun About() {
     Box(Modifier.fillMaxSize(), Alignment.Center) {
         Span {
             Text("THIS SITE WAS CREATED BY ")
