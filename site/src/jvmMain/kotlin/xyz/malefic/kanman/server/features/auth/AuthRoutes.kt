@@ -18,13 +18,13 @@ val authRoutes =
             api { request ->
                 val tokens = request.model<UserRequestModel>().create()
 
-                response(OK, tokens.response).withRefreshCookie(tokens.refreshToken)
+                response(OK, tokens.response) withCookie tokens.refreshToken
             },
         "/api/login" bind POST to
             api { request ->
                 val tokens = getTokensFromLogin(request.model())
 
-                response(OK, tokens.response).withRefreshCookie(tokens.refreshToken)
+                response(OK, tokens.response) withCookie tokens.refreshToken
             },
         "/api/logout" bind POST to
             api { request ->
@@ -36,6 +36,6 @@ val authRoutes =
             api { request ->
                 val tokens = refreshTokens(ensureNotNull(request.cookie("refresh_token")?.value) { Issue.Auth.MissingToken() })
 
-                response(OK, tokens.response).withRefreshCookie(tokens.refreshToken)
+                response(OK, tokens.response) withCookie tokens.refreshToken
             },
     )

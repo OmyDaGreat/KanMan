@@ -9,12 +9,15 @@ import org.http4k.filter.CorsPolicy
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.time.Duration.Companion.days
 
 val corsPolicy =
     CorsPolicy(
-        headers = listOf("Content-Type", "Authorization"),
-        methods = listOf(GET, POST, DELETE, PATCH),
-        originPolicy = AllowAllOriginPolicy,
+        AllowAllOriginPolicy,
+        listOf("Content-Type", "Authorization"),
+        listOf(GET, POST, DELETE, PATCH),
+        true,
+        maxAge = 1.days.inWholeSeconds.toInt(),
     )
 
 val mimeTypes =

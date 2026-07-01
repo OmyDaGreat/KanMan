@@ -41,12 +41,15 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Date
 import kotlin.io.encoding.Base64
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
-const val ACCESS_TOKEN_TTL_MILLIS = 15 * 60 * 1000L
-const val REFRESH_TOKEN_TTL_MILLIS = 30 * 24 * 60 * 60 * 1000L
-const val REFRESH_GRACE_PERIOD_MILLIS = 30 * 1000L
-const val LOCKOUT_DURATION_MILLIS = 15 * 60 * 1000L
+val ACCESS_TOKEN_TTL = 15.minutes
+val REFRESH_TOKEN_TTL = 30.days
+val REFRESH_GRACE_PERIOD = 30.seconds
+val LOCKOUT_DURATION = 15.minutes
 const val MAX_FAILED_ATTEMPTS = 5
 
 private val log = Logger.withTag("Auth")
@@ -73,16 +76,16 @@ private val jwtAlgorithm =
     )
 private val jwtVerifier = JWT.require(jwtAlgorithm).build()
 
-fun Response.withRefreshCookie(token: String?) =
+infix fun Response.withCookie(refreshToken: String) =
     cookie(
         Cookie(
             "refresh_token",
-            token ?: "",
-            token?.let { REFRESH_TOKEN_TTL_MILLIS / 1000 },
+            refreshToken,
+            REFRESH_TOKEN_TTL.inWholeSeconds,
             path = "/api",
             httpOnly = true,
             secure = true,
-            sameSite = SameSite.Strict,
+            sameSite = SameSite.None,
         ),
     )
 
@@ -101,7 +104,7 @@ private fun UserEntity.createAccessToken() =
     JWT
         .create()
         .withSubject(id.value.toString())
-        .withExpiresAt(Date(System.currentTimeMillis() + ACCESS_TOKEN_TTL_MILLIS))
+        .withExpiresAt(Date(System.currentTimeMillis() + ACCESS_TOKEN_TTL.inWholeMilliseconds))
         .sign(jwtAlgorithm)
 
 context(_: Raise<Issue>)
@@ -122,13 +125,13 @@ fun UserEntity.issueTokenPair(): TokenModel {
         AuthTokenEntity.new {
             this.user = this@issueTokenPair
             this.secretHash = hash(secret)
-            this.expiresAt = System.currentTimeMillis() + REFRESH_TOKEN_TTL_MILLIS
+            this.expiresAt = System.currentTimeMillis() + REFRESH_TOKEN_TTL.inWholeMilliseconds
         }
 
     return TokenModel(
         accessToken = accessToken,
         refreshToken = "${entity.id.value}:$secret",
-        expiresIn = ACCESS_TOKEN_TTL_MILLIS / 1000,
+        expiresIn = ACCESS_TOKEN_TTL.inWholeSeconds,
     )
 }
 
@@ -146,7 +149,7 @@ fun refreshTokens(refreshToken: String) =
         }
 
         token.revokedAt?.let { revokedAt ->
-            ensure(revokedAt + REFRESH_GRACE_PERIOD_MILLIS > now) { InvalidToken("Refresh token already revoked") }
+            ensure(revokedAt + REFRESH_GRACE_PERIOD.inWholeMilliseconds > now) { InvalidToken("Refresh token already revoked") }
         }
 
         token.revokedAt = now
@@ -156,7 +159,7 @@ fun refreshTokens(refreshToken: String) =
 fun janitor() =
     transaction {
         val now = System.currentTimeMillis()
-        val graceLimit = now - REFRESH_GRACE_PERIOD_MILLIS
+        val graceLimit = now - REFRESH_GRACE_PERIOD.inWholeMilliseconds
         AuthTokenEntity
             .find {
                 (AuthTokens.expiresAt less now) or
@@ -185,7 +188,7 @@ fun getTokensFromLogin(user: UserRequestModel) =
         ensure(verifyPassword(user.password, userEntity.hashedPassword)) {
             userEntity.failedAttempts += 1
             if (userEntity.failedAttempts >= MAX_FAILED_ATTEMPTS) {
-                userEntity.lockUntil = now + LOCKOUT_DURATION_MILLIS
+                userEntity.lockUntil = now + LOCKOUT_DURATION.inWholeMilliseconds
             }
             InvalidCredentials()
         }
