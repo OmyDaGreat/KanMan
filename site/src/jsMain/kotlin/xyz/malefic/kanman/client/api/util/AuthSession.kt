@@ -1,7 +1,6 @@
 package xyz.malefic.kanman.client.api.util
 
 import androidx.compose.runtime.mutableStateOf
-import arrow.core.Either
 import arrow.core.raise.Raise
 import arrow.core.raise.context.bind
 import arrow.core.raise.context.either
@@ -9,8 +8,6 @@ import co.touchlab.kermit.Logger
 import kotlinx.browser.localStorage
 import org.w3c.dom.get
 import org.w3c.dom.set
-import org.w3c.fetch.Headers
-import org.w3c.fetch.Response
 import xyz.malefic.kanman.client.api.logout
 import xyz.malefic.kanman.client.api.refresh
 import xyz.malefic.kanman.client.api.register
@@ -22,6 +19,11 @@ object AuthSession {
     private const val TOKEN_KEY = "kanman_token"
 
     private val _accessToken = mutableStateOf(localStorage[TOKEN_KEY])
+
+    init {
+        ApiConfig.accessToken = { accessToken }
+        ApiConfig.onAuthFailure = { either { tryRefresh() } }
+    }
 
     var accessToken: String?
         get() = _accessToken.value
@@ -52,22 +54,5 @@ object AuthSession {
     suspend fun signout() {
         logout().onLeft { Logger.e(it) { "Failed to log out" } }
         accessToken = null
-    }
-}
-
-suspend fun <T> apiAuth(
-    url: String,
-    method: String = "GET",
-    body: String? = null,
-    block: suspend (Response) -> T,
-) = either {
-    val headers = { Headers().apply { AuthSession.accessToken?.let { set("Authorization", "Bearer $it") } } }
-
-    val result = api(url, method, body, headers(), block)
-    if (result is Either.Left && result.value is Issue.Auth && AuthSession.accessToken != null) {
-        AuthSession.tryRefresh()
-        api(url, method, body, headers(), block).bind()
-    } else {
-        result.bind()
     }
 }
