@@ -7,8 +7,6 @@ import arrow.core.raise.context.raise
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.inSubQuery
-import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.dao.Entity
 import org.jetbrains.exposed.v1.dao.with
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
@@ -18,12 +16,11 @@ import xyz.malefic.kanman.server.data.AssignedUsers
 import xyz.malefic.kanman.server.data.BoardEntity
 import xyz.malefic.kanman.server.data.BoardEvents
 import xyz.malefic.kanman.server.data.BoardUserEntity
-import xyz.malefic.kanman.server.data.BoardUsers
 import xyz.malefic.kanman.server.data.Boards
 import xyz.malefic.kanman.server.data.StickyNoteEntity
 import xyz.malefic.kanman.server.data.StickyNotes
-import xyz.malefic.kanman.server.data.transaction
-import xyz.malefic.kanman.server.features.user.entity
+import xyz.malefic.kanman.server.data.data
+import xyz.malefic.kanman.server.data.entity
 import xyz.malefic.kanman.server.infra.ws.Registry
 import xyz.malefic.kanman.shared.data.model.BoardAction
 import xyz.malefic.kanman.shared.data.model.BoardAction.DELETE_BOARD
@@ -31,12 +28,10 @@ import xyz.malefic.kanman.shared.data.model.BoardAction.INVITE_USER
 import xyz.malefic.kanman.shared.data.model.BoardAction.VIEW_BOARD
 import xyz.malefic.kanman.shared.data.model.BoardCreateModel
 import xyz.malefic.kanman.shared.data.model.Issue
-import xyz.malefic.kanman.shared.data.model.Issue.Auth.MissingToken
 import xyz.malefic.kanman.shared.data.model.Issue.Board.AccessDenied
 import xyz.malefic.kanman.shared.data.model.PaginatedResponse
 import xyz.malefic.kanman.shared.data.model.Role
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
-import xyz.malefic.kanman.shared.data.model.Visibility
 import xyz.malefic.kanman.shared.data.model.Visibility.PRIVATE
 import xyz.malefic.kanman.shared.data.model.Visibility.PUBLIC
 import kotlin.reflect.KProperty1
@@ -81,7 +76,7 @@ fun getAccessibleBoard(
     id: Uuid,
     action: BoardAction = VIEW_BOARD,
     user: UserResponseModel? = null,
-) = user.transaction {
+) = user.data {
     getAccessibleBoard(
         id,
         action,
@@ -94,7 +89,7 @@ fun getAccessibleBoard(
 }
 
 fun UserResponseModel.createBoard(boardCreateModel: BoardCreateModel) =
-    transaction {
+    data {
         val createdBoard =
             BoardEntity.new {
                 title = boardCreateModel.title
@@ -107,7 +102,7 @@ fun UserResponseModel.createBoard(boardCreateModel: BoardCreateModel) =
 
 context(_: Raise<Issue>)
 fun UserResponseModel.deleteBoard(id: Uuid) =
-    transaction {
+    data {
         getAccessibleBoard(id, DELETE_BOARD).delete()
         Registry.closeAll(id)
     }
@@ -117,7 +112,7 @@ fun UserResponseModel.getBoardHistory(
     id: Uuid,
     page: Int = 1,
     limit: Int = 50,
-) = transaction {
+) = data {
     val board = getAccessibleBoard(id, VIEW_BOARD)
     val total = board.history.count()
     val items =
@@ -132,14 +127,13 @@ fun UserResponseModel.getBoardHistory(
 }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.getBoardUsers(id: Uuid) =
-    transaction { getAccessibleBoard(id, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
+fun UserResponseModel.getBoardUsers(id: Uuid) = data { getAccessibleBoard(id, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
 
 context(_: Raise<Issue>)
 fun UserResponseModel.kick(
     boardId: Uuid,
     targetId: Uuid,
-) = transaction {
+) = data {
     val board = getAccessibleBoard(boardId, INVITE_USER)
 
     ensure(board.owner.id.value != targetId) {
@@ -166,7 +160,7 @@ context(_: Raise<Issue>, _: JdbcTransaction)
 private fun UserResponseModel.changeOwner(
     boardId: Uuid,
     targetId: Uuid,
-) = transaction {
+) = data {
     val board = getAccessibleBoard(boardId, DELETE_BOARD)
 
     ensure(board.owner.id.value == id) { AccessDenied("Only the board owner can change the owner") }
@@ -186,8 +180,8 @@ fun UserResponseModel.updateUserRole(
     boardId: Uuid,
     targetId: Uuid,
     role: Role,
-) = transaction {
-    if (role == Role.OWNER) return@transaction changeOwner(boardId, targetId)
+) = data {
+    if (role == Role.OWNER) return@data changeOwner(boardId, targetId)
     val board = getAccessibleBoard(boardId, INVITE_USER)
     val target = ensureNotNull(board.memberships.firstOrNull { it.user.id.value == targetId }) { Issue.User.NotFound() }
     ensure(target.role != Role.OWNER) { AccessDenied("A board owner cannot be changed") }
@@ -197,37 +191,11 @@ fun UserResponseModel.updateUserRole(
 context(_: Raise<Issue>)
 fun getBoards(
     user: UserResponseModel? = null,
-    visibility: Visibility? = null,
     page: Int = 1,
     limit: Int = 50,
-) = user.transaction {
-    val query =
-        when (visibility) {
-            PUBLIC -> {
-                Boards.select(Boards.columns).where { Boards.visibility eq PUBLIC }
-            }
-
-            PRIVATE -> {
-                ensureNotNull(this) { MissingToken() }
-                (Boards innerJoin BoardUsers)
-                    .select(Boards.columns)
-                    .where { (Boards.visibility eq PRIVATE) and (BoardUsers.user eq id) }
-            }
-
-            else -> {
-                if (this == null) {
-                    Boards.select(Boards.columns).where { Boards.visibility eq PUBLIC }
-                } else {
-                    Boards.select(Boards.columns).where {
-                        (Boards.visibility eq PUBLIC) or
-                            (Boards.id inSubQuery BoardUsers.select(BoardUsers.board).where { BoardUsers.user eq id })
-                    }
-                }
-            }
-        }
-
+) = user.data {
+    val query = Boards.select(Boards.columns).where { Boards.visibility eq PUBLIC }
     val total = query.count()
-
     val items =
         BoardEntity
             .wrapRows(query.offset((page - 1L) * limit).limit(limit))

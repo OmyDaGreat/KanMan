@@ -15,16 +15,12 @@ import xyz.malefic.kanman.shared.data.model.Role
 import xyz.malefic.kanman.shared.data.model.RoleUpdateRequest
 import xyz.malefic.kanman.shared.data.model.StickyNoteModel
 import xyz.malefic.kanman.shared.data.model.UserSummaryModel
-import xyz.malefic.kanman.shared.data.model.Visibility
 import kotlin.uuid.Uuid
 
-suspend fun getBoards(
-    visibility: Visibility? = null,
+suspend fun getPublicBoards(
     page: Int = 1,
     limit: Int = 50,
-) = getAuth<PaginatedResponse<BoardSummaryModel>>(
-    "boards?page=$page&limit=$limit${visibility?.let { "&visibility=$it" } ?: ""}",
-)
+) = getAuth<PaginatedResponse<BoardSummaryModel>>("boards?page=$page&limit=$limit")
 
 suspend fun getBoard(id: Uuid) = getAuth<BoardResponseModel>("boards/$id")
 

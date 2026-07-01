@@ -29,7 +29,7 @@ import org.jetbrains.compose.web.dom.H1
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Span
 import org.jetbrains.compose.web.dom.Text
-import xyz.malefic.kanman.client.api.user
+import xyz.malefic.kanman.client.api.getUser
 import xyz.malefic.kanman.client.api.util.AuthSession
 import xyz.malefic.kanman.client.api.util.Request
 import xyz.malefic.kanman.client.styles.Color
@@ -64,7 +64,7 @@ fun NavBarLayout(
                 }
 
                 if (AuthSession.accessToken != null) {
-                    ctx.Request(Unit, request = { user() }) { user ->
+                    ctx.Request(Unit, request = { getUser() }) { user ->
                         Spacer()
                         Column(
                             Modifier.padding(16.px).backgroundColor(Color.secondaryContainer),

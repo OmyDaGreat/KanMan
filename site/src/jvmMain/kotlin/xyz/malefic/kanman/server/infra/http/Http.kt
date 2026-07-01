@@ -9,7 +9,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.runBlocking
-import org.http4k.core.ContentType
+import org.http4k.core.ContentType.Companion.APPLICATION_JSON
 import org.http4k.core.Filter
 import org.http4k.core.HttpHandler
 import org.http4k.core.Request
@@ -62,12 +62,12 @@ fun Issue.toResponse(): Response {
     return response<Issue>(status, body)
 }
 
-fun response(status: Status) = Response.Companion(status)
+fun response(status: Status) = Response(status)
 
 inline fun <reified T : Any> response(
     status: Status,
     body: T,
-) = Response.Companion(status).contentType(ContentType.APPLICATION_JSON).body(json.encodeToString(body))
+) = response(status).contentType(APPLICATION_JSON).body(json.encodeToString(body))
 
 fun rateLimit(
     requests: Int,
@@ -98,6 +98,6 @@ fun Request.boardId(field: String = "id"): Uuid = ensureNotNull(path(field)?.let
 fun Request.pagination() = (query("page")?.toIntOrNull() ?: 1) to (query("limit")?.toIntOrNull() ?: 50)
 
 fun apiBoardAuth(
-    idField: String = "id",
+    boardId: String = "id",
     handler: suspend Raise<Issue>.(UserResponseModel, Uuid, Request) -> Response,
-) = apiAuth { user, request -> handler(user, request.boardId(idField), request) }
+) = apiAuth { user, request -> handler(user, request.boardId(boardId), request) }

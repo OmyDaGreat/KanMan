@@ -18,17 +18,15 @@ import xyz.malefic.kanman.shared.data.model.BoardCreateModel
 import xyz.malefic.kanman.shared.data.model.Column
 import xyz.malefic.kanman.shared.data.model.InviteRequest
 import xyz.malefic.kanman.shared.data.model.RoleUpdateRequest
-import xyz.malefic.kanman.shared.data.model.Visibility.Companion.toVisibility
 import kotlin.uuid.Uuid
 
 val boardRoutes =
     arrayOf(
         "/api/boards" bind GET to
             apiAuthOptional { user, request ->
-                val visibility = request.query("visibility")?.toVisibility
                 val (page, limit) = request.pagination()
 
-                response(OK, getBoards(user, visibility, page, limit))
+                response(OK, getBoards(user, page, limit))
             },
         "/api/boards/{id}" bind GET to
             apiBoardAuth { user, id, request ->

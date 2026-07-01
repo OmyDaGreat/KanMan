@@ -8,7 +8,6 @@ import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction as jdbc
 
 fun initDatabase() {
     Database.connect(
@@ -24,4 +23,8 @@ fun initDatabase() {
 
 fun <A : CompositeEntityClass<B>, B : CompositeEntity> A.findById(id: (CompositeID) -> Unit) = findById(CompositeID.Companion(id))
 
-fun <R : UserResponseModel?, T> R.transaction(block: context(JdbcTransaction) R.() -> T): T = jdbc { this@transaction.block() }
+fun <R : UserResponseModel?, T> R.data(block: context(JdbcTransaction) R.() -> T): T = transaction { this@data.block() }
+
+context(_: JdbcTransaction)
+val UserResponseModel.entity
+    get() = UserEntity.findById(id) ?: throw IllegalArgumentException("User with ID $id not found")
