@@ -108,6 +108,20 @@ fun UserResponseModel.deleteBoard(id: Uuid) =
     }
 
 context(_: Raise<Issue>)
+fun UserResponseModel.join(boardId: Uuid) =
+    data {
+        val board = getAccessibleBoard(boardId, VIEW_BOARD)
+
+        ensure(board.visibility == PUBLIC) { AccessDenied("You cannot join a private board without an invitation") }
+
+        if (board.memberships.none { it.user.id.value == id }) {
+            BoardUserEntity.new(board, entity, Role.GUEST)
+        }
+
+        board.toResponseModel()
+    }
+
+context(_: Raise<Issue>)
 fun UserResponseModel.getBoardHistory(
     id: Uuid,
     page: Int = 1,

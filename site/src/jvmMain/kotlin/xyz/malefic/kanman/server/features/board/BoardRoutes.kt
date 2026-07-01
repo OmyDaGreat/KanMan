@@ -54,6 +54,10 @@ val boardRoutes =
 
                 response(OK)
             },
+        "/api/boards/{id}/join" bind POST to
+            apiBoardAuth { user, id, _ ->
+                response(OK, user.join(id))
+            },
         "/api/boards/{id}/history" bind GET to
             apiBoardAuth { user, id, request ->
                 val (page, limit) = request.pagination()

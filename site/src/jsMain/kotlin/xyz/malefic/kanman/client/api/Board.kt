@@ -34,6 +34,8 @@ suspend fun createBoard(board: BoardCreateModel) = postAuth<_, BoardResponseMode
 
 suspend fun deleteBoard(id: Uuid) = deleteAuth("boards/$id")
 
+suspend fun joinBoard(id: Uuid) = postAuth<BoardResponseModel>("boards/$id/join")
+
 suspend fun boardHistory(
     id: Uuid,
     page: Int = 1,

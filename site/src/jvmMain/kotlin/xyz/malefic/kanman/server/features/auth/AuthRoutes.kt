@@ -14,25 +14,25 @@ import xyz.malefic.kanman.shared.data.model.UserRequestModel
 
 val authRoutes =
     arrayOf(
-        "/api/register" bind POST to
+        "/api/auth/register" bind POST to
             api { request ->
                 val tokens = request.model<UserRequestModel>().create()
 
                 response(OK, tokens.response) withCookie tokens.refreshToken
             },
-        "/api/login" bind POST to
+        "/api/auth/login" bind POST to
             api { request ->
                 val tokens = getTokensFromLogin(request.model())
 
                 response(OK, tokens.response) withCookie tokens.refreshToken
             },
-        "/api/logout" bind POST to
+        "/api/auth/logout" bind POST to
             api { request ->
                 request.cookie("refresh_token")?.value?.let { revokeRefreshToken(it) }
 
                 response(OK).invalidateCookie("refresh_token")
             },
-        "/api/token/refresh" bind POST to
+        "/api/auth/token/refresh" bind POST to
             api { request ->
                 val tokens = refreshTokens(ensureNotNull(request.cookie("refresh_token")?.value) { Issue.Auth.MissingToken() })
 
