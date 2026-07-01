@@ -45,20 +45,14 @@ fun NavBarLayout(
     Row(Modifier.fillMaxSize().height(100.vh)) {
         Surface(Modifier.fillMaxHeight().backgroundColor(Color.surfaceContainerHigh)) {
             Column(Modifier.fillMaxSize().padding(16.px), horizontalAlignment = Alignment.CenterHorizontally) {
-                H1(Modifier.margin(16.px).toAttrs()) {
-                    Text("KanMan")
-                }
+                H1(Modifier.margin(16.px).toAttrs()) { Text("KanMan") }
 
                 Column(verticalArrangement = Arrangement.spacedBy(24.px), horizontalAlignment = Alignment.CenterHorizontally) {
                     Pages.entries.forEach { page ->
                         if (page.hasRoute(currentRoute)) {
-                            Span(DisabledStyle.toAttrs()) {
-                                Text(page.value)
-                            }
+                            Span(DisabledStyle.toAttrs()) { Text(page.value) }
                         } else {
-                            Link(page.route) {
-                                Text(page.value)
-                            }
+                            Link(page.route) { Text(page.value) }
                         }
                     }
                 }
@@ -71,12 +65,8 @@ fun NavBarLayout(
                             verticalArrangement = Arrangement.spacedBy(12.px),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            P(Modifier.margin(0.px).toAttrs()) {
-                                Text(user.username)
-                            }
-                            Link("/logout") {
-                                Text("Log Out")
-                            }
+                            P { Text(user.username) }
+                            Link("/logout") { Text("Log Out") }
                         }
                     }
                 }
@@ -94,6 +84,8 @@ enum class Pages(
     val route: String,
 ) {
     INDEX("Index", "/"),
+    PUBLIC("Public Boards", "/boards/public"),
+    DRIVE("Your Boards", "/boards/drive"),
     ABOUT("About", "/about"),
     ;
 

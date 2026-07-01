@@ -30,7 +30,7 @@ import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.PaginatedResponse
 
 @Composable
-fun PageContext.PaginatedBoards(
+fun PageContext.PaginatedBoardView(
     title: String,
     request: suspend (Int, Int) -> Either<Issue, PaginatedResponse<BoardSummaryModel>>,
     onBoardClick: (BoardSummaryModel) -> Unit,
@@ -44,11 +44,11 @@ fun PageContext.PaginatedBoards(
         onDispose { window.removeEventListener("resize", listener) }
     }
 
-    val limit = remember(windowHeight.value) { ((windowHeight.value) / 120).coerceAtLeast(1) }
+    val limit = remember(windowHeight.value) { ((windowHeight.value - 100) / 120).coerceAtLeast(1) }
 
     Box(Modifier.fillMaxSize()) {
         Request(page, limit, request = { request(page, limit) }) { response ->
-            ScrollBoard(title, response.items, onBoardClick)
+            BoardShowcase(title, response.items, onBoardClick)
 
             val maxPage = ((response.totalItems + limit - 1) / limit).toInt().coerceAtLeast(1)
 

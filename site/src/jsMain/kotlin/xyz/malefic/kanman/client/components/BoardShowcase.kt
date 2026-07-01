@@ -28,7 +28,7 @@ import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.BoardSummaryModel
 
 @Composable
-fun ScrollBoard(
+fun BoardShowcase(
     title: String,
     boards: List<BoardSummaryModel>,
     onBoardClick: (BoardSummaryModel) -> Unit,
