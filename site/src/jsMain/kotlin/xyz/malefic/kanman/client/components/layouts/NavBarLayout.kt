@@ -10,6 +10,7 @@ import com.varabyte.kobweb.compose.foundation.layout.Spacer
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
+import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxHeight
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.height
@@ -61,7 +62,7 @@ fun NavBarLayout(
                     ctx.Request(Unit, request = { getUser() }) { user ->
                         Spacer()
                         Column(
-                            Modifier.padding(16.px).backgroundColor(Color.secondaryContainer),
+                            Modifier.padding(16.px).backgroundColor(Color.secondaryContainer).borderRadius(16.px),
                             verticalArrangement = Arrangement.spacedBy(12.px),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
