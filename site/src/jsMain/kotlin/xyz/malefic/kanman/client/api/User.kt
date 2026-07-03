@@ -5,6 +5,7 @@ import xyz.malefic.kanman.shared.data.model.BoardSummaryModel
 import xyz.malefic.kanman.shared.data.model.PaginatedResponse
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
 import xyz.malefic.kanman.shared.data.model.UserSummaryModel
+import kotlin.uuid.Uuid
 
 suspend fun getUser() = getAuth<UserResponseModel>("me")
 
@@ -14,3 +15,5 @@ suspend fun getJoinedBoards(
 ) = getAuth<PaginatedResponse<BoardSummaryModel>>("me/boards?page=$page&limit=$limit")
 
 suspend fun getUser(username: String) = getAuth<UserSummaryModel>("users/$username")
+
+suspend fun getUser(id: Uuid) = getAuth<UserSummaryModel>("users/$id")

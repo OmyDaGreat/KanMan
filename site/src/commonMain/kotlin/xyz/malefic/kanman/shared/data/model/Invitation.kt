@@ -6,6 +6,7 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data class InviteRequest(
+    @SerialName("board_id") val boardId: Uuid,
     @SerialName("user_id") val userId: Uuid,
     val role: Role,
 )

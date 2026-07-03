@@ -24,13 +24,16 @@ import xyz.malefic.kanman.server.data.entity
 import xyz.malefic.kanman.server.infra.ws.Registry
 import xyz.malefic.kanman.shared.data.model.BoardAction
 import xyz.malefic.kanman.shared.data.model.BoardAction.DELETE_BOARD
+import xyz.malefic.kanman.shared.data.model.BoardAction.EDIT_STICKY
 import xyz.malefic.kanman.shared.data.model.BoardAction.INVITE_USER
 import xyz.malefic.kanman.shared.data.model.BoardAction.VIEW_BOARD
 import xyz.malefic.kanman.shared.data.model.BoardCreateModel
 import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.Issue.Board.AccessDenied
+import xyz.malefic.kanman.shared.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.shared.data.model.PaginatedResponse
 import xyz.malefic.kanman.shared.data.model.Role
+import xyz.malefic.kanman.shared.data.model.RoleUpdateRequest
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
 import xyz.malefic.kanman.shared.data.model.Visibility.PRIVATE
 import xyz.malefic.kanman.shared.data.model.Visibility.PUBLIC
@@ -61,6 +64,9 @@ private fun UserResponseModel?.permissionCheck(
     ensure(role.permission(action)) { AccessDenied("You don't have permission to perform this action") }
 }
 
+context(user: UserResponseModel, _: Raise<Issue>, _: JdbcTransaction)
+infix fun Uuid.perform(action: BoardAction) = user.getAccessibleBoard(this, action)
+
 context(_: Raise<Issue>, _: JdbcTransaction)
 fun UserResponseModel?.getAccessibleBoard(
     id: Uuid,
@@ -72,7 +78,7 @@ fun UserResponseModel?.getAccessibleBoard(
 }
 
 context(_: Raise<Issue>)
-fun getAccessibleBoard(
+fun getBoard(
     id: Uuid,
     action: BoardAction = VIEW_BOARD,
     user: UserResponseModel? = null,
@@ -88,7 +94,7 @@ fun getAccessibleBoard(
     ).toResponseModel()
 }
 
-fun UserResponseModel.createBoard(boardCreateModel: BoardCreateModel) =
+infix fun UserResponseModel.create(boardCreateModel: BoardCreateModel) =
     data {
         val createdBoard =
             BoardEntity.new {
@@ -101,16 +107,16 @@ fun UserResponseModel.createBoard(boardCreateModel: BoardCreateModel) =
     }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.deleteBoard(id: Uuid) =
+infix fun UserResponseModel.delete(boardId: Uuid) =
     data {
-        getAccessibleBoard(id, DELETE_BOARD).delete()
-        Registry.closeAll(id)
+        (boardId perform DELETE_BOARD).delete()
+        Registry.closeAll(boardId)
     }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.join(boardId: Uuid) =
+infix fun UserResponseModel.join(boardId: Uuid) =
     data {
-        val board = getAccessibleBoard(boardId, VIEW_BOARD)
+        val board = boardId perform VIEW_BOARD
 
         ensure(board.visibility == PUBLIC) { AccessDenied("You cannot join a private board without an invitation") }
 
@@ -121,13 +127,23 @@ fun UserResponseModel.join(boardId: Uuid) =
         board.toResponseModel()
     }
 
+infix fun UserResponseModel.historyOf(targetId: Uuid) = BoardHistoryBuilder(this, targetId)
+
+class BoardHistoryBuilder(
+    val actor: UserResponseModel,
+    val targetId: Uuid,
+) {
+    context(_: Raise<Issue>)
+    infix fun with(pagination: Pair<Int, Int>) = actor.getHistory(targetId, pagination.first, pagination.second)
+}
+
 context(_: Raise<Issue>)
-fun UserResponseModel.getBoardHistory(
-    id: Uuid,
+fun UserResponseModel.getHistory(
+    boardId: Uuid,
     page: Int = 1,
     limit: Int = 50,
 ) = data {
-    val board = getAccessibleBoard(id, VIEW_BOARD)
+    val board = boardId perform EDIT_STICKY
     val total = board.history.count()
     val items =
         board
@@ -141,14 +157,24 @@ fun UserResponseModel.getBoardHistory(
 }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.getBoardUsers(id: Uuid) = data { getAccessibleBoard(id, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
+infix fun UserResponseModel.getUsers(id: Uuid) = data { getAccessibleBoard(id, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
+
+infix fun UserResponseModel.kick(targetId: Uuid) = KickBuilder(this, targetId)
+
+class KickBuilder(
+    val actor: UserResponseModel,
+    val targetId: Uuid,
+) {
+    context(_: Raise<Issue>)
+    infix fun from(boardId: Uuid) = actor.kick(boardId, targetId)
+}
 
 context(_: Raise<Issue>)
 fun UserResponseModel.kick(
     boardId: Uuid,
     targetId: Uuid,
 ) = data {
-    val board = getAccessibleBoard(boardId, INVITE_USER)
+    val board = boardId perform INVITE_USER
 
     ensure(board.owner.id.value != targetId) {
         if (id == targetId) {
@@ -175,7 +201,7 @@ private fun UserResponseModel.changeOwner(
     boardId: Uuid,
     targetId: Uuid,
 ) = data {
-    val board = getAccessibleBoard(boardId, DELETE_BOARD)
+    val board = boardId perform DELETE_BOARD
 
     ensure(board.owner.id.value == id) { AccessDenied("Only the board owner can change the owner") }
     ensure(board.owner.id.value != targetId) { AccessDenied("User is already the board owner") }
@@ -189,32 +215,43 @@ private fun UserResponseModel.changeOwner(
     board.owner = target.user
 }
 
+infix fun UserResponseModel.update(targetId: Uuid) = UpdateRoleBuilder(this, targetId)
+
+class UpdateRoleBuilder(
+    val actor: UserResponseModel,
+    val targetId: Uuid,
+    val boardId: Uuid? = null,
+) {
+    context(_: Raise<Issue>)
+    infix fun to(request: RoleUpdateRequest) =
+        actor.update(ensureNotNull(boardId) { BadRequest("Missing board context") }, targetId, request.role)
+
+    infix fun from(id: Uuid) = UpdateRoleBuilder(actor, targetId, id)
+}
+
 context(_: Raise<Issue>)
-fun UserResponseModel.updateUserRole(
+fun UserResponseModel.update(
     boardId: Uuid,
     targetId: Uuid,
     role: Role,
 ) = data {
     if (role == Role.OWNER) return@data changeOwner(boardId, targetId)
-    val board = getAccessibleBoard(boardId, INVITE_USER)
+    val board = boardId perform INVITE_USER
     val target = ensureNotNull(board.memberships.firstOrNull { it.user.id.value == targetId }) { Issue.User.NotFound() }
     ensure(target.role != Role.OWNER) { AccessDenied("A board owner cannot be changed") }
     target.role = role
 }
 
 context(_: Raise<Issue>)
-fun getBoards(
-    user: UserResponseModel? = null,
-    page: Int = 1,
-    limit: Int = 50,
-) = user.data {
-    val query = Boards.select(Boards.columns).where { Boards.visibility eq PUBLIC }
-    val total = query.count()
-    val items =
-        BoardEntity
-            .wrapRows(query.offset((page - 1L) * limit).limit(limit))
-            .with(BoardEntity::owner, BoardEntity::memberships)
-            .map { it.toSummaryModel(user?.id) }
+infix fun UserResponseModel?.publicBoardsWith(pagination: Pair<Int, Int> = 1 to 50) =
+    data {
+        val query = Boards.select(Boards.columns).where { Boards.visibility eq PUBLIC }
+        val total = query.count()
+        val items =
+            BoardEntity
+                .wrapRows(query.offset((pagination.first - 1L) * pagination.second).limit(pagination.second))
+                .with(BoardEntity::owner, BoardEntity::memberships)
+                .map { it.toSummaryModel(this?.id) }
 
-    PaginatedResponse(items, page, limit, total)
-}
+        PaginatedResponse(items, pagination.first, pagination.second, total)
+    }

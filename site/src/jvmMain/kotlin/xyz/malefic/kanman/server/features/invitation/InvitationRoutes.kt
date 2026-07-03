@@ -5,10 +5,10 @@ import org.http4k.core.Method.GET
 import org.http4k.core.Method.POST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.routing.bind
-import org.http4k.routing.path
 import xyz.malefic.kanman.server.infra.http.apiAuth
+import xyz.malefic.kanman.server.infra.http.apiIdAuth
+import xyz.malefic.kanman.server.infra.http.model
 import xyz.malefic.kanman.server.infra.http.response
-import kotlin.uuid.Uuid
 
 val invitationRoutes =
     arrayOf(
@@ -16,15 +16,17 @@ val invitationRoutes =
             apiAuth { user, _ ->
                 response(OK, user.getInvites())
             },
-        "/api/invitations/{id}/accept" bind POST to
+        "/api/invitations" bind POST to
             apiAuth { user, request ->
-                val inviteId = Uuid.parse(request.path("id")!!)
-                response(OK, user.acceptInvite(inviteId))
+                response(OK, user invite request.model())
+            },
+        "/api/invitations/{id}/accept" bind POST to
+            apiIdAuth { user, id, _ ->
+                response(OK, user accept id)
             },
         "/api/invitations/{id}" bind DELETE to
-            apiAuth { user, request ->
-                val inviteId = Uuid.parse(request.path("id")!!)
-                user.declineInvite(inviteId)
+            apiIdAuth { user, id, _ ->
+                user decline id
                 response(OK)
             },
     )

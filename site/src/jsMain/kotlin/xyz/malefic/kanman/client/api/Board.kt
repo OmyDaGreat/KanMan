@@ -9,8 +9,6 @@ import xyz.malefic.kanman.shared.data.model.BoardEventModel
 import xyz.malefic.kanman.shared.data.model.BoardResponseModel
 import xyz.malefic.kanman.shared.data.model.BoardSummaryModel
 import xyz.malefic.kanman.shared.data.model.Column
-import xyz.malefic.kanman.shared.data.model.Invitation
-import xyz.malefic.kanman.shared.data.model.InviteRequest
 import xyz.malefic.kanman.shared.data.model.PaginatedResponse
 import xyz.malefic.kanman.shared.data.model.Role
 import xyz.malefic.kanman.shared.data.model.RoleUpdateRequest
@@ -34,8 +32,6 @@ suspend fun createBoard(board: BoardCreateModel) = postAuth<_, BoardResponseMode
 
 suspend fun deleteBoard(id: Uuid) = deleteAuth("boards/$id")
 
-suspend fun joinBoard(id: Uuid) = postAuth<BoardResponseModel>("boards/$id/join")
-
 suspend fun boardHistory(
     id: Uuid,
     page: Int = 1,
@@ -44,11 +40,7 @@ suspend fun boardHistory(
 
 suspend fun boardUsers(id: Uuid) = getAuth<List<UserSummaryModel>>("boards/$id/users")
 
-suspend fun invite(
-    boardId: Uuid,
-    userId: Uuid,
-    role: Role,
-) = postAuth<InviteRequest, Invitation>("boards/$boardId/users", InviteRequest(userId, role))
+suspend fun joinBoard(id: Uuid) = postAuth<BoardResponseModel>("boards/$id/users")
 
 suspend fun updateRole(
     boardId: Uuid,

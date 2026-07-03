@@ -7,6 +7,7 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import xyz.malefic.kanman.server.infra.http.api
 import xyz.malefic.kanman.server.infra.http.apiAuth
+import xyz.malefic.kanman.server.infra.http.apiId
 import xyz.malefic.kanman.server.infra.http.pagination
 import xyz.malefic.kanman.server.infra.http.response
 import xyz.malefic.kanman.shared.data.model.Issue.Validation.BadRequest
@@ -26,5 +27,9 @@ val userRoutes =
         "/api/users/{username}" bind GET to
             api { request ->
                 response(OK, getUserSummary(ensureNotNull(request.path("username")) { BadRequest("Missing username") }))
+            },
+        "/api/users/{id}" bind GET to
+            apiId { id, _ ->
+                response(OK, getUserSummary(id))
             },
     )

@@ -93,11 +93,16 @@ fun rateLimit(
 }
 
 context(_: Raise<Issue>)
-fun Request.boardId(field: String = "id"): Uuid = ensureNotNull(path(field)?.let { Uuid.parseOrNull(it) }) { Issue.Board.InvalidId() }
+fun Request.getId(field: String = "id"): Uuid = ensureNotNull(path(field)?.let { Uuid.parseOrNull(it) }) { Issue.Board.InvalidId() }
 
 fun Request.pagination() = (query("page")?.toIntOrNull() ?: 1).coerceAtLeast(1) to (query("limit")?.toIntOrNull() ?: 50).coerceIn(1, 100)
 
-fun apiBoardAuth(
-    boardId: String = "id",
+fun apiId(
+    field: String = "id",
+    handler: suspend Raise<Issue>.(Uuid, Request) -> Response,
+) = api { request -> handler(request.getId(field), request) }
+
+fun apiIdAuth(
+    field: String = "id",
     handler: suspend Raise<Issue>.(UserResponseModel, Uuid, Request) -> Response,
-) = apiAuth { user, request -> handler(user, request.boardId(boardId), request) }
+) = apiAuth { user, request -> handler(user, request.getId(field), request) }

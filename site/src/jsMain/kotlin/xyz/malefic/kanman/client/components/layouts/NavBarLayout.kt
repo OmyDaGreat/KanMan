@@ -84,9 +84,10 @@ enum class Pages(
     val value: String,
     val route: String,
 ) {
-    INDEX("Index", "/"),
+    INDEX("Home", "/"),
+    DRIVE("Drive", "/boards/drive"),
+    INBOX("Inbox", "/inbox"),
     PUBLIC("Public Boards", "/boards/public"),
-    DRIVE("Your Boards", "/boards/drive"),
     ABOUT("About", "/about"),
     ;
 

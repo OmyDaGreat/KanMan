@@ -23,25 +23,23 @@ context(_: Raise<Issue>)
 fun UserResponseModel.getInvites() = data { InvitationEntity.find { Invitations.receiver eq id }.map { it.toModel() } }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.invite(
-    boardId: Uuid,
-    inviteRequest: InviteRequest,
-) = data {
-    ensure(inviteRequest.role != Role.OWNER) { AccessDenied("A board owner cannot be invited") }
+infix fun UserResponseModel.invite(inviteRequest: InviteRequest) =
+    data {
+        ensure(inviteRequest.role != Role.OWNER) { AccessDenied("A board owner cannot be invited") }
 
-    val board = getAccessibleBoard(boardId, INVITE_USER)
-    val addUser = ensureNotNull(UserEntity.findById(inviteRequest.userId)) { Issue.User.NotFound() }
+        val board = getAccessibleBoard(inviteRequest.boardId, INVITE_USER)
+        val addUser = ensureNotNull(UserEntity.findById(inviteRequest.userId)) { Issue.User.NotFound() }
 
-    InvitationEntity.new {
-        this.board = board
-        sender = entity
-        receiver = addUser
-        role = inviteRequest.role
-    }
-}
+        InvitationEntity.new {
+            this.board = board
+            sender = entity
+            receiver = addUser
+            role = inviteRequest.role
+        }
+    }.toModel()
 
 context(_: Raise<Issue>)
-fun UserResponseModel.acceptInvite(inviteId: Uuid) =
+infix fun UserResponseModel.accept(inviteId: Uuid) =
     data {
         val invite = ensureNotNull(InvitationEntity.findById(inviteId)) { Issue.Board.NotFound() }
 
@@ -54,7 +52,7 @@ fun UserResponseModel.acceptInvite(inviteId: Uuid) =
     }
 
 context(_: Raise<Issue>)
-fun UserResponseModel.declineInvite(inviteId: Uuid) =
+infix fun UserResponseModel.decline(inviteId: Uuid) =
     data {
         val invite = ensureNotNull(InvitationEntity.findById(inviteId)) { Issue.Board.NotFound() }
         ensure(invite.receiver.id.value == id) { AccessDenied("You are not invited to this board") }

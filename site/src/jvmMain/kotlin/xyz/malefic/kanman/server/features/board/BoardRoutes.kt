@@ -6,34 +6,32 @@ import org.http4k.core.Method.PATCH
 import org.http4k.core.Method.POST
 import org.http4k.core.Status.Companion.OK
 import org.http4k.routing.bind
-import org.http4k.routing.path
-import xyz.malefic.kanman.server.features.invitation.invite
 import xyz.malefic.kanman.server.infra.http.apiAuth
 import xyz.malefic.kanman.server.infra.http.apiAuthOptional
-import xyz.malefic.kanman.server.infra.http.apiBoardAuth
+import xyz.malefic.kanman.server.infra.http.apiIdAuth
+import xyz.malefic.kanman.server.infra.http.getId
 import xyz.malefic.kanman.server.infra.http.model
 import xyz.malefic.kanman.server.infra.http.pagination
 import xyz.malefic.kanman.server.infra.http.response
-import xyz.malefic.kanman.shared.data.model.BoardCreateModel
+import xyz.malefic.kanman.shared.data.model.BoardAction.VIEW_BOARD
 import xyz.malefic.kanman.shared.data.model.Column
-import xyz.malefic.kanman.shared.data.model.InviteRequest
-import xyz.malefic.kanman.shared.data.model.RoleUpdateRequest
-import kotlin.uuid.Uuid
 
 val boardRoutes =
     arrayOf(
         "/api/boards" bind GET to
             apiAuthOptional { user, request ->
-                val (page, limit) = request.pagination()
-
-                response(OK, getBoards(user, page, limit))
+                response(OK, user publicBoardsWith request.pagination())
+            },
+        "/api/boards" bind POST to
+            apiAuth { user, request ->
+                response(OK, user create request.model())
             },
         "/api/boards/{id}" bind GET to
-            apiBoardAuth { user, id, request ->
-                val board = getAccessibleBoard(id, user = user)
+            apiIdAuth { user, id, request ->
+                val board = getBoard(id, VIEW_BOARD, user)
 
                 request.query("column")?.let {
-                    return@apiBoardAuth response(
+                    return@apiIdAuth response(
                         OK,
                         board.stickies.filter { sticky -> sticky.column == Column.valueOf(it.trim().uppercase()) },
                     )
@@ -41,45 +39,30 @@ val boardRoutes =
 
                 response(OK, board)
             },
-        "/api/boards" bind POST to
-            apiAuth { user, request ->
-                val boardRequest = request.model<BoardCreateModel>()
-                val boardResponse = user.createBoard(boardRequest)
-
-                response(OK, boardResponse)
-            },
         "/api/boards/{id}" bind DELETE to
-            apiBoardAuth { user, id, _ ->
-                user.deleteBoard(id)
+            apiIdAuth { user, board, _ ->
+                user delete board
 
                 response(OK)
             },
-        "/api/boards/{id}/join" bind POST to
-            apiBoardAuth { user, id, _ ->
-                response(OK, user.join(id))
-            },
         "/api/boards/{id}/history" bind GET to
-            apiBoardAuth { user, id, request ->
-                val (page, limit) = request.pagination()
-
-                response(OK, user.getBoardHistory(id, page, limit))
+            apiIdAuth { user, board, request ->
+                response(OK, user historyOf board with request.pagination())
             },
         "/api/boards/{id}/users" bind GET to
-            apiBoardAuth { user, id, _ ->
-                response(OK, user.getBoardUsers(id))
+            apiIdAuth { user, board, _ ->
+                response(OK, user getUsers board)
             },
         "/api/boards/{id}/users" bind POST to
-            apiBoardAuth { user, id, request ->
-                response(OK, user.invite(id, request.model<InviteRequest>()).toModel())
+            apiIdAuth { user, board, _ ->
+                response(OK, user join board)
             },
-        "/api/boards/{id}/users/{userId}" bind DELETE to
-            apiBoardAuth { user, id, request ->
-                val targetId = Uuid.parse(request.path("userId")!!)
-                response(OK, user.kick(id, targetId))
+        "/api/boards/{id}/users/{user_id}" bind DELETE to
+            apiIdAuth { user, board, request ->
+                response(OK, user kick request.getId("user_id") from board)
             },
-        "/api/boards/{id}/users/{userId}" bind PATCH to
-            apiBoardAuth { user, id, request ->
-                val targetId = Uuid.parse(request.path("userId")!!)
-                response(OK, user.updateUserRole(id, targetId, request.model<RoleUpdateRequest>().role))
+        "/api/boards/{id}/users/{user_id}" bind PATCH to
+            apiIdAuth { user, board, request ->
+                response(OK, user update request.getId("user_id") from board to request.model())
             },
     )
