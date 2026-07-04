@@ -25,7 +25,7 @@ import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.modifiers.top
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.silk.components.forms.Button
-import com.varabyte.kobweb.silk.components.icons.mdi.MdiArrowDownward
+import com.varabyte.kobweb.silk.components.icons.ms.MsArrowDownward
 import org.jetbrains.compose.web.css.percent
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.H1
@@ -82,7 +82,7 @@ fun BoardShowcase(
     if (hasMore.first) {
         Button(hasMore.second, Modifier.align(Alignment.BottomEnd).margin(32.px, 10.percent).backgroundColor(Colors.Transparent)) {
             Row {
-                MdiArrowDownward(Modifier.top(135.percent).color(Color.onSecondaryContainer))
+                MsArrowDownward(Modifier.top(135.percent).color(Color.onSecondaryContainer))
                 P(Modifier.color(Color.onSecondaryContainer).toAttrs()) { Text("Load more") }
             }
         }
