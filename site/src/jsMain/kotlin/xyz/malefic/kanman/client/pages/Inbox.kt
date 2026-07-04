@@ -79,9 +79,12 @@ fun Inbox(ctx: PageContext) =
                             Column(Modifier.gap(4.px)) {
                                 Request(request = { getBoard(invitation.boardId) }) { board ->
                                     H3 { Text(board.title) }
+                                    if (board.description.isNotBlank()) {
+                                        P { Text(board.description) }
+                                    }
                                 }
                                 Request(request = { getUser(invitation.senderId) }) { sender ->
-                                    P(Modifier.opacity(0.7).toAttrs()) { Text(sender.username) }
+                                    P(Modifier.opacity(0.7).toAttrs()) { Text("Sent by ${sender.username}") }
                                 }
                             }
                             MsCheckCircle(

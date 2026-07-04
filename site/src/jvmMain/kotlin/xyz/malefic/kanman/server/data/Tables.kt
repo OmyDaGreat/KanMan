@@ -28,6 +28,7 @@ object AuthTokens : UuidTable("auth_tokens") {
 
 object Boards : UuidTable("boards") {
     val title = varchar("title", 128)
+    val description = varchar("description", 256).default("")
     val visibility = enumeration<Visibility>("visibility")
     val owner = reference("owner_id", Users)
 }

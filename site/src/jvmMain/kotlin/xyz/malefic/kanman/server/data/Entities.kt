@@ -52,6 +52,7 @@ class BoardEntity(
     companion object : UuidEntityClass<BoardEntity>(Boards)
 
     var title by Boards.title
+    var description by Boards.description
     var visibility by Boards.visibility
     var owner by UserEntity referencedOn Boards.owner
     val stickies by StickyNoteEntity referrersOn StickyNotes.board
@@ -62,6 +63,7 @@ class BoardEntity(
         BoardResponseModel(
             id.value,
             title,
+            description,
             visibility,
             owner.toSummaryModel(),
             stickies.map { it.toModel() },
@@ -72,6 +74,7 @@ class BoardEntity(
         BoardSummaryModel(
             id.value,
             title,
+            description,
             visibility,
             owner.toSummaryModel(),
             userId?.let {

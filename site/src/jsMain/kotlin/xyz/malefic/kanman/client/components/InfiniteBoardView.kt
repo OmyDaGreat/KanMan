@@ -24,7 +24,7 @@ fun InfiniteBoardView(
 
     LaunchedEffect(page) {
         request(page, limit).fold(
-            { /* handle error */ },
+            { /* TODO: Handle error */ },
             { response ->
                 allBoards = allBoards + response.items
                 hasMore = allBoards.size < response.totalItems

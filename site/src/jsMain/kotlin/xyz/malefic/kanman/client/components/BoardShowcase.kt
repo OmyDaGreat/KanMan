@@ -72,6 +72,9 @@ fun BoardShowcase(
                 ) {
                     Column(Modifier.gap(4.px)) {
                         H3 { Text(board.title) }
+                        if (board.description.isNotBlank()) {
+                            P { Text(board.description) }
+                        }
                         P(Modifier.opacity(0.7).toAttrs()) { Text(board.owner.username) }
                     }
                 }

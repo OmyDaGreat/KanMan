@@ -15,6 +15,7 @@ arrow = "2.2.2.1"
 datetime = "0.8.0"
 konform = "0.11.0"
 nbvcxz = "1.5.1"
+slf4j = "2.0.18"
 
 [libraries]
 http4k-bom = { group = "org.http4k", name = "http4k-bom", version.ref = "http4k" }
@@ -57,6 +58,8 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit" }
 
 arrow = { group = "io.arrow-kt", name = "arrow-core", version.ref = "arrow" }
+
+slf4j-simple = { group = "org.slf4j", name = "slf4j-simple", version.ref = "slf4j" }
 
 [plugins]
 kobweb = { id = "com.varabyte.kobweb.application", version.ref = "kobweb" }

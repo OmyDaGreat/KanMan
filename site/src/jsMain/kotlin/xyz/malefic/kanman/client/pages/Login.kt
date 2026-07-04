@@ -90,8 +90,8 @@ fun Login(ctx: PageContext) =
             DisposableEffect(Unit) {
                 val handler: (Event) -> Unit = { event ->
                     if ((event as KeyboardEvent).key == "Enter" && loginStatus !is ApiState.Loading &&
-                        username.isNotEmpty() &&
-                        password.isNotEmpty()
+                        username.isNotBlank() &&
+                        password.isNotBlank()
                     ) {
                         event.preventDefault()
                         submit()
@@ -107,14 +107,14 @@ fun Login(ctx: PageContext) =
                 username,
                 { username = it },
                 placeholder = "Username",
-                valid = username.isNotEmpty() && loginStatus !is ApiState.Error,
+                valid = username.isNotBlank() && loginStatus !is ApiState.Error,
             )
             TextInput(
                 password,
                 { password = it },
                 placeholder = "Password",
                 password = true,
-                valid = password.isNotEmpty() && loginStatus !is ApiState.Error,
+                valid = password.isNotBlank() && loginStatus !is ApiState.Error,
             )
 
             if (loginStatus is ApiState.Error) {
@@ -125,7 +125,7 @@ fun Login(ctx: PageContext) =
 
             Button(
                 { submit() },
-                enabled = loginStatus !is ApiState.Loading && username.isNotEmpty() && password.isNotEmpty(),
+                enabled = loginStatus !is ApiState.Loading && username.isNotBlank() && password.isNotBlank(),
             ) {
                 Text(if (loginStatus is ApiState.Loading) "Loading..." else "Submit")
             }

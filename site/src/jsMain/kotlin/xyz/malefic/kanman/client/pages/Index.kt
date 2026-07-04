@@ -16,7 +16,7 @@ import xyz.malefic.kanman.shared.data.model.Visibility
 @Page
 @Composable
 fun Index(ctx: PageContext) =
-    ctx.Request(request = { createBoard(BoardCreateModel("Test", Visibility.PUBLIC)) }) { board ->
+    ctx.Request(request = { createBoard(BoardCreateModel("Test", "", Visibility.PUBLIC)) }) { board ->
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Link(
                 path = "/boards/${board.id}",

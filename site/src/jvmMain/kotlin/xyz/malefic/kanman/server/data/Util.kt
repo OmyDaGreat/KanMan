@@ -9,7 +9,7 @@ import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
 
-private val dbPath = System.getProperty("DB_PATH") ?: System.getenv("DB_PATH") ?: "/data/kanban.db"
+private val dbPath = System.getProperty("DB_PATH") ?: System.getenv("DB_PATH") ?: "/kanman/data/kanman.db"
 
 fun initDatabase() {
     Database.connect(

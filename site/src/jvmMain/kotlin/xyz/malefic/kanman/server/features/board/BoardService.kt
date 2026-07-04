@@ -99,6 +99,7 @@ infix fun UserResponseModel.create(boardCreateModel: BoardCreateModel) =
         val createdBoard =
             BoardEntity.new {
                 title = boardCreateModel.title
+                description = boardCreateModel.description
                 visibility = boardCreateModel.visibility
                 owner = entity
             }

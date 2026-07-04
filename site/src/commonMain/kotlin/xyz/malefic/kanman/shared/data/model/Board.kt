@@ -10,17 +10,6 @@ import kotlin.uuid.Uuid
 enum class Visibility {
     PUBLIC,
     PRIVATE,
-    ;
-
-    companion object {
-        val String.toVisibility
-            get() =
-                try {
-                    valueOf(this.uppercase().trim())
-                } catch (_: Exception) {
-                    null
-                }
-    }
 }
 
 @Serializable
@@ -70,6 +59,7 @@ data class BoardUserResponseModel(
 @Serializable
 data class BoardCreateModel(
     val title: String,
+    val description: String = "",
     val visibility: Visibility,
 )
 
@@ -77,6 +67,7 @@ data class BoardCreateModel(
 data class BoardResponseModel(
     val id: Uuid,
     val title: String,
+    val description: String = "",
     val visibility: Visibility,
     val owner: UserSummaryModel,
     val stickies: List<StickyNoteModel>,
@@ -87,6 +78,7 @@ data class BoardResponseModel(
 data class BoardSummaryModel(
     val id: Uuid,
     val title: String,
+    val description: String = "",
     val visibility: Visibility,
     val owner: UserSummaryModel,
     val lastViewedAt: Instant? = null,
