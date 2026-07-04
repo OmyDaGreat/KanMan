@@ -9,9 +9,11 @@ import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
 
+private val dbPath = System.getProperty("DB_PATH") ?: System.getenv("DB_PATH") ?: "/data/kanban.db"
+
 fun initDatabase() {
     Database.connect(
-        url = "jdbc:sqlite:kanban.db?foreign_keys=on",
+        url = "jdbc:sqlite:$dbPath?foreign_keys=on",
         driver = "org.sqlite.JDBC",
     )
 

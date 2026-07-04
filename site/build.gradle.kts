@@ -122,7 +122,12 @@ afterEvaluate {
     afterEvaluate {
         tasks.named<JavaExec>("jvmRun") {
             dependsOn(dockerRuntime)
-            systemProperty("SECRET", localProperties["SECRET"] ?: System.getenv("SECRET") ?: "")
+            (localProperties["SECRET"] ?: System.getenv("SECRET"))?.let {
+                systemProperty("SECRET", it)
+            }
+            (localProperties["DB_PATH"] ?: System.getenv("DB_PATH"))?.let {
+                systemProperty("DB_PATH", it)
+            }
         }
     }
 }
