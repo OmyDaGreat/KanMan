@@ -14,6 +14,10 @@ import xyz.malefic.kanman.shared.data.model.UserRequestModel
 
 val authRoutes =
     arrayOf(
+        "/api/auth/password/strength" bind POST to
+            api { request ->
+                response(OK, request.model<String>().strength())
+            },
         "/api/auth/register" bind POST to
             api { request ->
                 val tokens = request.model<UserRequestModel>().create()
