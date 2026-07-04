@@ -11,7 +11,7 @@ jetbrains-compose = "1.11.1"
 kobweb = "0.24.1"
 kutint = "1.0.1"
 jwt = "4.5.2"
-arrow = "2.2.2.1"
+arrow = "2.2.3"
 datetime = "0.8.0"
 
 [libraries]
