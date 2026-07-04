@@ -44,6 +44,16 @@ sealed class Issue : Error() {
         data class NotFound(
             override val message: String = "User not found",
         ) : User()
+
+        @Serializable
+        data class InvalidUser(
+            val usernameIssues: List<String> = emptyList(),
+            val passwordIssues: List<String> = emptyList(),
+        ) : User() {
+            override val message =
+                (if (usernameIssues.isNotEmpty()) "Invalid username: ${usernameIssues.joinToString(", ")};" else "") +
+                    if (passwordIssues.isNotEmpty()) "Invalid password: ${passwordIssues.joinToString(", ")};" else ""
+        }
     }
 
     @Serializable

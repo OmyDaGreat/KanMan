@@ -11,6 +11,15 @@ import at.favre.lib.crypto.bcrypt.BCrypt
 import co.touchlab.kermit.Logger
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import io.konform.validation.Validation
+import io.konform.validation.constraints.maxLength
+import io.konform.validation.constraints.minLength
+import io.konform.validation.constraints.notBlank
+import io.konform.validation.constraints.pattern
+import io.konform.validation.messagesAtPath
+import io.konform.validation.path.ValidationPath
+import me.gosimple.nbvcxz.Nbvcxz
+import me.gosimple.nbvcxz.resources.ConfigurationBuilder
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.cookie.Cookie
@@ -75,6 +84,8 @@ private val jwtAlgorithm =
         },
     )
 private val jwtVerifier = JWT.require(jwtAlgorithm).build()
+
+private val nbvcxz = Nbvcxz(ConfigurationBuilder().createConfiguration())
 
 infix fun Response.withCookie(refreshToken: String) =
     cookie(
@@ -198,14 +209,44 @@ fun getTokensFromLogin(user: UserRequestModel) =
         userEntity.issueTokenPair()
     }
 
+private val String.isStrongPassword get() = nbvcxz.estimate(this).basicScore >= 3
+
+val validateUser =
+    Validation {
+        UserRequestModel::username {
+            notBlank()
+            minLength(3) hint "Username must have at least 3 characters"
+            maxLength(32) hint "Username must have at most 32 characters"
+            constrain("Username must not contain spaces") { string -> !string.any { it.isWhitespace() } }
+            pattern(Regex("""^[\x21-\x7E&&[^"'`\\<>/:;%&{}|\[\]]]+$""")) hint
+                "Username must use printable ASCII and cannot include spaces or these characters: \" ' \\ < > / : ; % & { } | [ ]"
+        }
+        UserRequestModel::password {
+            notBlank()
+            minLength(12) hint "Password must have at least 12 characters"
+            maxLength(64) hint "Password must have at most 64 characters"
+            constrain("Password is not strong enough") { it.isStrongPassword }
+        }
+        constrain("Password must not contain username", ValidationPath.of(UserRequestModel::password)) { u ->
+            !u.password.contains(u.username, ignoreCase = true)
+        }
+    }
+
 context(_: Raise<Issue>)
 fun UserRequestModel.create() =
     transaction {
+        val userValidation = validateUser(this@create)
+        ensure(userValidation.isValid) {
+            User.InvalidUser(
+                userValidation.errors.messagesAtPath(UserRequestModel::username),
+                userValidation.errors.messagesAtPath(UserRequestModel::password),
+            )
+        }
         ensure(UserEntity.find { Users.username eq username }.empty()) { User.AlreadyExists() }
         UserEntity
             .new {
-                this.username = this@create.username
-                this.hashedPassword = hashPassword(this@create.password)
+                username = this@create.username
+                hashedPassword = hashPassword(password)
             }.issueTokenPair()
     }
 

@@ -74,13 +74,14 @@ kotlin {
             implementation(project.dependencies.platform(libs.http4k.bom))
             implementation(libs.bundles.http4k)
             implementation(libs.bundles.storage)
+            implementation(libs.konform)
+            implementation(libs.nbvcxz)
             implementation(libs.bcrypt)
             implementation(libs.jwt)
             compileOnly(libs.kobweb.api)
         }
 
         jsMain.dependencies {
-            implementation(libs.bundles.silk.icons)
             implementation(libs.bundles.compose)
             implementation(libs.bundles.kobweb)
             implementation(wrappers.js)

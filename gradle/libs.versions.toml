@@ -13,6 +13,8 @@ kutint = "1.0.1"
 jwt = "4.5.2"
 arrow = "2.2.2.1"
 datetime = "0.8.0"
+konform = "0.11.0"
+nbvcxz = "1.5.1"
 
 [libraries]
 http4k-bom = { group = "org.http4k", name = "http4k-bom", version.ref = "http4k" }
@@ -33,13 +35,16 @@ jwt = { group = "com.auth0", name = "java-jwt", version.ref = "jwt" }
 
 bcrypt = { group = "at.favre.lib", name = "bcrypt", version.ref = "bcrypt" }
 
+konform = { group = "io.konform", name = "konform", version.ref = "konform" }
+
+nbvcxz = { group = "me.gosimple", name = "nbvcxz", version.ref = "nbvcxz" }
+
 compose-html-core = { module = "org.jetbrains.compose.html:html-core", version.ref = "jetbrains-compose" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "jetbrains-compose" }
 kobweb-core = { module = "com.varabyte.kobweb:kobweb-core ", version.ref = "kobweb" }
 kobweb-silk = { module = "com.varabyte.kobweb:kobweb-silk", version.ref = "kobweb" }
 kobweb-api = { module = "com.varabyte.kobweb:kobweb-api", version.ref = "kobweb" }
-silk-icons-fa = { module = "com.varabyte.kobwebx:silk-icons-fa", version.ref = "kobweb" }
-silk-icons-mdi = { module = "com.varabyte.kobwebx:silk-icons-mdi", version.ref = "kobweb" }
+silk-icons-ms = { module = "com.varabyte.kobwebx:silk-icons-ms", version.ref = "kobweb" }
 
 kutint = { group = "xyz.malefic", name = "kutint", version.ref = "kutint" }
 
@@ -75,6 +80,5 @@ storage = [
     "exposed-json",
     "exposed-datetime"
 ]
-kobweb = ["kobweb-core", "kobweb-silk"]
+kobweb = ["kobweb-core", "kobweb-silk", "silk-icons-ms"]
 compose = ["compose-html-core", "compose-runtime"]
-silk-icons = ["silk-icons-fa", "silk-icons-mdi"]

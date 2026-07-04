@@ -7,10 +7,10 @@ import org.http4k.routing.bind
 import org.http4k.routing.path
 import xyz.malefic.kanman.server.infra.http.api
 import xyz.malefic.kanman.server.infra.http.apiAuth
-import xyz.malefic.kanman.server.infra.http.apiId
 import xyz.malefic.kanman.server.infra.http.pagination
 import xyz.malefic.kanman.server.infra.http.response
 import xyz.malefic.kanman.shared.data.model.Issue.Validation.BadRequest
+import kotlin.uuid.Uuid
 
 val userRoutes =
     arrayOf(
@@ -24,12 +24,14 @@ val userRoutes =
 
                 response(OK, user.getJoinedBoards(page, limit))
             },
-        "/api/users/{username}" bind GET to
+        "/api/users/{search}" bind GET to
             api { request ->
-                response(OK, getUserSummary(ensureNotNull(request.path("username")) { BadRequest("Missing username") }))
-            },
-        "/api/users/{id}" bind GET to
-            apiId { id, _ ->
-                response(OK, getUserSummary(id))
+                val search = ensureNotNull(request.path("search")) { BadRequest("Missing search") }
+
+                Uuid.parseOrNull(search)?.let { id ->
+                    return@api response(OK, getUserSummary(id))
+                }
+
+                response(OK, getUserSummary(search))
             },
     )

@@ -54,7 +54,7 @@ fun Issue.toResponse(): Response {
             is Issue.Access.Forbidden, is Issue.Board.AccessDenied -> Status.FORBIDDEN
             is Issue.Board.NotFound, is Issue.User.NotFound -> Status.NOT_FOUND
             is Issue.User.AlreadyExists, is Issue.Server.Conflict -> Status.CONFLICT
-            is Issue.Board.InvalidId, is Issue.Validation.BadRequest -> Status.BAD_REQUEST
+            is Issue.Board.InvalidId, is Issue.Validation.BadRequest, is Issue.User.InvalidUser -> Status.BAD_REQUEST
             is Issue.Server.RateLimited -> Status.TOO_MANY_REQUESTS
             is Issue.Server.Internal, is Issue.Validation.BadResponse, is Issue.Client -> Status.INTERNAL_SERVER_ERROR
         }
