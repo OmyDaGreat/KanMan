@@ -13,7 +13,7 @@ kutint = "1.0.1"
 jwt = "4.5.2"
 arrow = "2.2.2.1"
 datetime = "0.8.0"
-konform = "0.11.0"
+konform = "0.11.1"
 nbvcxz = "1.5.1"
 slf4j = "2.0.18"
 
