@@ -8,36 +8,48 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.varabyte.kobweb.compose.css.TextWrap
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.foundation.layout.Row
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
+import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.border
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
 import com.varabyte.kobweb.compose.ui.modifiers.color
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
+import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
+import com.varabyte.kobweb.compose.ui.modifiers.height
 import com.varabyte.kobweb.compose.ui.modifiers.padding
+import com.varabyte.kobweb.compose.ui.modifiers.textWrap
+import com.varabyte.kobweb.compose.ui.modifiers.width
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.Page
 import com.varabyte.kobweb.core.PageContext
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.forms.Switch
 import com.varabyte.kobweb.silk.components.forms.TextInput
+import com.varabyte.kobweb.silk.components.layout.SimpleGrid
+import com.varabyte.kobweb.silk.components.layout.numColumns
 import kotlinx.browser.document
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.web.css.LineStyle
+import org.jetbrains.compose.web.css.percent
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.H2
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
+import xyz.malefic.kanman.client.api.strength
 import xyz.malefic.kanman.client.api.util.ApiState
 import xyz.malefic.kanman.client.api.util.AuthSession
+import xyz.malefic.kanman.client.api.util.Request
 import xyz.malefic.kanman.client.styles.Color
+import xyz.malefic.kanman.shared.data.model.Issue
 
 enum class Login(
     val string: String,
@@ -67,7 +79,8 @@ fun Login(ctx: PageContext) =
                 .backgroundColor(Color.surfaceContainerHigh)
                 .padding(24.px)
                 .borderRadius(24.px)
-                .border(1.px, LineStyle.Solid, Color.outlineVariant),
+                .border(1.px, LineStyle.Solid, Color.outlineVariant)
+                .width(25.percent),
             Arrangement.spacedBy(24.px),
         ) {
             fun submit() {
@@ -106,20 +119,68 @@ fun Login(ctx: PageContext) =
             TextInput(
                 username,
                 { username = it },
+                Modifier.fillMaxWidth(),
                 placeholder = "Username",
                 valid = username.isNotBlank() && loginStatus !is ApiState.Error,
             )
             TextInput(
                 password,
                 { password = it },
+                Modifier.fillMaxWidth(),
                 placeholder = "Password",
                 password = true,
                 valid = password.isNotBlank() && loginStatus !is ApiState.Error,
             )
 
+            if (loginMode == Login.SIGNUP) {
+                ctx.Request(password, request = { password.strength() }) { (strength, feedback) ->
+                    SimpleGrid(numColumns(4), Modifier.height(24.px).fillMaxWidth().borderRadius(24.px)) {
+                        repeat(strength) { strength ->
+                            Box(
+                                Modifier.fillMaxSize().backgroundColor(
+                                    when (strength) {
+                                        1 -> Colors.Red
+                                        2 -> Colors.Orange
+                                        3 -> Colors.Yellow
+                                        4 -> Colors.Green
+                                        else -> Colors.Gray
+                                    },
+                                ),
+                            )
+                        }
+                        repeat(4 - strength) {
+                            Box(Modifier.fillMaxSize().backgroundColor(Colors.White))
+                        }
+                    }
+                    feedback?.let {
+                        P(
+                            Modifier
+                                .fillMaxWidth()
+                                .color(Color.onSurface)
+                                .textWrap(TextWrap.Pretty)
+                                .toAttrs(),
+                        ) {
+                            Text(it)
+                        }
+                    }
+                }
+            }
+
             if (loginStatus is ApiState.Error) {
-                P(Modifier.color(Color.error).toAttrs()) {
-                    Text((loginStatus as ApiState.Error).issue.message)
+                val issue = (loginStatus as ApiState.Error).issue
+                if (issue is Issue.User.InvalidUser) {
+                    P(Modifier.color(Color.error).toAttrs()) {
+                        Text("Invalid username or password")
+                    }
+                    issue.usernameIssues.plus(issue.passwordIssues).forEach {
+                        P(Modifier.color(Color.error).toAttrs()) {
+                            Text(it)
+                        }
+                    }
+                } else {
+                    P(Modifier.color(Color.error).toAttrs()) {
+                        Text((loginStatus as ApiState.Error).issue.message)
+                    }
                 }
             }
 

@@ -23,23 +23,19 @@ import xyz.malefic.kanman.server.features.board.boardRoutes
 import xyz.malefic.kanman.server.features.board.boardWs
 import xyz.malefic.kanman.server.features.invitation.invitationRoutes
 import xyz.malefic.kanman.server.features.user.userRoutes
-import xyz.malefic.kanman.server.infra.http.rateLimit
 import xyz.malefic.kanman.server.infra.http.response
 import xyz.malefic.kanman.server.infra.http.serveStaticFile
 import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
 
 fun main() {
     initDatabase()
-
-    val throttler = rateLimit(10, 1.minutes.inWholeMilliseconds)
 
     val http: RoutingHttpHandler =
         ServerFilters.Cors(corsPolicy).then(
             routes(
                 "/api/ping" bind GET to { response(OK).body("pong") },
                 "/api/health" bind GET to { response(OK).body("healthy") },
-                *authRoutes.map { throttler.then(it) }.toTypedArray(),
+                *authRoutes,
                 *userRoutes,
                 *boardRoutes,
                 *invitationRoutes,

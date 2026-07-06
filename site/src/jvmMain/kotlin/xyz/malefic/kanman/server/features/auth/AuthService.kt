@@ -209,7 +209,7 @@ fun getTokensFromLogin(user: UserRequestModel) =
         userEntity.issueTokenPair()
     }
 
-fun String.strength(): Pair<Int, List<String>> = with(nbvcxz.estimate(this)) { basicScore to feedback.suggestion }
+fun String.strength(): Pair<Int, String?> = with(nbvcxz.estimate(this)) { basicScore to feedback.warning }
 
 private val String.isStrongPassword get() = nbvcxz.estimate(this).basicScore >= 3
 

@@ -50,9 +50,11 @@ sealed class Issue : Error() {
             val usernameIssues: List<String> = emptyList(),
             val passwordIssues: List<String> = emptyList(),
         ) : User() {
-            override val message =
-                (if (usernameIssues.isNotEmpty()) "Invalid username: ${usernameIssues.joinToString(", ")};" else "") +
-                    if (passwordIssues.isNotEmpty()) "Invalid password: ${passwordIssues.joinToString(", ")};" else ""
+            override val message: String =
+                buildList {
+                    if (usernameIssues.isNotEmpty()) add("Invalid username: ${usernameIssues.joinToString(", ")}")
+                    if (passwordIssues.isNotEmpty()) add("Invalid password: ${passwordIssues.joinToString(", ")}")
+                }.joinToString("; ")
         }
     }
 

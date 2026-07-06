@@ -8,9 +8,13 @@ import org.http4k.core.cookie.invalidateCookie
 import org.http4k.routing.bind
 import xyz.malefic.kanman.server.infra.http.api
 import xyz.malefic.kanman.server.infra.http.model
+import xyz.malefic.kanman.server.infra.http.rateLimit
 import xyz.malefic.kanman.server.infra.http.response
 import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.UserRequestModel
+import kotlin.time.Duration.Companion.minutes
+
+val throttler = rateLimit(10, 1.minutes.inWholeMilliseconds)
 
 val authRoutes =
     arrayOf(
@@ -19,27 +23,35 @@ val authRoutes =
                 response(OK, request.model<String>().strength())
             },
         "/api/auth/register" bind POST to
-            api { request ->
-                val tokens = request.model<UserRequestModel>().create()
+            throttler(
+                api { request ->
+                    val tokens = request.model<UserRequestModel>().create()
 
-                response(OK, tokens.response) withCookie tokens.refreshToken
-            },
+                    response(OK, tokens.response) withCookie tokens.refreshToken
+                },
+            ),
         "/api/auth/login" bind POST to
-            api { request ->
-                val tokens = getTokensFromLogin(request.model())
+            throttler(
+                api { request ->
+                    val tokens = getTokensFromLogin(request.model())
 
-                response(OK, tokens.response) withCookie tokens.refreshToken
-            },
+                    response(OK, tokens.response) withCookie tokens.refreshToken
+                },
+            ),
         "/api/auth/logout" bind POST to
-            api { request ->
-                request.cookie("refresh_token")?.value?.let { revokeRefreshToken(it) }
+            throttler(
+                api { request ->
+                    request.cookie("refresh_token")?.value?.let { revokeRefreshToken(it) }
 
-                response(OK).invalidateCookie("refresh_token")
-            },
+                    response(OK).invalidateCookie("refresh_token")
+                },
+            ),
         "/api/auth/token/refresh" bind POST to
-            api { request ->
-                val tokens = refreshTokens(ensureNotNull(request.cookie("refresh_token")?.value) { Issue.Auth.MissingToken() })
+            throttler(
+                api { request ->
+                    val tokens = refreshTokens(ensureNotNull(request.cookie("refresh_token")?.value) { Issue.Auth.MissingToken() })
 
-                response(OK, tokens.response) withCookie tokens.refreshToken
-            },
+                    response(OK, tokens.response) withCookie tokens.refreshToken
+                },
+            ),
     )
