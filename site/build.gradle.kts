@@ -38,10 +38,7 @@ kobweb {
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs.apply {
-            add("-Xcontext-parameters")
-            add("-Xreturn-value-checker=full")
-        }
+        freeCompilerArgs.add("-Xreturn-value-checker=full")
         optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
 
@@ -87,6 +84,14 @@ kotlin {
             implementation(libs.bundles.kobweb)
             implementation(wrappers.js)
             implementation(libs.kutint)
+        }
+    }
+}
+
+configurations.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin-test")) {
+            useVersion(libs.versions.kotlin.get())
         }
     }
 }

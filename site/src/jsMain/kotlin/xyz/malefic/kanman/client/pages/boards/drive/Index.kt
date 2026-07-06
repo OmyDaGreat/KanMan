@@ -9,4 +9,4 @@ import xyz.malefic.kanman.client.components.InfiniteBoardView
 @Page
 @Composable
 fun Drive(ctx: PageContext) =
-    InfiniteBoardView("Your Boards", { page, limit -> getJoinedBoards(page, limit) }) { ctx.router.navigateTo("/boards/${it.id}") }
+    ctx.InfiniteBoardView("Your Boards", { page, limit -> getJoinedBoards(page, limit) }) { ctx.router.navigateTo("/boards/${it.id}") }

@@ -132,7 +132,7 @@ fun Login(ctx: PageContext) =
                 valid = password.isNotBlank() && loginStatus !is ApiState.Error,
             )
 
-            if (loginMode == Login.SIGNUP) {
+            if (loginMode == Login.SIGNUP) { // TODO: Fix sizing
                 ctx.Request(password, request = { password.strength() }) { (strength, feedback) ->
                     SimpleGrid(numColumns(4), Modifier.height(24.px).fillMaxWidth().borderRadius(24.px)) {
                         repeat(strength) { strength ->
