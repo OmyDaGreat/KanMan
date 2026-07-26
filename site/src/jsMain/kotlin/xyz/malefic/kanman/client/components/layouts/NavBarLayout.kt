@@ -33,6 +33,7 @@ import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.api.getUser
 import xyz.malefic.kanman.client.api.util.AuthSession
 import xyz.malefic.kanman.client.api.util.Request
+import xyz.malefic.kanman.client.components.ErrorOverlay
 import xyz.malefic.kanman.client.styles.Color
 
 @Layout
@@ -77,6 +78,8 @@ fun NavBarLayout(
         Box(Modifier.fillMaxSize().weight(1).overflow(Overflow.Auto)) {
             content()
         }
+
+        ErrorOverlay(ctx)
     }
 }
 

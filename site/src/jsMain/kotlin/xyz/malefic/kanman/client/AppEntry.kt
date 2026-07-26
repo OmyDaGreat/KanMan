@@ -12,7 +12,6 @@ import com.varabyte.kobweb.silk.style.toModifier
 import com.varabyte.kobweb.silk.theme.colors.ColorMode
 import com.varabyte.kobweb.silk.theme.colors.saveToLocalStorage
 import org.jetbrains.compose.web.css.vh
-import xyz.malefic.kanman.client.components.ErrorOverlay
 
 @App
 @Composable
@@ -26,7 +25,5 @@ fun AppEntry(content: @Composable () -> Unit) {
         Surface(SmoothColorStyle.toModifier().fillMaxSize().minHeight(100.vh)) {
             content()
         }
-
-        ErrorOverlay()
     }
 }

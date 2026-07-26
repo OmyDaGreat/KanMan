@@ -19,7 +19,7 @@ import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.modifiers.textAlign
 import com.varabyte.kobweb.compose.ui.modifiers.width
 import com.varabyte.kobweb.compose.ui.toAttrs
-import com.varabyte.kobweb.core.rememberPageContext
+import com.varabyte.kobweb.core.PageContext
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.ms.MsError
 import com.varabyte.kobweb.silk.components.overlay.Overlay
@@ -33,9 +33,8 @@ import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.Issue
 
 @Composable
-fun ErrorOverlay() {
+fun ErrorOverlay(ctx: PageContext) {
     val issue = GlobalErrorState.currentIssue ?: return
-    val ctx = rememberPageContext()
 
     LaunchedEffect(issue) {
         if (issue is Issue.Auth) {

@@ -5,17 +5,21 @@ import arrow.core.raise.either
 import co.touchlab.kermit.Logger
 import org.http4k.routing.websocket.bind
 import org.http4k.routing.websockets
+import org.http4k.websocket.WsMessage
 import org.http4k.websocket.WsResponse
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.server.features.user.getUserSummary
 import xyz.malefic.kanman.server.infra.ws.Registry
 import xyz.malefic.kanman.server.infra.ws.apiBoardAuthWS
 import xyz.malefic.kanman.server.infra.ws.model
-import xyz.malefic.kanman.server.infra.ws.send
+import xyz.malefic.kanman.shared.api.util.json
 import xyz.malefic.kanman.shared.data.model.BoardAction.VIEW_BOARD
+import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.Issue.Server.Internal
 import xyz.malefic.kanman.shared.data.model.WsAction
+import xyz.malefic.kanman.shared.data.model.WsEvent
 import xyz.malefic.kanman.shared.data.model.WsEvent.AssignedUser
+import xyz.malefic.kanman.shared.data.model.WsEvent.BoardLoad
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyCreated
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyDeleted
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyMoved
@@ -27,12 +31,17 @@ val boardWs =
     websockets(
         "/api/ws/{id}" bind
             apiBoardAuthWS { user, id, _ ->
-                transaction { user.getAccessibleBoard(id, VIEW_BOARD) }
+                val board = transaction { user.getAccessibleBoard(id, VIEW_BOARD).toResponseModel() }
                 val userSummary = user.toSummaryModel()
 
                 WsResponse { ws ->
                     either {
-                        catch({ if (Registry.register(id, ws)) Registry.broadcast(id, UserJoin(userSummary, id)) })
+                        catch({
+                            if (Registry.register(id, ws)) {
+                                Registry.broadcast(id, UserJoin(userSummary, id))
+                                ws.send(WsMessage(json.encodeToString(WsEvent.serializer(), BoardLoad(userSummary, board))))
+                            }
+                        })
                         { raise(Internal.from(it, "Connection registration failed")) }
 
                         ws.onMessage { msg ->
@@ -68,7 +77,7 @@ val boardWs =
                                 Registry.broadcast(id, event)
                             }.onLeft { e ->
                                 Logger.e(e, "WebSockets") { "Failed to handle message" }
-                                ws.send(e)
+                                ws.send(WsMessage(json.encodeToString(Issue.serializer(), e)))
                             }
                         }
 
@@ -86,7 +95,7 @@ val boardWs =
                         }
                     }.onLeft { issue ->
                         Logger.e(issue, "WebSockets") { "Error during WS setup" }
-                        ws.send(issue)
+                        ws.send(WsMessage(json.encodeToString(Issue.serializer(), issue)))
                         ws.close()
                     }
                 }

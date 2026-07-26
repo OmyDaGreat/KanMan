@@ -22,7 +22,7 @@ import com.varabyte.kobweb.compose.ui.modifiers.onClick
 import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.modifiers.width
 import com.varabyte.kobweb.compose.ui.toAttrs
-import com.varabyte.kobweb.core.PageContext
+import com.varabyte.kobweb.core.rememberPageContext
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.forms.Switch
 import com.varabyte.kobweb.silk.components.forms.TextInput
@@ -41,9 +41,9 @@ import xyz.malefic.kanman.shared.data.model.Visibility
 
 @Composable
 fun CreateBoardOverlay(
-    ctx: PageContext,
     onClose: () -> Unit,
 ) {
+    val ctx = rememberPageContext()
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var visibility by remember { mutableStateOf(Visibility.PRIVATE) }

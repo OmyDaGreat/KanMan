@@ -50,6 +50,12 @@ sealed interface WsEvent {
     ) : WsEvent
 
     @Serializable
+    data class BoardLoad(
+        override val actor: UserSummaryModel,
+        val board: BoardResponseModel,
+    ) : WsEvent
+
+    @Serializable
     data class UserLeave(
         override val actor: UserSummaryModel,
         @SerialName("board_id") val boardId: Uuid,

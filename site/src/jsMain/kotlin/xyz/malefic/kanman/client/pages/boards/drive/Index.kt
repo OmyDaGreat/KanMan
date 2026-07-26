@@ -43,6 +43,6 @@ fun Drive(ctx: PageContext) {
     )
 
     if (showCreatePopup) {
-        CreateBoardOverlay(ctx, onClose = { showCreatePopup = false })
+        CreateBoardOverlay(onClose = { showCreatePopup = false })
     }
 }
