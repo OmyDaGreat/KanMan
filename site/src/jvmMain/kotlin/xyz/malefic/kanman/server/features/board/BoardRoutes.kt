@@ -39,6 +39,12 @@ val boardRoutes =
 
                 response(OK, board)
             },
+        "/api/boards/{id}" bind PATCH to
+            apiIdAuth { user, board, request ->
+                user patch board with request.model()
+
+                response(OK)
+            },
         "/api/boards/{id}" bind DELETE to
             apiIdAuth { user, board, _ ->
                 user delete board

@@ -57,7 +57,7 @@ data class BoardUserResponseModel(
 )
 
 @Serializable
-data class BoardCreateModel(
+data class BoardDetailsModel(
     val title: String,
     val description: String = "",
     val visibility: Visibility,

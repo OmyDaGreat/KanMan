@@ -36,7 +36,7 @@ import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.api.createBoard
 import xyz.malefic.kanman.client.api.util.ApiState
 import xyz.malefic.kanman.client.styles.Color
-import xyz.malefic.kanman.shared.data.model.BoardCreateModel
+import xyz.malefic.kanman.shared.data.model.BoardDetailsModel
 import xyz.malefic.kanman.shared.data.model.Visibility
 
 @Composable
@@ -111,7 +111,7 @@ fun CreateBoardOverlay(
                         scope.launch {
                             state = ApiState.Loading
 
-                            handle(createBoard(BoardCreateModel(title, description, visibility))) {
+                            handle(createBoard(BoardDetailsModel(title, description, visibility))) {
                                 state = ApiState.Success(Unit)
                                 onClose()
                                 ctx.router.navigateTo("/boards/drive/${it.id}")

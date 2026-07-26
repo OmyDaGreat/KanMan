@@ -4,7 +4,7 @@ import xyz.malefic.kanman.client.api.util.deleteAuth
 import xyz.malefic.kanman.client.api.util.getAuth
 import xyz.malefic.kanman.client.api.util.patchAuth
 import xyz.malefic.kanman.client.api.util.postAuth
-import xyz.malefic.kanman.shared.data.model.BoardCreateModel
+import xyz.malefic.kanman.shared.data.model.BoardDetailsModel
 import xyz.malefic.kanman.shared.data.model.BoardEventModel
 import xyz.malefic.kanman.shared.data.model.BoardResponseModel
 import xyz.malefic.kanman.shared.data.model.BoardSummaryModel
@@ -28,7 +28,12 @@ suspend fun getBoardStickies(
     column: Column,
 ) = getAuth<List<StickyNoteModel>>("boards/$id?column=$column")
 
-suspend fun createBoard(board: BoardCreateModel) = postAuth<_, BoardResponseModel>("boards", board)
+suspend fun createBoard(board: BoardDetailsModel) = postAuth<_, BoardResponseModel>("boards", board)
+
+suspend fun updateBoard(
+    id: Uuid,
+    board: BoardDetailsModel,
+) = patchAuth<_>("boards/$id", board)
 
 suspend fun deleteBoard(id: Uuid) = deleteAuth("boards/$id")
 

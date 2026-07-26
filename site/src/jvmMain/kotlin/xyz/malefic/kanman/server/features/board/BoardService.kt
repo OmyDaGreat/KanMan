@@ -27,7 +27,7 @@ import xyz.malefic.kanman.shared.data.model.BoardAction.DELETE_BOARD
 import xyz.malefic.kanman.shared.data.model.BoardAction.EDIT_STICKY
 import xyz.malefic.kanman.shared.data.model.BoardAction.INVITE_USER
 import xyz.malefic.kanman.shared.data.model.BoardAction.VIEW_BOARD
-import xyz.malefic.kanman.shared.data.model.BoardCreateModel
+import xyz.malefic.kanman.shared.data.model.BoardDetailsModel
 import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.Issue.Board.AccessDenied
 import xyz.malefic.kanman.shared.data.model.Issue.Validation.BadRequest
@@ -94,18 +94,40 @@ fun getBoard(
     ).toResponseModel()
 }
 
-infix fun UserResponseModel.create(boardCreateModel: BoardCreateModel) =
+infix fun UserResponseModel.create(boardDetailsModel: BoardDetailsModel) =
     data {
         val createdBoard =
             BoardEntity.new {
-                title = boardCreateModel.title
-                description = boardCreateModel.description
-                visibility = boardCreateModel.visibility
+                title = boardDetailsModel.title
+                description = boardDetailsModel.description
+                visibility = boardDetailsModel.visibility
                 owner = entity
             }
         BoardUserEntity.new(createdBoard, entity, Role.OWNER)
         createdBoard.toResponseModel()
     }
+
+infix fun UserResponseModel.patch(boardId: Uuid) = PatchBuilder(this, boardId)
+
+class PatchBuilder(
+    val actor: UserResponseModel,
+    val boardId: Uuid,
+) {
+    context(_: Raise<Issue>)
+    infix fun with(details: BoardDetailsModel) = actor.patch(boardId, details)
+}
+
+context(_: Raise<Issue>)
+fun UserResponseModel.patch(
+    boardId: Uuid,
+    details: BoardDetailsModel,
+) = data {
+    val board = boardId perform DELETE_BOARD
+
+    if (board.title != details.title) board.title = details.title
+    if (board.description != details.description) board.description = details.description
+    if (board.visibility != details.visibility) board.visibility = details.visibility
+}
 
 context(_: Raise<Issue>)
 infix fun UserResponseModel.delete(boardId: Uuid) =

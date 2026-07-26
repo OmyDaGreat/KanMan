@@ -33,7 +33,9 @@ import org.jetbrains.compose.web.dom.H2
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.api.deleteBoard
+import xyz.malefic.kanman.client.api.updateBoard
 import xyz.malefic.kanman.client.styles.Color
+import xyz.malefic.kanman.shared.data.model.BoardDetailsModel
 import xyz.malefic.kanman.shared.data.model.BoardResponseModel
 import xyz.malefic.kanman.shared.data.model.Visibility
 
@@ -65,8 +67,6 @@ fun BoardSettings(
                 .gap(24.px),
         ) {
             H2 { Text("Board Settings") }
-
-            // TODO: Add board detail editing backend route (PATCH?)
 
             Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.px)) {
                 P(Modifier.padding(0.px).toAttrs()) { Text("Title") }
@@ -123,7 +123,13 @@ fun BoardSettings(
                         Text("Cancel")
                     }
                     Button(
-                        { /* TODO: Update logic when backend is ready */ },
+                        {
+                            scope.launch {
+                                handle(updateBoard(board.id, BoardDetailsModel(title, description, visibility))) {
+                                    window.location.reload()
+                                }
+                            }
+                        },
                         enabled = false,
                     ) {
                         Text("Save Changes")

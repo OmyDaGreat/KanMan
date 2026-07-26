@@ -9,13 +9,13 @@ import com.varabyte.kobweb.core.Page
 import com.varabyte.kobweb.silk.components.navigation.Link
 import xyz.malefic.kanman.client.api.createBoard
 import xyz.malefic.kanman.client.api.util.Request
-import xyz.malefic.kanman.shared.data.model.BoardCreateModel
+import xyz.malefic.kanman.shared.data.model.BoardDetailsModel
 import xyz.malefic.kanman.shared.data.model.Visibility
 
 @Page
 @Composable
 fun Index() =
-    Request(request = { createBoard(BoardCreateModel("Test", "", Visibility.PUBLIC)) }) { board ->
+    Request(request = { createBoard(BoardDetailsModel("Test", "", Visibility.PUBLIC)) }) { board ->
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Link(
                 path = "/boards/drive/${board.id}",
