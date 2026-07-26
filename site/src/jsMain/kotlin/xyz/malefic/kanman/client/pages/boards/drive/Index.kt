@@ -19,7 +19,7 @@ import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.api.getJoinedBoards
-import xyz.malefic.kanman.client.components.CreateBoardOverlay
+import xyz.malefic.kanman.client.components.BoardCreationOverlay
 import xyz.malefic.kanman.client.components.InfiniteBoardView
 import xyz.malefic.kanman.client.styles.Color
 
@@ -43,6 +43,6 @@ fun Drive(ctx: PageContext) {
     )
 
     if (showCreatePopup) {
-        CreateBoardOverlay(onClose = { showCreatePopup = false })
+        BoardCreationOverlay(onClose = { showCreatePopup = false })
     }
 }

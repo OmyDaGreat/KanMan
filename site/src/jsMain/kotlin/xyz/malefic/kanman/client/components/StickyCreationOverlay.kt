@@ -4,51 +4,42 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.varabyte.kobweb.compose.css.Cursor
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.foundation.layout.Row
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
+import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.border
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
-import com.varabyte.kobweb.compose.ui.modifiers.cursor
+import com.varabyte.kobweb.compose.ui.modifiers.color
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
+import com.varabyte.kobweb.compose.ui.modifiers.height
 import com.varabyte.kobweb.compose.ui.modifiers.margin
-import com.varabyte.kobweb.compose.ui.modifiers.onClick
 import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.modifiers.width
 import com.varabyte.kobweb.compose.ui.toAttrs
-import com.varabyte.kobweb.core.rememberPageContext
 import com.varabyte.kobweb.silk.components.forms.Button
-import com.varabyte.kobweb.silk.components.forms.Switch
 import com.varabyte.kobweb.silk.components.forms.TextInput
 import com.varabyte.kobweb.silk.components.overlay.Overlay
-import kotlinx.coroutines.launch
+import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.H2
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
-import xyz.malefic.kanman.client.api.createBoard
-import xyz.malefic.kanman.client.api.util.ApiState
+import org.jetbrains.compose.web.dom.TextArea
 import xyz.malefic.kanman.client.styles.Color
-import xyz.malefic.kanman.shared.data.model.BoardDetailsModel
-import xyz.malefic.kanman.shared.data.model.Visibility
 
 @Composable
-fun CreateBoardOverlay(
+fun StickyCreationOverlay(
     onClose: () -> Unit,
+    onCreate: (title: String, content: String?) -> Unit,
 ) {
-    val ctx = rememberPageContext()
     var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var visibility by remember { mutableStateOf(Visibility.PRIVATE) }
-    var state by remember { mutableStateOf<ApiState<Unit>?>(null) }
-    val scope = rememberCoroutineScope()
+    var content by remember { mutableStateOf("") }
 
     Overlay(
         Modifier.backgroundColor(Color.overlay),
@@ -63,7 +54,7 @@ fun CreateBoardOverlay(
                 .width(400.px),
             Arrangement.spacedBy(24.px),
         ) {
-            H2 { Text("Create New Board") }
+            H2 { Text("Create New Sticky") }
 
             Column(Modifier.fillMaxWidth().padding(bottom = 8.px), Arrangement.spacedBy(8.px)) {
                 P(Modifier.padding(0.px).toAttrs()) { Text("Title") }
@@ -71,32 +62,27 @@ fun CreateBoardOverlay(
                     title,
                     { title = it },
                     Modifier.fillMaxWidth(),
-                    placeholder = "Board Title",
+                    placeholder = "Sticky Title",
                 )
             }
 
             Column(Modifier.fillMaxWidth().padding(bottom = 8.px), Arrangement.spacedBy(8.px)) {
-                P(Modifier.padding(0.px).toAttrs()) { Text("Description") }
-                TextInput(
-                    description,
-                    { description = it },
-                    Modifier.fillMaxWidth(),
-                    placeholder = "Optional description",
+                P(Modifier.padding(0.px).toAttrs()) { Text("Content") }
+                TextArea(
+                    content,
+                    Modifier
+                        .fillMaxWidth()
+                        .height(150.px)
+                        .padding(12.px)
+                        .borderRadius(8.px)
+                        .border(1.px, LineStyle.Solid, Color.outlineVariant)
+                        .backgroundColor(Colors.Transparent)
+                        .color(Color.onSurface)
+                        .toAttrs {
+                            onInput { content = it.value }
+                            placeholder("Sticky Content (optional)")
+                        }
                 )
-            }
-
-            Row(
-                Modifier
-                    .cursor(Cursor.Pointer)
-                    .onClick { visibility = if (visibility == Visibility.PUBLIC) Visibility.PRIVATE else Visibility.PUBLIC }
-                    .padding(leftRight = 8.px),
-                Arrangement.spacedBy(12.px),
-                Alignment.CenterVertically,
-            ) {
-                Switch(visibility == Visibility.PUBLIC, { /* Handled by Row onClick */ })
-                P(Modifier.padding(0.px).toAttrs()) {
-                    Text("Public Visibility")
-                }
             }
 
             Row(Modifier.fillMaxWidth(), Arrangement.End, Alignment.CenterVertically) {
@@ -108,21 +94,12 @@ fun CreateBoardOverlay(
                 }
                 Button(
                     {
-                        scope.launch {
-                            state = ApiState.Loading
-
-                            handle(createBoard(BoardDetailsModel(title, description, visibility))) {
-                                state = ApiState.Success(Unit)
-                                onClose()
-                                ctx.router.navigateTo("/boards/drive/${it.id}")
-                            }
-
-                            if (state is ApiState.Loading) state = null
-                        }
+                        onCreate(title, content.ifBlank { null })
+                        onClose()
                     },
-                    enabled = title.isNotBlank() && state !is ApiState.Loading,
+                    enabled = title.isNotBlank(),
                 ) {
-                    Text(if (state is ApiState.Loading) "Creating..." else "Create")
+                    Text("Create")
                 }
             }
         }

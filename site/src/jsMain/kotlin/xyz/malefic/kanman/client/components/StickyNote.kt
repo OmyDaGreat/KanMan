@@ -9,15 +9,25 @@ import com.varabyte.kobweb.compose.css.BackgroundSize
 import com.varabyte.kobweb.compose.css.CSSPosition
 import com.varabyte.kobweb.compose.css.Overflow
 import com.varabyte.kobweb.compose.css.functions.linearGradient
+import com.varabyte.kobweb.compose.foundation.layout.Box
+import com.varabyte.kobweb.compose.foundation.layout.Column
+import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.aspectRatio
 import com.varabyte.kobweb.compose.ui.modifiers.background
+import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.color
+import com.varabyte.kobweb.compose.ui.modifiers.draggable
+import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
+import com.varabyte.kobweb.compose.ui.modifiers.margin
+import com.varabyte.kobweb.compose.ui.modifiers.onDragStart
 import com.varabyte.kobweb.compose.ui.modifiers.overflow
 import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.toAttrs
+import com.varabyte.kobweb.silk.components.forms.Button
+import com.varabyte.kobweb.silk.components.icons.ms.MsDelete
 import com.varabyte.kobweb.silk.components.layout.Surface
 import org.jetbrains.compose.web.css.deg
 import org.jetbrains.compose.web.css.div
@@ -34,10 +44,12 @@ import xyz.malefic.kutint.Kutint
 fun StickyNote(
     color: Kutint<*>,
     stickyNote: StickyNoteModel,
+    canEdit: Boolean = false,
+    onDelete: () -> Unit = {},
 ) {
     val foldSize = 10.percent
 
-    Surface(
+    var modifier =
         Modifier
             .fillMaxWidth()
             .aspectRatio(1)
@@ -61,13 +73,39 @@ fun StickyNote(
                     BackgroundSize.of(foldSize, foldSize),
                     BackgroundPosition.of(CSSPosition(100.percent, 100.percent)),
                 ),
-            ).padding(18.px),
-    ) {
-        H3(Modifier.color(Color.onTertiary).overflow(Overflow.Scroll).toAttrs()) {
-            Text(stickyNote.title)
-        }
-        P(Modifier.color(Color.onTertiary).overflow(Overflow.Scroll).toAttrs()) {
-            Text(stickyNote.content)
+            )
+
+    if (canEdit) {
+        modifier =
+            modifier
+                .draggable(true)
+                .onDragStart { event ->
+                    event.dataTransfer?.setData("text/plain", stickyNote.id.toString())
+                }
+    }
+
+    Surface(modifier.padding(18.px).margin(topBottom = 12.px)) {
+        Box(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxWidth()) {
+                H3(Modifier.color(Color.onTertiary).overflow(Overflow.Scroll).toAttrs()) {
+                    Text(stickyNote.title)
+                }
+                P(Modifier.color(Color.onTertiary).overflow(Overflow.Scroll).toAttrs()) {
+                    Text(stickyNote.content)
+                }
+            }
+
+            if (canEdit) {
+                Button(
+                    { onDelete() },
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .backgroundColor(Colors.Transparent)
+                        .padding(0.px),
+                ) {
+                    MsDelete(Modifier.color(Color.onTertiary))
+                }
+            }
         }
     }
 }

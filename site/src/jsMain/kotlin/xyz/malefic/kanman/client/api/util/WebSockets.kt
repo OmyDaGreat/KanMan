@@ -9,6 +9,7 @@ import org.w3c.dom.WebSocket
 import xyz.malefic.kanman.client.api.util.AuthSession.accessToken
 import xyz.malefic.kanman.shared.api.util.json
 import xyz.malefic.kanman.shared.data.model.Issue
+import xyz.malefic.kanman.shared.data.model.WsAction
 import xyz.malefic.kanman.shared.data.model.WsEvent
 import kotlin.uuid.Uuid
 
@@ -41,5 +42,9 @@ object WebSockets {
         }
         ws.onerror = { log.e { "WebSocket error" } }
         ws.onclose = { log.d { "WebSocket closed" } }
+    }
+
+    fun WebSocket.send(action: WsAction) {
+        send(json.encodeToString(WsAction.serializer(), action))
     }
 }

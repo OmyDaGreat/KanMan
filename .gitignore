@@ -95,3 +95,4 @@ site/build/
 .kotlin/
 kotlin-js-store/
 **.db
+.artifacts
