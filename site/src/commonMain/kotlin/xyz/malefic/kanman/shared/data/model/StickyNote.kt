@@ -9,7 +9,7 @@ import kotlin.uuid.Uuid
 enum class Column {
     BACKLOG,
     PLANNING,
-    IN_PROGRESS,
+    ONGOING,
     DONE,
 }
 
