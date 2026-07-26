@@ -2,7 +2,6 @@ package xyz.malefic.kanman.client.styles
 
 import androidx.compose.runtime.Composable
 import com.varabyte.kobweb.compose.ui.Modifier
-import com.varabyte.kobweb.compose.ui.graphics.Color
 import com.varabyte.kobweb.compose.ui.graphics.Color.Companion.rgba
 import com.varabyte.kobweb.compose.ui.modifiers.setVariable
 import com.varabyte.kobweb.silk.components.forms.ButtonVars
@@ -255,9 +254,6 @@ val surfaceContainerLowDark = parseHex("#1B1C15")
 val surfaceContainerDark = parseHex("#1F2019")
 val surfaceContainerHighDark = parseHex("#2A2B23")
 val surfaceContainerHighestDark = parseHex("#34352D")
-
-val RGB.color: Color
-    get() = rgba(this.r, this.g, this.b, this.alpha)
 
 @InitSilk
 fun initColor(ctx: InitSilkContext) {

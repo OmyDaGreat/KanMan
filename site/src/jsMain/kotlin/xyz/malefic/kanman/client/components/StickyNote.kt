@@ -28,11 +28,11 @@ import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.StickyNoteModel
-import xyz.malefic.kutint.KutintColor
+import xyz.malefic.kutint.Kutint
 
 @Composable
 fun StickyNote(
-    color: KutintColor<*>,
+    color: Kutint<*>,
     stickyNote: StickyNoteModel,
 ) {
     val foldSize = 10.percent
@@ -53,7 +53,7 @@ fun StickyNote(
                 Background.of(
                     BackgroundImage.of(
                         linearGradient(135.deg) {
-                            add(color.dim(0.3f), 50.percent)
+                            add(color.shade(0.3f), 50.percent)
                             add(Colors.Transparent, 0.percent)
                         },
                     ),
