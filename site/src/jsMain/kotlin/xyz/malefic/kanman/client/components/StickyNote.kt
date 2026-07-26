@@ -7,7 +7,9 @@ import com.varabyte.kobweb.compose.css.BackgroundPosition
 import com.varabyte.kobweb.compose.css.BackgroundRepeat
 import com.varabyte.kobweb.compose.css.BackgroundSize
 import com.varabyte.kobweb.compose.css.CSSPosition
-import com.varabyte.kobweb.compose.css.Overflow
+import com.varabyte.kobweb.compose.css.OverflowWrap
+import com.varabyte.kobweb.compose.css.TextWrap
+import com.varabyte.kobweb.compose.css.WhiteSpace
 import com.varabyte.kobweb.compose.css.functions.linearGradient
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
@@ -25,8 +27,10 @@ import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
 import com.varabyte.kobweb.compose.ui.modifiers.margin
 import com.varabyte.kobweb.compose.ui.modifiers.onDragStart
-import com.varabyte.kobweb.compose.ui.modifiers.overflow
+import com.varabyte.kobweb.compose.ui.modifiers.overflowWrap
 import com.varabyte.kobweb.compose.ui.modifiers.padding
+import com.varabyte.kobweb.compose.ui.modifiers.textWrap
+import com.varabyte.kobweb.compose.ui.modifiers.whiteSpace
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.ms.MsDelete
@@ -91,10 +95,24 @@ fun StickyNote(
     Surface(modifier.padding(18.px).margin(topBottom = 12.px)) {
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxWidth()) {
-                H3(Modifier.color(Color.onTertiary).overflow(Overflow.Scroll).toAttrs()) {
+                H3(
+                    Modifier
+                        .fillMaxWidth()
+                        .color(Color.onTertiary)
+                        .overflowWrap(OverflowWrap.BreakWord)
+                        .toAttrs(),
+                ) {
                     Text(stickyNote.title)
                 }
-                P(Modifier.color(Color.onTertiary).overflow(Overflow.Scroll).toAttrs()) {
+                P(
+                    Modifier
+                        .fillMaxWidth()
+                        .color(Color.onTertiary)
+                        .whiteSpace(WhiteSpace.PreWrap)
+                        .overflowWrap(OverflowWrap.BreakWord)
+                        .textWrap(TextWrap.Wrap)
+                        .toAttrs(),
+                ) {
                     Text(stickyNote.content)
                 }
             }
