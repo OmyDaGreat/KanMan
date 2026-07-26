@@ -9,8 +9,10 @@ import com.varabyte.kobweb.compose.css.BackgroundSize
 import com.varabyte.kobweb.compose.css.CSSPosition
 import com.varabyte.kobweb.compose.css.Overflow
 import com.varabyte.kobweb.compose.css.functions.linearGradient
+import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
+import com.varabyte.kobweb.compose.foundation.layout.Row
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Colors
@@ -28,6 +30,7 @@ import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.icons.ms.MsDelete
+import com.varabyte.kobweb.silk.components.icons.ms.MsEdit
 import com.varabyte.kobweb.silk.components.layout.Surface
 import org.jetbrains.compose.web.css.deg
 import org.jetbrains.compose.web.css.div
@@ -45,6 +48,7 @@ fun StickyNote(
     color: Kutint<*>,
     stickyNote: StickyNoteModel,
     canEdit: Boolean = false,
+    onEdit: () -> Unit = {},
     onDelete: () -> Unit = {},
 ) {
     val foldSize = 10.percent
@@ -96,14 +100,23 @@ fun StickyNote(
             }
 
             if (canEdit) {
-                Button(
-                    { onDelete() },
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .backgroundColor(Colors.Transparent)
-                        .padding(0.px),
+                Row(
+                    Modifier.align(Alignment.BottomEnd).backgroundColor(Colors.Transparent).padding(0.px),
+                    Arrangement.spacedBy(8.px),
+                    Alignment.CenterVertically,
                 ) {
-                    MsDelete(Modifier.color(Color.onTertiary))
+                    Button(
+                        { onEdit() },
+                        Modifier.backgroundColor(Colors.Transparent).padding(0.px),
+                    ) {
+                        MsEdit(Modifier.color(Color.onTertiary))
+                    }
+                    Button(
+                        { onDelete() },
+                        Modifier.backgroundColor(Colors.Transparent).padding(0.px),
+                    ) {
+                        MsDelete(Modifier.color(Color.onTertiary))
+                    }
                 }
             }
         }

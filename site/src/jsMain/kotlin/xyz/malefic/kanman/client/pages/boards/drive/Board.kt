@@ -35,18 +35,20 @@ import xyz.malefic.kanman.client.api.util.WebSockets.send
 import xyz.malefic.kanman.client.components.BoardSettings
 import xyz.malefic.kanman.client.components.KanColumn
 import xyz.malefic.kanman.client.components.Spinner
-import xyz.malefic.kanman.client.components.StickyCreationOverlay
+import xyz.malefic.kanman.client.components.StickyOverlay
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.BoardAction
 import xyz.malefic.kanman.shared.data.model.BoardResponseModel
 import xyz.malefic.kanman.shared.data.model.Column
 import xyz.malefic.kanman.shared.data.model.Role
+import xyz.malefic.kanman.shared.data.model.StickyNoteModel
 import xyz.malefic.kanman.shared.data.model.WsAction
 import xyz.malefic.kanman.shared.data.model.WsEvent
 import xyz.malefic.kanman.shared.data.model.WsEvent.BoardLoad
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyCreated
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyDeleted
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyMoved
+import xyz.malefic.kanman.shared.data.model.WsEvent.StickyUpdated
 import kotlin.uuid.Uuid
 
 @Page("{id}")
@@ -57,6 +59,7 @@ fun Board(ctx: PageContext) {
     var board by remember { mutableStateOf<BoardResponseModel?>(null) }
     var websocket by remember { mutableStateOf<WebSocket?>(null) }
     var addingToColumn by remember { mutableStateOf<Column?>(null) }
+    var editingSticky by remember { mutableStateOf<StickyNoteModel?>(null) }
 
     DisposableEffect(boardId, AuthSession.accessToken) {
         websocket =
@@ -87,6 +90,18 @@ fun Board(ctx: PageContext) {
 
                             is StickyDeleted -> {
                                 board = board?.let { b -> b.copy(stickies = b.stickies.filter { it.id != event.stickyId }) }
+                            }
+
+                            is StickyUpdated -> {
+                                board =
+                                    board?.let { b ->
+                                        b.copy(
+                                            stickies =
+                                                b.stickies.map { s ->
+                                                    if (s.id == event.sticky.id) event.sticky else s
+                                                },
+                                        )
+                                    }
                             }
 
                             is WsEvent.AssignedUser -> {
@@ -151,6 +166,7 @@ fun Board(ctx: PageContext) {
                             currentBoard.stickies.filter { it.column == col },
                             canEdit,
                             onAddSticky = { addingToColumn = col },
+                            onEditSticky = { editingSticky = it },
                             onMoveSticky = { stickyId ->
                                 websocket?.send(WsAction.StickyMove(stickyId, col))
                             },
@@ -163,11 +179,22 @@ fun Board(ctx: PageContext) {
             }
 
             addingToColumn?.let { col ->
-                StickyCreationOverlay(
-                    { addingToColumn = null },
-                ) { title, content ->
-                    websocket?.send(WsAction.StickyCreate(title, content, col))
-                }
+                StickyOverlay(
+                    onClose = { addingToColumn = null },
+                    onConfirm = { title, content ->
+                        websocket?.send(WsAction.StickyCreate(title, content, col))
+                    },
+                )
+            }
+
+            editingSticky?.let { sticky ->
+                StickyOverlay(
+                    sticky = sticky,
+                    onClose = { editingSticky = null },
+                    onConfirm = { title, content ->
+                        websocket?.send(WsAction.StickyUpdate(sticky.id, title, content))
+                    },
+                )
             }
         }
     }

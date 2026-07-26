@@ -23,6 +23,7 @@ import xyz.malefic.kanman.shared.data.model.WsEvent.BoardLoad
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyCreated
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyDeleted
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyMoved
+import xyz.malefic.kanman.shared.data.model.WsEvent.StickyUpdated
 import xyz.malefic.kanman.shared.data.model.WsEvent.UnassignedUser
 import xyz.malefic.kanman.shared.data.model.WsEvent.UserJoin
 import xyz.malefic.kanman.shared.data.model.WsEvent.UserLeave
@@ -61,6 +62,11 @@ val boardWs =
                                         is WsAction.StickyDelete -> {
                                             user.deleteSticky(action, id)
                                             StickyDeleted(userSummary, action.stickyId)
+                                        }
+
+                                        is WsAction.StickyUpdate -> {
+                                            val sticky = user.updateSticky(action, id)
+                                            StickyUpdated(userSummary, sticky)
                                         }
 
                                         is WsAction.AssignUser -> {

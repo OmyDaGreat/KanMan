@@ -32,14 +32,16 @@ import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
 import org.jetbrains.compose.web.dom.TextArea
 import xyz.malefic.kanman.client.styles.Color
+import xyz.malefic.kanman.shared.data.model.StickyNoteModel
 
 @Composable
-fun StickyCreationOverlay(
+fun StickyOverlay(
+    sticky: StickyNoteModel? = null,
     onClose: () -> Unit,
-    onCreate: (title: String, content: String?) -> Unit,
+    onConfirm: (title: String, content: String?) -> Unit,
 ) {
-    var title by remember { mutableStateOf("") }
-    var content by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf(sticky?.title ?: "") }
+    var content by remember { mutableStateOf(sticky?.content ?: "") }
 
     Overlay(
         Modifier.backgroundColor(Color.overlay),
@@ -54,7 +56,7 @@ fun StickyCreationOverlay(
                 .width(400.px),
             Arrangement.spacedBy(24.px),
         ) {
-            H2 { Text("Create New Sticky") }
+            H2 { Text(if (sticky == null) "Create New Sticky" else "Edit Sticky") }
 
             Column(Modifier.fillMaxWidth().padding(bottom = 8.px), Arrangement.spacedBy(8.px)) {
                 P(Modifier.padding(0.px).toAttrs()) { Text("Title") }
@@ -81,7 +83,7 @@ fun StickyCreationOverlay(
                         .toAttrs {
                             onInput { content = it.value }
                             placeholder("Sticky Content (optional)")
-                        }
+                        },
                 )
             }
 
@@ -94,12 +96,12 @@ fun StickyCreationOverlay(
                 }
                 Button(
                     {
-                        onCreate(title, content.ifBlank { null })
+                        onConfirm(title, content.ifBlank { null })
                         onClose()
                     },
                     enabled = title.isNotBlank(),
                 ) {
-                    Text("Create")
+                    Text(if (sticky == null) "Create" else "Save")
                 }
             }
         }

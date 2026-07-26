@@ -36,6 +36,7 @@ fun KanColumn(
     stickies: List<StickyNoteModel>,
     canEdit: Boolean = false,
     onAddSticky: () -> Unit = {},
+    onEditSticky: (StickyNoteModel) -> Unit = {},
     onMoveSticky: (Uuid) -> Unit = {},
     onDeleteSticky: (Uuid) -> Unit = {},
 ) = Column(
@@ -81,6 +82,8 @@ fun KanColumn(
             stickyColors.random(),
             stickyNote,
             canEdit,
-        ) { onDeleteSticky(stickyNote.id) }
+            onEdit = { onEditSticky(stickyNote) },
+            onDelete = { onDeleteSticky(stickyNote.id) },
+        )
     }
 }

@@ -48,6 +48,19 @@ fun UserResponseModel.moveSticky(
 }
 
 context(_: Raise<Issue>)
+fun UserResponseModel.updateSticky(
+    event: WsAction.StickyUpdate,
+    boardId: Uuid,
+) = transaction {
+    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId, EDIT_STICKY) }) {
+        Issue.Board.NotFound()
+    }.apply {
+        title = event.title
+        content = event.content ?: ""
+    }.toModel()
+}
+
+context(_: Raise<Issue>)
 fun UserResponseModel.assignUser(
     event: WsAction.AssignUser,
     boardId: Uuid,
