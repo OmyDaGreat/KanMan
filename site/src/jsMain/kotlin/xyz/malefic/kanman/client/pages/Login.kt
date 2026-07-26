@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.varabyte.kobweb.compose.css.Cursor
 import com.varabyte.kobweb.compose.css.TextWrap
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
@@ -20,9 +21,11 @@ import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.border
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
 import com.varabyte.kobweb.compose.ui.modifiers.color
+import com.varabyte.kobweb.compose.ui.modifiers.cursor
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
 import com.varabyte.kobweb.compose.ui.modifiers.height
+import com.varabyte.kobweb.compose.ui.modifiers.onClick
 import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.modifiers.textWrap
 import com.varabyte.kobweb.compose.ui.modifiers.width
@@ -191,8 +194,15 @@ fun Login(ctx: PageContext) =
                 Text(if (loginStatus is ApiState.Loading) "Loading..." else "Submit")
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.px), verticalAlignment = Alignment.CenterVertically) {
-                Switch(loginMode == Login.SIGNUP, { loginMode = if (it) Login.SIGNUP else Login.LOGIN })
+            Row(
+                Modifier
+                    .cursor(Cursor.Pointer)
+                    .onClick { loginMode = if (loginMode == Login.LOGIN) Login.SIGNUP else Login.LOGIN }
+                    .padding(leftRight = 8.px),
+                horizontalArrangement = Arrangement.spacedBy(8.px),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Switch(loginMode == Login.SIGNUP, { /* Handled by Row onClick */ })
                 P(Modifier.padding(0.px).toAttrs()) {
                     Text("Switch to ${if (loginMode == Login.LOGIN) "Sign Up" else "Login"}")
                 }

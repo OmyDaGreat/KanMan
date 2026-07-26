@@ -91,7 +91,7 @@ fun Inbox(ctx: PageContext) =
                                 Modifier.fontSize(72.px).cursor(Cursor.Pointer).onClick {
                                     GlobalScope.launch {
                                         handle(acceptInvitation(invitation.id)) {
-                                            router.navigateTo("/boards/${invitation.boardId}")
+                                            router.navigateTo("/boards/drive/${invitation.boardId}")
                                         }
                                     }
                                 },

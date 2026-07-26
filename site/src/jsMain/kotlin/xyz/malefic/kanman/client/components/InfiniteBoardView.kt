@@ -23,6 +23,7 @@ fun PageContext.InfiniteBoardView(
     title: String,
     request: suspend (Int, Int) -> Either<Issue, PaginatedResponse<BoardSummaryModel>>,
     onBoardClick: (BoardSummaryModel) -> Unit,
+    extraHeaderActions: @Composable () -> Unit = {},
 ) {
     var page by remember { mutableStateOf(1) }
     var allBoards by remember { mutableStateOf(listOf<BoardSummaryModel>()) }
@@ -62,5 +63,5 @@ fun PageContext.InfiniteBoardView(
         )
     }
 
-    error?.invoke() ?: BoardShowcase(title, allBoards, onBoardClick, hasMore to { page++ })
+    error?.invoke() ?: BoardShowcase(title, allBoards, onBoardClick, hasMore to { page++ }, extraHeaderActions)
 }

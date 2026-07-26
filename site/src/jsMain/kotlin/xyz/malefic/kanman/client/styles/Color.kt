@@ -142,6 +142,10 @@ object Color {
         @Composable
         get() = colorModeAware(scrimLight, scrimDark)
 
+    val overlay
+        @Composable
+        get() = rgba(0, 0, 0, 0.5f)
+
     val inverseSurface
         @Composable
         get() = colorModeAware(inverseSurfaceLight, inverseSurfaceDark)

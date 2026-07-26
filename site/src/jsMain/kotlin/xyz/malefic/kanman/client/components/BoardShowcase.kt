@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.web.events.SyntheticMouseEvent
 import com.varabyte.kobweb.compose.css.Cursor
 import com.varabyte.kobweb.compose.css.Overflow
+import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.foundation.layout.Row
@@ -41,6 +42,7 @@ fun BoardShowcase(
     boards: List<BoardSummaryModel>,
     onBoardClick: (BoardSummaryModel) -> Unit,
     hasMore: Pair<Boolean, (SyntheticMouseEvent) -> Unit>,
+    extraHeaderActions: @Composable () -> Unit = {},
 ) = Box(Modifier.fillMaxSize()) {
     Column(
         Modifier
@@ -49,7 +51,14 @@ fun BoardShowcase(
             .padding(32.px, 10.percent)
             .gap(24.px),
     ) {
-        H1 { Text(title) }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            H1 { Text(title) }
+            extraHeaderActions()
+        }
 
         Column(
             Modifier

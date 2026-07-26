@@ -16,7 +16,11 @@ fun Public(ctx: PageContext) =
     with(ctx) {
         val scope = rememberCoroutineScope()
 
-        InfiniteBoardView("Public Boards", { page, limit -> getPublicBoards(page, limit) }) { board ->
-            scope.launch { handle(joinBoard(board.id)) { router.navigateTo("/boards/${board.id}") } }
-        }
+        InfiniteBoardView(
+            "Public Boards",
+            { page, limit -> getPublicBoards(page, limit) },
+            { board ->
+                scope.launch { handle(joinBoard(board.id)) { router.navigateTo("/boards/drive/${board.id}") } }
+            },
+        )
     }

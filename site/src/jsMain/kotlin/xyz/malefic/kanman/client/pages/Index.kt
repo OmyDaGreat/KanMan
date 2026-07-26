@@ -19,7 +19,7 @@ fun Index(ctx: PageContext) =
     ctx.Request(request = { createBoard(BoardCreateModel("Test", "", Visibility.PUBLIC)) }) { board ->
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Link(
-                path = "/boards/${board.id}",
+                path = "/boards/drive/${board.id}",
                 text = "Go to Board: ${board.title}",
             )
         }
