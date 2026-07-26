@@ -59,7 +59,7 @@ fun NavBarLayout(
                 }
 
                 if (AuthSession.accessToken != null) {
-                    ctx.Request(Unit, request = { getUser() }) { user ->
+                    Request(Unit, request = { getUser() }) { user ->
                         Spacer()
                         Column(
                             Modifier.padding(16.px).backgroundColor(Color.secondaryContainer).borderRadius(16.px),

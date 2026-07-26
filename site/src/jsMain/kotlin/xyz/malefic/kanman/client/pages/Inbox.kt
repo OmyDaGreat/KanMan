@@ -45,61 +45,60 @@ import xyz.malefic.kanman.client.styles.Color
 @OptIn(DelicateCoroutinesApi::class)
 @Page
 @Composable
-fun Inbox(ctx: PageContext) =
-    with(ctx) {
-        Request(request = { getInvitations() }) { invitations ->
+fun Inbox(ctx: PageContext) {
+    Request(request = { getInvitations() }) { invitations ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .backgroundColor(Color.secondaryContainer)
+                .padding(32.px, 10.percent)
+                .gap(24.px),
+        ) {
+            H1 { Text("Invitations") }
+
             Column(
                 Modifier
-                    .fillMaxSize()
-                    .backgroundColor(Color.secondaryContainer)
-                    .padding(32.px, 10.percent)
-                    .gap(24.px),
+                    .fillMaxWidth()
+                    .weight(1)
+                    .overflow(Overflow.Auto)
+                    .gap(12.px)
+                    .padding(8.px),
             ) {
-                H1 { Text("Invitations") }
-
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(1)
-                        .overflow(Overflow.Auto)
-                        .gap(12.px)
-                        .padding(8.px),
-                ) {
-                    invitations.forEach { invitation ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(16.px)
-                                .borderRadius(16.px)
-                                .backgroundColor(Color.surfaceContainer),
-                            Arrangement.SpaceBetween,
-                            Alignment.CenterVertically,
-                        ) {
-                            MsSend(Modifier.fontSize(72.px), MsIconStyle.ROUNDED)
-                            Column(Modifier.gap(4.px)) {
-                                Request(request = { getBoard(invitation.boardId) }) { board ->
-                                    H3 { Text(board.title) }
-                                    if (board.description.isNotBlank()) {
-                                        P { Text(board.description) }
-                                    }
-                                }
-                                Request(request = { getUser(invitation.senderId) }) { sender ->
-                                    P(Modifier.opacity(0.7).toAttrs()) { Text("Sent by ${sender.username}") }
+                invitations.forEach { invitation ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.px)
+                            .borderRadius(16.px)
+                            .backgroundColor(Color.surfaceContainer),
+                        Arrangement.SpaceBetween,
+                        Alignment.CenterVertically,
+                    ) {
+                        MsSend(Modifier.fontSize(72.px), MsIconStyle.ROUNDED)
+                        Column(Modifier.gap(4.px)) {
+                            Request(request = { getBoard(invitation.boardId) }) { board ->
+                                H3 { Text(board.title) }
+                                if (board.description.isNotBlank()) {
+                                    P { Text(board.description) }
                                 }
                             }
-                            MsCheckCircle(
-                                Modifier.fontSize(72.px).cursor(Cursor.Pointer).onClick {
-                                    GlobalScope.launch {
-                                        handle(acceptInvitation(invitation.id)) {
-                                            router.navigateTo("/boards/drive/${invitation.boardId}")
-                                        }
-                                    }
-                                },
-                                MsIconStyle.ROUNDED,
-                            )
+                            Request(request = { getUser(invitation.senderId) }) { sender ->
+                                P(Modifier.opacity(0.7).toAttrs()) { Text("Sent by ${sender.username}") }
+                            }
                         }
+                        MsCheckCircle(
+                            Modifier.fontSize(72.px).cursor(Cursor.Pointer).onClick {
+                                GlobalScope.launch {
+                                    handle(acceptInvitation(invitation.id)) {
+                                        ctx.router.navigateTo("/boards/drive/${invitation.boardId}")
+                                    }
+                                }
+                            },
+                            MsIconStyle.ROUNDED,
+                        )
                     }
                 }
             }
         }
     }
+}

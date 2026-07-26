@@ -41,9 +41,8 @@ fun Board(ctx: PageContext) {
     val boardId = ctx.route.params["id"]?.let { Uuid.parse(it) } ?: return Spinner()
     var isSettingsView by remember { mutableStateOf(false) }
 
-    ctx.Request(boardId, request = { getBoard(boardId) }) { board ->
+    Request(boardId, request = { getBoard(boardId) }) { board ->
         Column(Modifier.fillMaxSize()) {
-            // Header
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -54,7 +53,7 @@ fun Board(ctx: PageContext) {
             ) {
                 H1 { Text(board.title) }
 
-                ctx.Request(request = { getUser() }) { user ->
+                Request(request = { getUser() }) { user ->
                     val role = board.memberships.find { it.user.id == user.id }?.role
                     if (role == Role.OWNER || role == Role.ADMIN) {
                         Button({ isSettingsView = !isSettingsView }, Modifier.backgroundColor(Colors.Transparent)) {

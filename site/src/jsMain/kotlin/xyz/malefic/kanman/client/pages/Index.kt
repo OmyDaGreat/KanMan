@@ -6,7 +6,6 @@ import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.core.Page
-import com.varabyte.kobweb.core.PageContext
 import com.varabyte.kobweb.silk.components.navigation.Link
 import xyz.malefic.kanman.client.api.createBoard
 import xyz.malefic.kanman.client.api.util.Request
@@ -15,8 +14,8 @@ import xyz.malefic.kanman.shared.data.model.Visibility
 
 @Page
 @Composable
-fun Index(ctx: PageContext) =
-    ctx.Request(request = { createBoard(BoardCreateModel("Test", "", Visibility.PUBLIC)) }) { board ->
+fun Index() =
+    Request(request = { createBoard(BoardCreateModel("Test", "", Visibility.PUBLIC)) }) { board ->
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Link(
                 path = "/boards/drive/${board.id}",

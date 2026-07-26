@@ -50,6 +50,7 @@ import org.w3c.dom.events.KeyboardEvent
 import xyz.malefic.kanman.client.api.strength
 import xyz.malefic.kanman.client.api.util.ApiState
 import xyz.malefic.kanman.client.api.util.AuthSession
+import xyz.malefic.kanman.client.api.util.GlobalErrorState
 import xyz.malefic.kanman.client.api.util.Request
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.Issue
@@ -94,7 +95,14 @@ fun Login(ctx: PageContext) =
                     } else {
                         AuthSession.signup(username, password)
                     }.fold(
-                        { issue -> loginStatus = ApiState.Error(issue) },
+                        { issue ->
+                            if (issue is Issue.Auth.InvalidCredentials || issue is Issue.User.InvalidUser) {
+                                loginStatus = ApiState.Error(issue)
+                            } else {
+                                loginStatus = null
+                                GlobalErrorState.show(issue)
+                            }
+                        },
                         {
                             loginStatus = ApiState.Success(Unit)
                             ctx.router.navigateTo(ctx.route.params["redirect"] ?: "/")
@@ -136,7 +144,7 @@ fun Login(ctx: PageContext) =
             )
 
             if (loginMode == Login.SIGNUP) { // TODO: Fix sizing
-                ctx.Request(password, request = { password.strength() }) { (strength, feedback) ->
+                Request(password, request = { password.strength() }) { (strength, feedback) ->
                     SimpleGrid(numColumns(4), Modifier.height(24.px).fillMaxWidth().borderRadius(24.px)) {
                         repeat(strength) { strength ->
                             Box(

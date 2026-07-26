@@ -12,15 +12,14 @@ import xyz.malefic.kanman.client.components.handle
 
 @Page
 @Composable
-fun Public(ctx: PageContext) =
-    with(ctx) {
-        val scope = rememberCoroutineScope()
+fun Public(ctx: PageContext) {
+    val scope = rememberCoroutineScope()
 
-        InfiniteBoardView(
-            "Public Boards",
-            { page, limit -> getPublicBoards(page, limit) },
-            { board ->
-                scope.launch { handle(joinBoard(board.id)) { router.navigateTo("/boards/drive/${board.id}") } }
-            },
-        )
-    }
+    InfiniteBoardView(
+        "Public Boards",
+        { page, limit -> getPublicBoards(page, limit) },
+        { board ->
+            scope.launch { handle(joinBoard(board.id)) { ctx.router.navigateTo("/boards/drive/${board.id}") } }
+        },
+    )
+}

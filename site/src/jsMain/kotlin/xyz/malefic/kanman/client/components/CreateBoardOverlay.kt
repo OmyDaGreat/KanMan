@@ -15,7 +15,6 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.border
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
-import com.varabyte.kobweb.compose.ui.modifiers.color
 import com.varabyte.kobweb.compose.ui.modifiers.cursor
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
 import com.varabyte.kobweb.compose.ui.modifiers.margin
@@ -100,12 +99,6 @@ fun CreateBoardOverlay(
                 }
             }
 
-            if (state is ApiState.Error) {
-                P(Modifier.color(Color.error).toAttrs()) {
-                    Text((state as ApiState.Error).issue.message)
-                }
-            }
-
             Row(Modifier.fillMaxWidth(), Arrangement.End, Alignment.CenterVertically) {
                 Button(
                     { onClose() },
@@ -117,14 +110,14 @@ fun CreateBoardOverlay(
                     {
                         scope.launch {
                             state = ApiState.Loading
-                            createBoard(BoardCreateModel(title, description, visibility)).fold(
-                                { state = ApiState.Error(it) },
-                                {
-                                    state = ApiState.Success(Unit)
-                                    onClose()
-                                    ctx.router.navigateTo("/boards/drive/${it.id}")
-                                },
-                            )
+
+                            handle(createBoard(BoardCreateModel(title, description, visibility))) {
+                                state = ApiState.Success(Unit)
+                                onClose()
+                                ctx.router.navigateTo("/boards/drive/${it.id}")
+                            }
+
+                            if (state is ApiState.Loading) state = null
                         }
                     },
                     enabled = title.isNotBlank() && state !is ApiState.Loading,

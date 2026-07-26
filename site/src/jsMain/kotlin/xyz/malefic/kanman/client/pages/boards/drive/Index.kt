@@ -28,7 +28,7 @@ import xyz.malefic.kanman.client.styles.Color
 fun Drive(ctx: PageContext) {
     var showCreatePopup by remember { mutableStateOf(false) }
 
-    ctx.InfiniteBoardView(
+    InfiniteBoardView(
         "Your Boards",
         { page, limit -> getJoinedBoards(page, limit) },
         { ctx.router.navigateTo("/boards/drive/${it.id}") },

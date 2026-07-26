@@ -107,12 +107,9 @@ fun BoardSettings(
                     {
                         if (window.confirm("Are you sure you want to delete this board? This action cannot be undone.")) {
                             scope.launch {
-                                deleteBoard(board.id).fold(
-                                    { /* Handle error */ },
-                                    {
-                                        ctx.router.navigateTo("/boards/drive")
-                                    },
-                                )
+                                handle(deleteBoard(board.id)) {
+                                    ctx.router.navigateTo("/boards/drive")
+                                }
                             }
                         }
                     },

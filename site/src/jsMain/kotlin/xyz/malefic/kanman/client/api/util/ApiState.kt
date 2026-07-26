@@ -4,13 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import arrow.core.Either
-import com.varabyte.kobweb.browser.uri.encodeURIComponent
-import com.varabyte.kobweb.compose.foundation.layout.Box
-import com.varabyte.kobweb.compose.ui.Alignment
-import com.varabyte.kobweb.compose.ui.Modifier
-import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
-import com.varabyte.kobweb.core.PageContext
-import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.components.Spinner
 import xyz.malefic.kanman.shared.data.model.Issue
 
@@ -39,7 +32,7 @@ fun <T> produceApiState(
 }
 
 @Composable
-fun <T> PageContext.Request(
+fun <T> Request(
     vararg keys: Any?,
     request: suspend () -> Either<Issue, T>,
     content: @Composable (T) -> Unit,
@@ -51,23 +44,7 @@ fun <T> PageContext.Request(
         }
 
         is ApiState.Error -> {
-            when (val error = (state as ApiState.Error).issue) {
-                is Issue.Auth -> {
-                    router.navigateTo("/login?redirect=${encodeURIComponent(route.path)}")
-                }
-
-                is Issue.Server.RateLimited -> {
-                    Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        Text("Too many requests. Please wait ${error.retryAfterMs ?: "a moment"}.")
-                    }
-                }
-
-                else -> {
-                    Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        Text("Error: ${error.message}")
-                    }
-                }
-            }
+            GlobalErrorState.show((state as ApiState.Error).issue)
         }
 
         is ApiState.Success -> {
