@@ -28,6 +28,8 @@ import xyz.malefic.kanman.shared.data.model.WsEvent.UnassignedUser
 import xyz.malefic.kanman.shared.data.model.WsEvent.UserJoin
 import xyz.malefic.kanman.shared.data.model.WsEvent.UserLeave
 
+val log = Logger.withTag("Websockets")
+
 val boardWs =
     websockets(
         "/api/ws/{id}" bind
@@ -82,7 +84,7 @@ val boardWs =
 
                                 Registry.broadcast(id, event)
                             }.onLeft { e ->
-                                Logger.e(e, "WebSockets") { "Failed to handle message" }
+                                log.e(e) { "Failed to handle message" }
                                 ws.send(WsMessage(json.encodeToString(Issue.serializer(), e)))
                             }
                         }
@@ -94,13 +96,13 @@ val boardWs =
                         }
 
                         ws.onError { e ->
-                            Logger.e(e, "WebSockets") { "${user.username} disconnected with error" }
+                            log.e(e) { "${user.username} disconnected with error" }
                             if (Registry.unregister(id, ws)) {
                                 Registry.broadcast(id, UserLeave(userSummary, id))
                             }
                         }
                     }.onLeft { issue ->
-                        Logger.e(issue, "WebSockets") { "Error during WS setup" }
+                        log.e(issue) { "Error during WS setup" }
                         ws.send(WsMessage(json.encodeToString(Issue.serializer(), issue)))
                         ws.close()
                     }

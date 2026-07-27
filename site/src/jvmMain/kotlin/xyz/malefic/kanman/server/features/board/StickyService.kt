@@ -3,10 +3,10 @@ package xyz.malefic.kanman.server.features.board
 import arrow.core.raise.Raise
 import arrow.core.raise.context.ensureNotNull
 import arrow.core.raise.context.raise
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import xyz.malefic.kanman.server.data.AssignedUserEntity
 import xyz.malefic.kanman.server.data.StickyNoteEntity
 import xyz.malefic.kanman.server.data.UserEntity
+import xyz.malefic.kanman.server.data.data
 import xyz.malefic.kanman.shared.data.model.BoardAction.EDIT_STICKY
 import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
@@ -17,7 +17,7 @@ context(_: Raise<Issue>)
 fun UserResponseModel.createSticky(
     event: WsAction.StickyCreate,
     boardId: Uuid,
-) = transaction {
+) = data {
     val board = getAccessibleBoard(boardId, EDIT_STICKY)
 
     StickyNoteEntity
@@ -33,7 +33,7 @@ context(_: Raise<Issue>)
 fun UserResponseModel.deleteSticky(
     event: WsAction.StickyDelete,
     boardId: Uuid,
-) = transaction {
+) = data {
     ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId, EDIT_STICKY) }?.delete())
     { Issue.Board.NotFound() }
 }
@@ -42,7 +42,7 @@ context(_: Raise<Issue>)
 fun UserResponseModel.moveSticky(
     event: WsAction.StickyMove,
     boardId: Uuid,
-) = transaction {
+) = data {
     ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId, EDIT_STICKY) })
         { Issue.Board.NotFound() }.column = event.newColumn
 }
@@ -51,7 +51,7 @@ context(_: Raise<Issue>)
 fun UserResponseModel.updateSticky(
     event: WsAction.StickyUpdate,
     boardId: Uuid,
-) = transaction {
+) = data {
     ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId, EDIT_STICKY) }) {
         Issue.Board.NotFound()
     }.apply {
@@ -65,7 +65,7 @@ fun UserResponseModel.assignUser(
     event: WsAction.AssignUser,
     boardId: Uuid,
 ): Unit =
-    transaction {
+    data {
         val board = getAccessibleBoard(boardId, EDIT_STICKY)
         val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
         val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }
@@ -77,7 +77,7 @@ context(_: Raise<Issue>)
 fun UserResponseModel.unassignUser(
     event: WsAction.UnassignUser,
     boardId: Uuid,
-) = transaction {
+) = data {
     val board = getAccessibleBoard(boardId, EDIT_STICKY)
     val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
     val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }

@@ -12,6 +12,7 @@ sealed interface WsAction {
         val title: String,
         val content: String?,
         val column: Column,
+        @SerialName("assigned_users") val assignedUsers: List<AssignedUserModel>,
     ) : WsAction
 
     @Serializable
@@ -30,6 +31,7 @@ sealed interface WsAction {
         @SerialName("sticky_id") val stickyId: Uuid,
         val title: String,
         val content: String?,
+        val assignedUsers: List<AssignedUserModel>,
     ) : WsAction
 
     @Serializable

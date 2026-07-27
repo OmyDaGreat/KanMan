@@ -181,8 +181,8 @@ fun Board(ctx: PageContext) {
             addingToColumn?.let { col ->
                 StickyOverlay(
                     onClose = { addingToColumn = null },
-                    onConfirm = { title, content ->
-                        websocket?.send(WsAction.StickyCreate(title, content, col))
+                    onConfirm = { title, content, users ->
+                        websocket?.send(WsAction.StickyCreate(title, content, col, users))
                     },
                 )
             }
@@ -191,8 +191,8 @@ fun Board(ctx: PageContext) {
                 StickyOverlay(
                     sticky = sticky,
                     onClose = { editingSticky = null },
-                    onConfirm = { title, content ->
-                        websocket?.send(WsAction.StickyUpdate(sticky.id, title, content))
+                    onConfirm = { title, content, users ->
+                        websocket?.send(WsAction.StickyUpdate(sticky.id, title, content, users))
                     },
                 )
             }
