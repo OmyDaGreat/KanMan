@@ -12,7 +12,8 @@ import xyz.malefic.kanman.client.api.logout
 import xyz.malefic.kanman.client.api.refresh
 import xyz.malefic.kanman.client.api.register
 import xyz.malefic.kanman.shared.data.model.Issue
-import xyz.malefic.kanman.shared.data.model.UserRequestModel
+import xyz.malefic.kanman.shared.data.model.UserCreateModel
+import xyz.malefic.kanman.shared.data.model.UserLoginModel
 import xyz.malefic.kanman.client.api.login as apilogin
 
 object AuthSession {
@@ -39,12 +40,13 @@ object AuthSession {
     suspend fun login(
         username: String,
         password: String,
-    ) = either { accessToken = apilogin(UserRequestModel(username, password)).bind().accessToken }
+    ) = either { accessToken = apilogin(UserLoginModel(username, password)).bind().accessToken }
 
     suspend fun signup(
         username: String,
+        email: String,
         password: String,
-    ) = either { accessToken = register(UserRequestModel(username, password)).bind().accessToken }
+    ) = either { accessToken = register(UserCreateModel(username, email, password)).bind().accessToken }
 
     context(_: Raise<Issue>)
     suspend fun tryRefresh() {

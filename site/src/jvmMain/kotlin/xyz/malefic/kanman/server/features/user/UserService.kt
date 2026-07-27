@@ -1,6 +1,7 @@
 package xyz.malefic.kanman.server.features.user
 
 import arrow.core.raise.Raise
+import arrow.core.raise.context.ensure
 import arrow.core.raise.context.ensureNotNull
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.dao.with
@@ -18,6 +19,7 @@ import xyz.malefic.kanman.shared.data.model.Issue.Auth.InvalidToken
 import xyz.malefic.kanman.shared.data.model.Issue.User
 import xyz.malefic.kanman.shared.data.model.PaginatedResponse
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
+import xyz.malefic.kanman.shared.data.model.UserUpdateModel
 import kotlin.uuid.Uuid
 
 context(_: Raise<Issue>)
@@ -29,6 +31,23 @@ fun getUserFromAccessToken(accessToken: String) =
                 .with(UserEntity::boards, BoardEntity::owner)
                 .firstOrNull(),
         ) { InvalidToken() }.toResponseModel()
+    }
+
+context(_: Raise<Issue>)
+infix fun UserResponseModel.patch(updates: UserUpdateModel) =
+    data {
+        val entity = ensureNotNull(UserEntity.findById(id)) { User.NotFound() }
+
+        updates.username?.let { newUsername ->
+            if (newUsername != entity.username) {
+                ensure(UserEntity.find { Users.username eq newUsername }.empty()) { User.AlreadyExists() }
+                entity.username = newUsername
+            }
+        }
+
+        updates.profilePicture?.let { entity.profilePicture = it }
+
+        entity.toResponseModel()
     }
 
 context(_: Raise<Issue>)

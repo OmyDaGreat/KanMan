@@ -9,6 +9,7 @@ import com.varabyte.kobweb.compose.foundation.layout.Row
 import com.varabyte.kobweb.compose.foundation.layout.Spacer
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
+import com.varabyte.kobweb.compose.ui.modifiers.aspectRatio
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxHeight
@@ -17,9 +18,11 @@ import com.varabyte.kobweb.compose.ui.modifiers.height
 import com.varabyte.kobweb.compose.ui.modifiers.margin
 import com.varabyte.kobweb.compose.ui.modifiers.overflow
 import com.varabyte.kobweb.compose.ui.modifiers.padding
+import com.varabyte.kobweb.compose.ui.modifiers.size
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.PageContext
 import com.varabyte.kobweb.core.layout.Layout
+import com.varabyte.kobweb.silk.components.graphics.Image
 import com.varabyte.kobweb.silk.components.layout.Surface
 import com.varabyte.kobweb.silk.components.navigation.Link
 import com.varabyte.kobweb.silk.style.common.DisabledStyle
@@ -62,13 +65,19 @@ fun NavBarLayout(
                 if (AuthSession.accessToken != null) {
                     Request(Unit, request = { getUser() }) { user ->
                         Spacer()
-                        Column(
+                        Row(
                             Modifier.padding(16.px).backgroundColor(Color.secondaryContainer).borderRadius(16.px),
-                            verticalArrangement = Arrangement.spacedBy(12.px),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            P { Text(user.username) }
-                            Link("/logout") { Text("Log Out") }
+                            Image(user.profilePicture, "${user.username}'s profile picture", Modifier.size(48.px).aspectRatio(1))
+                            Column(
+                                Modifier.padding(left = 16.px),
+                                Arrangement.spacedBy(12.px),
+                                Alignment.CenterHorizontally,
+                            ) {
+                                P { Text(user.username) }
+                                Link("/logout") { Text("Log Out") }
+                            }
                         }
                     }
                 }

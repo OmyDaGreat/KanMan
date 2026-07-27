@@ -1,10 +1,12 @@
 package xyz.malefic.kanman.client.api
 
 import xyz.malefic.kanman.client.api.util.getAuth
+import xyz.malefic.kanman.client.api.util.patchAuth
 import xyz.malefic.kanman.shared.data.model.BoardSummaryModel
 import xyz.malefic.kanman.shared.data.model.PaginatedResponse
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
 import xyz.malefic.kanman.shared.data.model.UserSummaryModel
+import xyz.malefic.kanman.shared.data.model.UserUpdateModel
 import kotlin.uuid.Uuid
 
 suspend fun getUser() = getAuth<UserResponseModel>("me")
@@ -13,6 +15,8 @@ suspend fun getJoinedBoards(
     page: Int = 1,
     limit: Int = 50,
 ) = getAuth<PaginatedResponse<BoardSummaryModel>>("me/boards?page=$page&limit=$limit")
+
+suspend fun updateUser(update: UserUpdateModel) = patchAuth<_>("me", update)
 
 suspend fun getUser(username: String) = getAuth<UserSummaryModel>("users/$username")
 

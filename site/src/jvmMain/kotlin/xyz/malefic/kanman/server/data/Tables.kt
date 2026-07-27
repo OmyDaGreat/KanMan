@@ -14,6 +14,8 @@ import xyz.malefic.kanman.shared.data.model.WsEvent
 
 object Users : UuidTable("users") {
     val username = varchar("username", 128).uniqueIndex()
+    val email = varchar("email", 256).uniqueIndex()
+    val profilePicture = varchar("profile_picture", 1024).default("https://i.pinimg.com/736x/0f/c2/b0/0fc2b09b645e3f878ce39232ec3e552e.jpg")
     val hashedPassword = varchar("password", 256)
     val failedAttempts = integer("failed_attempts").default(0)
     val lockUntil = long("lock_until").default(0)

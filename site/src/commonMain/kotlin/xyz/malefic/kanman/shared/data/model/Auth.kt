@@ -4,8 +4,15 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class UserRequestModel(
+data class UserLoginModel(
     val username: String,
+    val password: String,
+)
+
+@Serializable
+data class UserCreateModel(
+    val username: String,
+    val email: String,
     val password: String,
 )
 

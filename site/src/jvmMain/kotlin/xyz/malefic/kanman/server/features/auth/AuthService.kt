@@ -45,7 +45,8 @@ import xyz.malefic.kanman.shared.data.model.Issue.Auth.MissingToken
 import xyz.malefic.kanman.shared.data.model.Issue.User
 import xyz.malefic.kanman.shared.data.model.Issue.Validation.BadRequest
 import xyz.malefic.kanman.shared.data.model.TokenModel
-import xyz.malefic.kanman.shared.data.model.UserRequestModel
+import xyz.malefic.kanman.shared.data.model.UserCreateModel
+import xyz.malefic.kanman.shared.data.model.UserLoginModel
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Date
@@ -189,7 +190,7 @@ fun revokeRefreshToken(refreshToken: String) =
     }
 
 context(_: Raise<Issue>)
-fun getTokensFromLogin(user: UserRequestModel) =
+fun getTokensFromLogin(user: UserLoginModel) =
     transaction {
         val userEntity = ensureNotNull(UserEntity.find { Users.username eq user.username }.firstOrNull()) { InvalidCredentials() }
         val now = System.currentTimeMillis()
@@ -215,7 +216,7 @@ private val String.isStrongPassword get() = nbvcxz.estimate(this).basicScore >= 
 
 val validateUser =
     Validation {
-        UserRequestModel::username {
+        UserCreateModel::username {
             notBlank()
             minLength(3) hint "Username must have at least 3 characters"
             maxLength(32) hint "Username must have at most 32 characters"
@@ -223,31 +224,37 @@ val validateUser =
             pattern(Regex("""^[\x21-\x7E&&[^"'`\\<>/:;%&{}|\[\]]]+$""")) hint
                 "Username must use printable ASCII and cannot include spaces or these characters: \" ' \\ < > / : ; % & { } | [ ]"
         }
-        UserRequestModel::password {
+        UserCreateModel::email {
+            notBlank()
+            pattern(Regex("""^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$""")) hint "Invalid email address"
+        }
+        UserCreateModel::password {
             notBlank()
             minLength(12) hint "Password must have at least 12 characters"
             maxLength(64) hint "Password must have at most 64 characters"
             constrain("Password is not strong enough") { it.isStrongPassword }
         }
-        constrain("Password must not contain username", ValidationPath.of(UserRequestModel::password)) { u ->
+        constrain("Password must not contain username", ValidationPath.of(UserCreateModel::password)) { u ->
             !u.password.contains(u.username, ignoreCase = true)
         }
     }
 
 context(_: Raise<Issue>)
-fun UserRequestModel.create() =
+fun UserCreateModel.create() =
     transaction {
         val userValidation = validateUser(this@create)
         ensure(userValidation.isValid) {
             User.InvalidUser(
-                userValidation.errors.messagesAtPath(UserRequestModel::username),
-                userValidation.errors.messagesAtPath(UserRequestModel::password),
+                userValidation.errors.messagesAtPath(UserCreateModel::username),
+                userValidation.errors.messagesAtPath(UserCreateModel::password),
             )
         }
         ensure(UserEntity.find { Users.username eq username }.empty()) { User.AlreadyExists() }
+        ensure(UserEntity.find { Users.email eq email }.empty()) { User.AlreadyExists() }
         UserEntity
             .new {
                 username = this@create.username
+                email = this@create.email
                 hashedPassword = hashPassword(password)
             }.issueTokenPair()
     }

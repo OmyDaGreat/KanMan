@@ -25,14 +25,16 @@ class UserEntity(
     companion object : UuidEntityClass<UserEntity>(Users)
 
     var username by Users.username
+    var email by Users.email
+    var profilePicture by Users.profilePicture
     var hashedPassword by Users.hashedPassword
     var failedAttempts by Users.failedAttempts
     var lockUntil by Users.lockUntil
     var boards by BoardEntity via BoardUsers
 
-    fun toSummaryModel() = UserSummaryModel(id.value, username)
+    fun toSummaryModel() = UserSummaryModel(id.value, username, profilePicture)
 
-    fun toResponseModel() = UserResponseModel(id.value, username, boards.map { it.toSummaryModel(id.value) })
+    fun toResponseModel() = UserResponseModel(id.value, username, email, profilePicture, boards.map { it.toSummaryModel(id.value) })
 }
 
 class AuthTokenEntity(

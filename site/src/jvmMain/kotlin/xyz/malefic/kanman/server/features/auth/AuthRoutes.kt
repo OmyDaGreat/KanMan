@@ -11,7 +11,7 @@ import xyz.malefic.kanman.server.infra.http.model
 import xyz.malefic.kanman.server.infra.http.rateLimit
 import xyz.malefic.kanman.server.infra.http.response
 import xyz.malefic.kanman.shared.data.model.Issue
-import xyz.malefic.kanman.shared.data.model.UserRequestModel
+import xyz.malefic.kanman.shared.data.model.UserCreateModel
 import kotlin.time.Duration.Companion.minutes
 
 val throttler = rateLimit(10, 1.minutes.inWholeMilliseconds)
@@ -25,7 +25,7 @@ val authRoutes =
         "/api/auth/register" bind POST to
             throttler(
                 api { request ->
-                    val tokens = request.model<UserRequestModel>().create()
+                    val tokens = request.model<UserCreateModel>().create()
 
                     response(OK, tokens.response) withCookie tokens.refreshToken
                 },

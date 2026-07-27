@@ -69,6 +69,7 @@ fun Login(ctx: PageContext) =
         val scope = rememberCoroutineScope()
         var loginMode by remember { mutableStateOf(Login.LOGIN) }
         var username by remember { mutableStateOf("") }
+        var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var loginStatus by remember { mutableStateOf<ApiState<Unit>?>(null) }
 
@@ -93,7 +94,7 @@ fun Login(ctx: PageContext) =
                     if (loginMode == Login.LOGIN) {
                         AuthSession.login(username, password)
                     } else {
-                        AuthSession.signup(username, password)
+                        AuthSession.signup(username, email, password)
                     }.fold(
                         { issue ->
                             if (issue is Issue.Auth.InvalidCredentials || issue is Issue.User.InvalidUser) {
@@ -111,11 +112,12 @@ fun Login(ctx: PageContext) =
                 }
             }
 
-            DisposableEffect(Unit) {
+            DisposableEffect(loginMode) {
                 val handler: (Event) -> Unit = { event ->
                     if ((event as KeyboardEvent).key == "Enter" && loginStatus !is ApiState.Loading &&
                         username.isNotBlank() &&
-                        password.isNotBlank()
+                        password.isNotBlank() &&
+                        (loginMode == Login.LOGIN || email.isNotBlank())
                     ) {
                         event.preventDefault()
                         submit()
@@ -134,6 +136,15 @@ fun Login(ctx: PageContext) =
                 placeholder = "Username",
                 valid = username.isNotBlank() && loginStatus !is ApiState.Error,
             )
+            if (loginMode == Login.SIGNUP) {
+                TextInput(
+                    email,
+                    { email = it },
+                    Modifier.fillMaxWidth(),
+                    placeholder = "Email",
+                    valid = email.isNotBlank() && loginStatus !is ApiState.Error,
+                )
+            }
             TextInput(
                 password,
                 { password = it },
@@ -197,7 +208,9 @@ fun Login(ctx: PageContext) =
 
             Button(
                 { submit() },
-                enabled = loginStatus !is ApiState.Loading && username.isNotBlank() && password.isNotBlank(),
+                enabled =
+                    loginStatus !is ApiState.Loading && username.isNotBlank() && password.isNotBlank() &&
+                        (loginMode == Login.LOGIN || email.isNotBlank()),
             ) {
                 Text(if (loginStatus is ApiState.Loading) "Loading..." else "Submit")
             }
