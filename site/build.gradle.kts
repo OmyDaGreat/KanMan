@@ -24,7 +24,7 @@ kobweb {
     pagesPackage = "xyz.malefic.kanman.client.pages"
     app {
         index {
-            description.set("Powered by Kobweb")
+            description.set("Another™ Kanban task manager")
             head.add {
                 link {
                     rel = "stylesheet"
