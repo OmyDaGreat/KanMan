@@ -28,7 +28,7 @@ import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.BoardEventModel
 import xyz.malefic.kanman.shared.data.model.WsEvent
-import xyz.malefic.kanman.shared.util.toPrettyDate
+import xyz.malefic.kanman.shared.util.toPrettyDateTime
 
 @Composable
 fun ActivityLogItem(
@@ -72,7 +72,7 @@ fun ActivityLogItem(
                     .margin(0.px)
                     .toAttrs(),
             ) {
-                Text(event.timestamp.toPrettyDate())
+                Text(event.timestamp.toPrettyDateTime())
             }
         }
     }

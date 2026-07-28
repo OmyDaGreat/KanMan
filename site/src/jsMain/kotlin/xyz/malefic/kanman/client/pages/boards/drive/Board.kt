@@ -21,6 +21,7 @@ import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.core.Page
 import com.varabyte.kobweb.core.PageContext
 import com.varabyte.kobweb.silk.components.forms.Button
+import com.varabyte.kobweb.silk.components.icons.ms.MsHistory
 import com.varabyte.kobweb.silk.components.icons.ms.MsSettings
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.H1
@@ -32,6 +33,7 @@ import xyz.malefic.kanman.client.api.util.GlobalErrorState
 import xyz.malefic.kanman.client.api.util.Request
 import xyz.malefic.kanman.client.api.util.WebSockets
 import xyz.malefic.kanman.client.api.util.WebSockets.send
+import xyz.malefic.kanman.client.components.BoardActivity
 import xyz.malefic.kanman.client.components.BoardSettings
 import xyz.malefic.kanman.client.components.KanColumn
 import xyz.malefic.kanman.client.components.Spinner
@@ -56,6 +58,7 @@ import kotlin.uuid.Uuid
 fun Board(ctx: PageContext) {
     val boardId = ctx.route.params["id"]?.let { Uuid.parse(it) } ?: return Spinner()
     var isSettingsView by remember { mutableStateOf(false) }
+    var isActivityView by remember { mutableStateOf(false) }
     var board by remember { mutableStateOf<BoardResponseModel?>(null) }
     var websocket by remember { mutableStateOf<WebSocket?>(null) }
     var addingToColumn by remember { mutableStateOf<Column?>(null) }
@@ -179,11 +182,15 @@ fun Board(ctx: PageContext) {
             ) {
                 H1 { Text(currentBoard.title) }
 
-                // TODO: Add activity column/popup
+                Row(Modifier.gap(8.px), verticalAlignment = Alignment.CenterVertically) {
+                    Button({ isActivityView = !isActivityView }, Modifier.backgroundColor(Colors.Transparent)) {
+                        MsHistory(Modifier.color(Color.primary))
+                    }
 
-                if (role == Role.OWNER || role == Role.ADMIN) {
-                    Button({ isSettingsView = !isSettingsView }, Modifier.backgroundColor(Colors.Transparent)) {
-                        MsSettings(Modifier.color(Color.primary))
+                    if (role == Role.OWNER || role == Role.ADMIN) {
+                        Button({ isSettingsView = !isSettingsView }, Modifier.backgroundColor(Colors.Transparent)) {
+                            MsSettings(Modifier.color(Color.primary))
+                        }
                     }
                 }
             }
@@ -240,6 +247,10 @@ fun Board(ctx: PageContext) {
                         websocket?.send(WsAction.StickyUpdate(sticky.id, title, content, users))
                     },
                 )
+            }
+
+            if (isActivityView) {
+                BoardActivity(currentBoard.id) { isActivityView = false }
             }
         }
     }
