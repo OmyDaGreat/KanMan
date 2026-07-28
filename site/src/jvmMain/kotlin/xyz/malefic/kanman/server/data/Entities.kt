@@ -212,5 +212,5 @@ class InvitationEntity(
     var receiver by UserEntity referencedOn Invitations.receiver
     var role by Invitations.role
 
-    fun toModel() = Invitation(id.value, board.id.value, sender.id.value, receiver.id.value, role)
+    fun toModel() = Invitation(id.value, board.toSummaryModel(), sender.toSummaryModel(), receiver.toSummaryModel(), role)
 }

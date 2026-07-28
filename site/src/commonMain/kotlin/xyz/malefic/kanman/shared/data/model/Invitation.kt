@@ -14,9 +14,9 @@ data class InviteRequest(
 @Serializable
 data class Invitation(
     val id: Uuid,
-    @SerialName("board_id") val boardId: Uuid,
-    @SerialName("sender_id") val senderId: Uuid,
-    @SerialName("receiver_id") val receiverId: Uuid,
+    val board: BoardSummaryModel,
+    val sender: UserSummaryModel,
+    val receiver: UserSummaryModel,
     val role: Role,
 )
 

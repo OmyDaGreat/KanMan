@@ -11,6 +11,8 @@ import kotlin.uuid.Uuid
 
 suspend fun getInvitations() = getAuth<List<Invitation>>("invitations")
 
+suspend fun getBoardInvitations(boardId: Uuid) = getAuth<List<Invitation>>("boards/$boardId/invitations")
+
 suspend fun invite(
     boardId: Uuid,
     userId: Uuid,

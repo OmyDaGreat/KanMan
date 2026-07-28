@@ -20,6 +20,10 @@ val invitationRoutes =
             apiAuth { user, request ->
                 response(OK, user invite request.model())
             },
+        "/api/boards/{id}/invitations" bind GET to
+            apiIdAuth { user, id, _ ->
+                response(OK, user getBoardInvites id)
+            },
         "/api/invitations/{id}/accept" bind POST to
             apiIdAuth { user, id, _ ->
                 response(OK, user accept id)

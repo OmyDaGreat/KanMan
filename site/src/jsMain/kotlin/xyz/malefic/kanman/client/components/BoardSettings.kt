@@ -24,6 +24,7 @@ import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
 import com.varabyte.kobweb.compose.ui.modifiers.fontSize
 import com.varabyte.kobweb.compose.ui.modifiers.gap
 import com.varabyte.kobweb.compose.ui.modifiers.onClick
+import com.varabyte.kobweb.compose.ui.modifiers.opacity
 import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.modifiers.size
 import com.varabyte.kobweb.compose.ui.modifiers.width
@@ -46,11 +47,14 @@ import org.jetbrains.compose.web.dom.H3
 import org.jetbrains.compose.web.dom.Hr
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
+import xyz.malefic.kanman.client.api.declineInvitation
 import xyz.malefic.kanman.client.api.deleteBoard
+import xyz.malefic.kanman.client.api.getBoardInvitations
 import xyz.malefic.kanman.client.api.invite
 import xyz.malefic.kanman.client.api.kick
 import xyz.malefic.kanman.client.api.updateBoard
 import xyz.malefic.kanman.client.api.updateRole
+import xyz.malefic.kanman.client.api.util.Request
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.BoardDetailsModel
 import xyz.malefic.kanman.shared.data.model.BoardResponseModel
@@ -188,6 +192,56 @@ fun BoardSettings(
                                                         handle(kick(board.id, member.user.id)) {
                                                             window.location.reload()
                                                         }
+                                                    }
+                                                }
+                                            },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (currentRole == Role.OWNER || currentRole == Role.ADMIN) {
+                Request(board.id, request = { getBoardInvitations(board.id) }) { invitations ->
+                    if (invitations.isNotEmpty()) {
+                        Hr(Modifier.fillMaxWidth().border(1.px, LineStyle.Solid, Color.outlineVariant).toAttrs())
+                        H3 { Text("Pending Invitations") }
+                        Column(Modifier.fillMaxWidth().gap(12.px)) {
+                            invitations.forEach { invitation ->
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.px)
+                                        .backgroundColor(Color.surfaceContainer)
+                                        .borderRadius(12.px),
+                                    Arrangement.SpaceBetween,
+                                    Alignment.CenterVertically,
+                                ) {
+                                    Row(Modifier, Arrangement.spacedBy(12.px), Alignment.CenterVertically) {
+                                        Image(
+                                            invitation.receiver.profilePicture,
+                                            "${invitation.receiver.username}'s profile picture",
+                                            Modifier.size(32.px).clip(Circle()),
+                                        )
+                                        Column {
+                                            Text(invitation.receiver.username)
+                                            P(Modifier.opacity(0.6).fontSize(12.px).toAttrs()) {
+                                                Text("Invited as ${invitation.role.name.lowercase()}")
+                                            }
+                                        }
+                                    }
+
+                                    MsPersonRemove(
+                                        Modifier
+                                            .color(Color.error)
+                                            .cursor(Cursor.Pointer)
+                                            .fontSize(20.px)
+                                            .onClick {
+                                                scope.launch {
+                                                    handle(declineInvitation(invitation.id)) {
+                                                        window.location.reload()
                                                     }
                                                 }
                                             },

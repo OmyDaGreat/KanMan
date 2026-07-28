@@ -3,6 +3,7 @@ package xyz.malefic.kanman.server.features.invitation
 import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
 import arrow.core.raise.context.ensureNotNull
+import arrow.core.raise.either
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import xyz.malefic.kanman.server.data.BoardUserEntity
@@ -23,6 +24,13 @@ import kotlin.uuid.Uuid
 
 context(_: Raise<Issue>)
 fun UserResponseModel.getInvites() = data { InvitationEntity.find { Invitations.receiver eq id }.map { it.toModel() } }
+
+context(_: Raise<Issue>)
+infix fun UserResponseModel.getBoardInvites(boardId: Uuid) =
+    data {
+        val board = getAccessibleBoard(boardId, INVITE_USER)
+        InvitationEntity.find { Invitations.board eq board.id.value }.map { it.toModel() }
+    }
 
 context(_: Raise<Issue>)
 infix fun UserResponseModel.invite(inviteRequest: InviteRequest) =
@@ -78,6 +86,13 @@ context(_: Raise<Issue>)
 infix fun UserResponseModel.decline(inviteId: Uuid) =
     data {
         val invite = ensureNotNull(InvitationEntity.findById(inviteId)) { Issue.Board.NotFound() }
-        ensure(invite.receiver.id.value == id) { AccessDenied("You are not invited to this board") }
+
+        val isReceiver = invite.receiver.id.value == id
+        val isAdmin =
+            either { getAccessibleBoard(invite.board.id.value, INVITE_USER) }
+                .isRight()
+
+        ensure(isReceiver || isAdmin) { AccessDenied("You do not have permission to delete this invitation") }
+
         invite.delete()
     }

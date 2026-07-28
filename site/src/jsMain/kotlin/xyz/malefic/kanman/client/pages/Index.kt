@@ -16,6 +16,7 @@ import xyz.malefic.kanman.shared.data.model.Visibility
 @Composable
 fun Index() =
     Request(request = { createBoard(BoardDetailsModel("Test", "", Visibility.PUBLIC)) }) { board ->
+        // TODO: Real home page
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Link(
                 path = "/boards/drive/${board.id}",
