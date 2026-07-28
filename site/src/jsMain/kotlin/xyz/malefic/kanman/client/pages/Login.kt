@@ -38,6 +38,7 @@ import com.varabyte.kobweb.silk.components.forms.TextInput
 import com.varabyte.kobweb.silk.components.layout.SimpleGrid
 import com.varabyte.kobweb.silk.components.layout.numColumns
 import kotlinx.browser.document
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.percent
@@ -54,6 +55,7 @@ import xyz.malefic.kanman.client.api.util.GlobalErrorState
 import xyz.malefic.kanman.client.api.util.Request
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.Issue
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class Login(
     val string: String,
@@ -71,7 +73,13 @@ fun Login(ctx: PageContext) =
         var username by remember { mutableStateOf("") }
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+        var debouncedPassword by remember { mutableStateOf("") }
         var loginStatus by remember { mutableStateOf<ApiState<Unit>?>(null) }
+
+        LaunchedEffect(password) {
+            delay(500.milliseconds)
+            debouncedPassword = password
+        }
 
         LaunchedEffect(AuthSession.accessToken) {
             if (AuthSession.accessToken != null) {
@@ -154,9 +162,8 @@ fun Login(ctx: PageContext) =
                 valid = password.isNotBlank() && loginStatus !is ApiState.Error,
             )
 
-            if (loginMode == Login.SIGNUP) { // TODO: Fix sizing
-                Request(password, request = { password.strength() }) { (strength, feedback) ->
-                    // TODO: Add debounce
+            if (loginMode == Login.SIGNUP) {
+                Request(debouncedPassword, request = { debouncedPassword.strength() }) { (strength, feedback) ->
                     SimpleGrid(numColumns(4), Modifier.height(24.px).fillMaxWidth().borderRadius(24.px)) {
                         repeat(strength) { strength ->
                             Box(
