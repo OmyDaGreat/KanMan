@@ -30,6 +30,15 @@ val userRoutes =
 
                 response(OK, user.getJoinedBoards(page, limit))
             },
+        "/api/me/tasks" bind GET to
+            apiAuth { user, _ ->
+                response(OK, user.getAssignedTasks())
+            },
+        "/api/me/history" bind GET to
+            apiAuth { user, request ->
+                val (page, limit) = request.pagination()
+                response(OK, user.getGlobalHistory(page, limit))
+            },
         "/api/users/{search}" bind GET to
             api { request ->
                 val search = ensureNotNull(request.path("search")) { BadRequest("Missing search") }

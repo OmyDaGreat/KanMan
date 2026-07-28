@@ -145,11 +145,11 @@ fun Board(ctx: PageContext) {
                                     }
                             }
 
-                            is WsEvent.UserJoin -> {
+                            is WsEvent.UserOpenBoard -> {
                                 // No-op
                             }
 
-                            is WsEvent.UserLeave -> {
+                            is WsEvent.UserCloseBoard -> {
                                 // No-op
                             }
                         }
@@ -178,6 +178,8 @@ fun Board(ctx: PageContext) {
                 Alignment.CenterVertically,
             ) {
                 H1 { Text(currentBoard.title) }
+
+                // TODO: Add activity column/popup
 
                 if (role == Role.OWNER || role == Role.ADMIN) {
                     Button({ isSettingsView = !isSettingsView }, Modifier.backgroundColor(Colors.Transparent)) {

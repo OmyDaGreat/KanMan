@@ -65,6 +65,7 @@ fun NavBarLayout(
                 if (AuthSession.accessToken != null) {
                     Request(Unit, request = { getUser() }) { user ->
                         Spacer()
+                        // TODO: Make the Row link to a user settings popup
                         Row(
                             Modifier.padding(16.px).backgroundColor(Color.secondaryContainer).borderRadius(16.px),
                             verticalAlignment = Alignment.CenterVertically,
@@ -97,8 +98,7 @@ enum class Pages(
     val route: String,
 ) {
     INDEX("Home", "/"),
-    DRIVE("Drive", "/boards/drive"),
-    INBOX("Inbox", "/inbox"),
+    DRIVE("Your Boards", "/boards/drive"),
     PUBLIC("Public Boards", "/boards/public"),
     ABOUT("About", "/about"),
     ;

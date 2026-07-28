@@ -3,13 +3,21 @@ package xyz.malefic.kanman.server.features.user
 import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
 import arrow.core.raise.context.ensureNotNull
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.dao.with
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import xyz.malefic.kanman.server.data.AssignedUserEntity
+import xyz.malefic.kanman.server.data.AssignedUsers
 import xyz.malefic.kanman.server.data.BoardEntity
+import xyz.malefic.kanman.server.data.BoardEventEntity
+import xyz.malefic.kanman.server.data.BoardEvents
 import xyz.malefic.kanman.server.data.BoardUsers
 import xyz.malefic.kanman.server.data.Boards
+import xyz.malefic.kanman.server.data.StickyNoteEntity
+import xyz.malefic.kanman.server.data.StickyNotes
 import xyz.malefic.kanman.server.data.UserEntity
 import xyz.malefic.kanman.server.data.Users
 import xyz.malefic.kanman.server.data.data
@@ -65,6 +73,48 @@ fun UserResponseModel.getJoinedBoards(
             .wrapRows(query.offset((page - 1L) * limit).limit(limit))
             .with(BoardEntity::owner, BoardEntity::memberships)
             .map { it.toSummaryModel(id) }
+
+    PaginatedResponse(items, page, limit, total)
+}
+
+context(_: Raise<Issue>)
+fun UserResponseModel.getAssignedTasks() =
+    data {
+        val query =
+            (StickyNotes innerJoin AssignedUsers)
+                .select(StickyNotes.columns)
+                .where { AssignedUsers.user eq id }
+                .orderBy(AssignedUsers.due to SortOrder.ASC_NULLS_LAST)
+
+        StickyNoteEntity
+            .wrapRows(query)
+            .with(StickyNoteEntity::board, StickyNoteEntity::assignedUsers, AssignedUserEntity::user)
+            .map { it.toModel() }
+    }
+
+context(_: Raise<Issue>)
+fun UserResponseModel.getGlobalHistory(
+    page: Int = 1,
+    limit: Int = 50,
+) = data {
+    val joinedBoardIds =
+        BoardUsers
+            .select(BoardUsers.board)
+            .where { BoardUsers.user eq id }
+            .map { it[BoardUsers.board] }
+
+    val query =
+        BoardEvents
+            .select(BoardEvents.columns)
+            .where { BoardEvents.board inList joinedBoardIds }
+            .orderBy(BoardEvents.timestamp to SortOrder.DESC)
+
+    val total = query.count()
+    val items =
+        BoardEventEntity
+            .wrapRows(query.offset((page - 1L) * limit).limit(limit))
+            .with(BoardEventEntity::board, BoardEventEntity::actor)
+            .map { it.toModel() }
 
     PaginatedResponse(items, page, limit, total)
 }

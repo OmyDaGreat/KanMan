@@ -35,7 +35,7 @@ object Registry {
                 }
             }
         }
-        val encoded = json.encodeToString(WsEvent.serializer(), msg)
+        val encoded = json.encodeToString<WsEvent>(msg)
         connections[boardId]?.forEach { it.send(WsMessage(encoded)) }
     }
 

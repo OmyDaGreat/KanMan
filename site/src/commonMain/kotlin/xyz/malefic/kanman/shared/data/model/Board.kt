@@ -53,7 +53,7 @@ enum class Role(
 data class BoardUserResponseModel(
     val user: UserSummaryModel,
     val role: Role,
-    val lastViewedAt: Instant,
+    @SerialName("last_viewed_at") val lastViewedAt: Instant,
 )
 
 @Serializable
@@ -81,7 +81,7 @@ data class BoardSummaryModel(
     val description: String = "",
     val visibility: Visibility,
     val owner: UserSummaryModel,
-    val lastViewedAt: Instant? = null,
+    @SerialName("last_viewed_at") val lastViewedAt: Instant? = null,
 )
 
 @Serializable

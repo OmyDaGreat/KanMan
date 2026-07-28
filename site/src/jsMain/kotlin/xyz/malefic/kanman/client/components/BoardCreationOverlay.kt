@@ -48,6 +48,8 @@ fun BoardCreationOverlay(onClose: () -> Unit) {
     var state by remember { mutableStateOf<ApiState<Unit>?>(null) }
     val scope = rememberCoroutineScope()
 
+    // TODO: Exit w/ esc key
+
     Overlay(
         Modifier.backgroundColor(Color.overlay),
         contentAlignment = Alignment.Center,

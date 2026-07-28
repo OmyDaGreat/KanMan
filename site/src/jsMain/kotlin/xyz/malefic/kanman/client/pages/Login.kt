@@ -156,6 +156,7 @@ fun Login(ctx: PageContext) =
 
             if (loginMode == Login.SIGNUP) { // TODO: Fix sizing
                 Request(password, request = { password.strength() }) { (strength, feedback) ->
+                    // TODO: Add debounce
                     SimpleGrid(numColumns(4), Modifier.height(24.px).fillMaxWidth().borderRadius(24.px)) {
                         repeat(strength) { strength ->
                             Box(

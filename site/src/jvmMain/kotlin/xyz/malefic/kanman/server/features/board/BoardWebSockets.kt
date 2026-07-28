@@ -25,8 +25,8 @@ import xyz.malefic.kanman.shared.data.model.WsEvent.StickyDeleted
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyMoved
 import xyz.malefic.kanman.shared.data.model.WsEvent.StickyUpdated
 import xyz.malefic.kanman.shared.data.model.WsEvent.UnassignedUser
-import xyz.malefic.kanman.shared.data.model.WsEvent.UserJoin
-import xyz.malefic.kanman.shared.data.model.WsEvent.UserLeave
+import xyz.malefic.kanman.shared.data.model.WsEvent.UserCloseBoard
+import xyz.malefic.kanman.shared.data.model.WsEvent.UserOpenBoard
 
 val log = Logger.withTag("Websockets")
 
@@ -41,8 +41,8 @@ val boardWs =
                     either {
                         catch({
                             if (Registry.register(id, ws)) {
-                                Registry.broadcast(id, UserJoin(userSummary, id))
-                                ws.send(WsMessage(json.encodeToString(WsEvent.serializer(), BoardLoad(userSummary, board))))
+                                Registry.broadcast(id, UserOpenBoard(userSummary, id))
+                                ws.send(WsMessage(json.encodeToString<WsEvent>(BoardLoad(userSummary, board))))
                             }
                         })
                         { raise(Internal.from(it, "Connection registration failed")) }
@@ -91,14 +91,14 @@ val boardWs =
 
                         ws.onClose {
                             if (Registry.unregister(id, ws)) {
-                                Registry.broadcast(id, UserLeave(userSummary, id))
+                                Registry.broadcast(id, UserCloseBoard(userSummary, id))
                             }
                         }
 
                         ws.onError { e ->
                             log.e(e) { "${user.username} disconnected with error" }
                             if (Registry.unregister(id, ws)) {
-                                Registry.broadcast(id, UserLeave(userSummary, id))
+                                Registry.broadcast(id, UserCloseBoard(userSummary, id))
                             }
                         }
                     }.onLeft { issue ->

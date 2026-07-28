@@ -53,7 +53,7 @@ sealed interface WsEvent {
     val actor: UserSummaryModel
 
     @Serializable
-    data class UserJoin(
+    data class UserOpenBoard(
         override val actor: UserSummaryModel,
         @SerialName("board_id") val boardId: Uuid,
     ) : WsEvent
@@ -65,7 +65,7 @@ sealed interface WsEvent {
     ) : WsEvent
 
     @Serializable
-    data class UserLeave(
+    data class UserCloseBoard(
         override val actor: UserSummaryModel,
         @SerialName("board_id") val boardId: Uuid,
     ) : WsEvent
