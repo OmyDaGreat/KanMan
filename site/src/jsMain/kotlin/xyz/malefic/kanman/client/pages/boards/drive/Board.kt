@@ -75,8 +75,6 @@ fun Board(ctx: PageContext) {
                                 board = event.board
                             }
 
-                            // TODO: Use arrow optics instead of copy
-
                             is StickyMoved -> {
                                 board =
                                     board?.let { b ->
