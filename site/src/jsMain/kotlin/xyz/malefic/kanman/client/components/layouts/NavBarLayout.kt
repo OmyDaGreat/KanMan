@@ -1,6 +1,11 @@
 package xyz.malefic.kanman.client.components.layouts
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.varabyte.kobweb.compose.css.Cursor
 import com.varabyte.kobweb.compose.css.Overflow
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
@@ -12,10 +17,12 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.aspectRatio
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
+import com.varabyte.kobweb.compose.ui.modifiers.cursor
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxHeight
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.height
 import com.varabyte.kobweb.compose.ui.modifiers.margin
+import com.varabyte.kobweb.compose.ui.modifiers.onClick
 import com.varabyte.kobweb.compose.ui.modifiers.overflow
 import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.modifiers.size
@@ -37,6 +44,7 @@ import xyz.malefic.kanman.client.api.getUser
 import xyz.malefic.kanman.client.api.util.AuthSession
 import xyz.malefic.kanman.client.api.util.Request
 import xyz.malefic.kanman.client.components.ErrorOverlay
+import xyz.malefic.kanman.client.components.UserSettingsOverlay
 import xyz.malefic.kanman.client.styles.Color
 
 @Layout
@@ -46,6 +54,7 @@ fun NavBarLayout(
     content: @Composable () -> Unit,
 ) {
     val currentRoute = ctx.route.path
+    var showUserSettings by remember { mutableStateOf(false) }
 
     Row(Modifier.fillMaxSize().height(100.vh)) {
         Surface(Modifier.fillMaxHeight().backgroundColor(Color.surfaceContainerHigh)) {
@@ -65,9 +74,13 @@ fun NavBarLayout(
                 if (AuthSession.accessToken != null) {
                     Request(Unit, request = { getUser() }) { user ->
                         Spacer()
-                        // TODO: Make the Row link to a user settings popup
                         Row(
-                            Modifier.padding(16.px).backgroundColor(Color.secondaryContainer).borderRadius(16.px),
+                            Modifier
+                                .padding(16.px)
+                                .backgroundColor(Color.secondaryContainer)
+                                .borderRadius(16.px)
+                                .cursor(Cursor.Pointer)
+                                .onClick { showUserSettings = true },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Image(user.profilePicture, "${user.username}'s profile picture", Modifier.size(48.px).aspectRatio(1))
@@ -79,6 +92,10 @@ fun NavBarLayout(
                                 P { Text(user.username) }
                                 Link("/logout") { Text("Log Out") }
                             }
+                        }
+
+                        if (showUserSettings) {
+                            UserSettingsOverlay(user, onClose = { showUserSettings = false })
                         }
                     }
                 }
