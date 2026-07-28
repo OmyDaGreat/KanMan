@@ -39,8 +39,9 @@ import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.AssignedUserModel
 import xyz.malefic.kanman.shared.data.model.StickyNoteModel
 import xyz.malefic.kanman.shared.data.model.UserSummaryModel
-import xyz.malefic.kanman.shared.util.toInstant
+import xyz.malefic.kanman.shared.util.combineToInstant
 import xyz.malefic.kanman.shared.util.toPrettyDate
+import xyz.malefic.kanman.shared.util.toPrettyTime
 
 @Composable
 fun StickyOverlay(
@@ -121,9 +122,9 @@ fun StickyOverlay(
                             val user = members.find { it.id == assigned.userId } ?: return@forEach
                             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                                 Text(user.username)
-                                Input(
-                                    type = InputType.Date,
-                                    attrs =
+                                Row(Modifier.gap(8.px)) {
+                                    Input(
+                                        InputType.Date,
                                         Modifier
                                             .padding(4.px)
                                             .borderRadius(4.px)
@@ -137,12 +138,42 @@ fun StickyOverlay(
                                                     if (index != -1) {
                                                         assignedUsers[index] =
                                                             assigned.copy(
-                                                                due = event.value.takeIf { it.isNotBlank() }?.toInstant(),
+                                                                due =
+                                                                    combineToInstant(
+                                                                        event.value,
+                                                                        assigned.due?.toPrettyTime() ?: "",
+                                                                    ),
                                                             )
                                                     }
                                                 }
                                             },
-                                )
+                                    )
+                                    Input(
+                                        InputType.Time,
+                                        Modifier
+                                            .padding(4.px)
+                                            .borderRadius(4.px)
+                                            .border(1.px, LineStyle.Solid, Color.outlineVariant)
+                                            .backgroundColor(Colors.Transparent)
+                                            .color(Color.onSurface)
+                                            .toAttrs {
+                                                value(assigned.due?.toPrettyTime() ?: "")
+                                                onInput { event ->
+                                                    val index = assignedUsers.indexOf(assigned)
+                                                    if (index != -1) {
+                                                        assignedUsers[index] =
+                                                            assigned.copy(
+                                                                due =
+                                                                    combineToInstant(
+                                                                        assigned.due?.toPrettyDate() ?: "",
+                                                                        event.value,
+                                                                    ),
+                                                            )
+                                                    }
+                                                }
+                                            },
+                                    )
+                                }
                             }
                         }
                     }
@@ -171,8 +202,8 @@ fun StickyOverlay(
 
     if (showUserPopup) {
         BoardMemberSearchOverlay(
-            members = members,
-            alreadyAssigned = assignedUsers.map { it.userId },
+            members,
+            assignedUsers.map { it.userId },
             onClose = { showUserPopup = false },
             onSubmit = {
                 assignedUsers += AssignedUserModel(it)

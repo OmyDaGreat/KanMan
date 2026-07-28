@@ -52,7 +52,7 @@ import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.StickyNoteModel
 import xyz.malefic.kanman.shared.data.model.UserSummaryModel
 import xyz.malefic.kanman.shared.util.isOverdue
-import xyz.malefic.kanman.shared.util.toPrettyDate
+import xyz.malefic.kanman.shared.util.toPrettyDateTime
 import xyz.malefic.kutint.Kutint
 import kotlin.uuid.Uuid
 
@@ -143,7 +143,7 @@ fun StickyNote(
                             .margin(top = 8.px)
                             .toAttrs(),
                     ) {
-                        Text("Due: ${due.toPrettyDate()}")
+                        Text("Due: ${due.toPrettyDateTime()}")
                     }
                 }
             }

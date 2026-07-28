@@ -31,7 +31,7 @@ import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.StickyNoteModel
 import xyz.malefic.kanman.shared.util.isOverdue
-import xyz.malefic.kanman.shared.util.toPrettyDate
+import xyz.malefic.kanman.shared.util.toPrettyDateTime
 
 @Composable
 fun TaskSummaryItem(
@@ -82,7 +82,7 @@ fun TaskSummaryItem(
             due?.let {
                 Column(horizontalAlignment = Alignment.End) {
                     P(Modifier.fontSize(12.px).color(if (it.isOverdue()) Color.error else Color.onSurfaceVariant).toAttrs()) {
-                        Text("Due: ${it.toPrettyDate()}")
+                        Text("Due: ${it.toPrettyDateTime()}")
                     }
                 }
             }
