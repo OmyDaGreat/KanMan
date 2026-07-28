@@ -75,7 +75,7 @@ fun Login(ctx: PageContext) =
 
         LaunchedEffect(AuthSession.accessToken) {
             if (AuthSession.accessToken != null) {
-                ctx.router.navigateTo("/")
+                ctx.router.navigateTo(ctx.route.params["redirect"] ?: "/")
             }
         }
 
