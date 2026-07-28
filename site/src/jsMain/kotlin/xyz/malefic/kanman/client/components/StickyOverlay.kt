@@ -17,6 +17,7 @@ import com.varabyte.kobweb.compose.ui.modifiers.border
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
 import com.varabyte.kobweb.compose.ui.modifiers.color
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
+import com.varabyte.kobweb.compose.ui.modifiers.gap
 import com.varabyte.kobweb.compose.ui.modifiers.height
 import com.varabyte.kobweb.compose.ui.modifiers.margin
 import com.varabyte.kobweb.compose.ui.modifiers.padding
@@ -25,10 +26,12 @@ import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.silk.components.forms.Button
 import com.varabyte.kobweb.silk.components.forms.TextInput
 import com.varabyte.kobweb.silk.components.overlay.Overlay
+import org.jetbrains.compose.web.attributes.InputType
 import org.jetbrains.compose.web.attributes.placeholder
 import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.H2
+import org.jetbrains.compose.web.dom.Input
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
 import org.jetbrains.compose.web.dom.TextArea
@@ -36,6 +39,8 @@ import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.AssignedUserModel
 import xyz.malefic.kanman.shared.data.model.StickyNoteModel
 import xyz.malefic.kanman.shared.data.model.UserSummaryModel
+import xyz.malefic.kanman.shared.util.toInstant
+import xyz.malefic.kanman.shared.util.toPrettyDate
 
 @Composable
 fun StickyOverlay(
@@ -93,19 +98,56 @@ fun StickyOverlay(
                 )
             }
 
-            UserAvatarRow(
-                Modifier.fillMaxWidth(),
-                Arrangement.Start,
-                assignedUsers =
-                    assignedUsers.mapNotNull { assigned ->
-                        members.find { it.id == assigned.userId }
+            Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.px)) {
+                UserAvatarRow(
+                    Modifier.fillMaxWidth(),
+                    Arrangement.Start,
+                    assignedUsers =
+                        assignedUsers.mapNotNull { assigned ->
+                            members.find { it.id == assigned.userId }
+                        },
+                    dueDates = assignedUsers.associate { it.userId to it.due },
+                    canEdit = true,
+                    onAddClick = { showUserPopup = true },
+                    onUserClick = { userId ->
+                        assignedUsers.removeAll { it.userId == userId }
                     },
-                canEdit = true,
-                onAddClick = { showUserPopup = true },
-                onUserClick = { userId ->
-                    assignedUsers.removeAll { it.userId == userId }
-                },
-            )
+                )
+
+                if (assignedUsers.isNotEmpty()) {
+                    Column(Modifier.fillMaxWidth().gap(8.px)) {
+                        P(Modifier.padding(0.px).toAttrs()) { Text("Deadlines") }
+                        assignedUsers.forEach { assigned ->
+                            val user = members.find { it.id == assigned.userId } ?: return@forEach
+                            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                                Text(user.username)
+                                Input(
+                                    type = InputType.Date,
+                                    attrs =
+                                        Modifier
+                                            .padding(4.px)
+                                            .borderRadius(4.px)
+                                            .border(1.px, LineStyle.Solid, Color.outlineVariant)
+                                            .backgroundColor(Colors.Transparent)
+                                            .color(Color.onSurface)
+                                            .toAttrs {
+                                                value(assigned.due?.toPrettyDate() ?: "")
+                                                onInput { event ->
+                                                    val index = assignedUsers.indexOf(assigned)
+                                                    if (index != -1) {
+                                                        assignedUsers[index] =
+                                                            assigned.copy(
+                                                                due = event.value.takeIf { it.isNotBlank() }?.toInstant(),
+                                                            )
+                                                    }
+                                                }
+                                            },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             Row(Modifier.fillMaxWidth(), Arrangement.End, Alignment.CenterVertically) {
                 Button(

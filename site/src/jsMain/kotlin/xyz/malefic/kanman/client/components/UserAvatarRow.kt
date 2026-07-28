@@ -31,7 +31,9 @@ import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.px
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.UserSummaryModel
+import xyz.malefic.kanman.shared.util.toPrettyDate
 import xyz.malefic.kutint.Kutint
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @Composable
@@ -40,6 +42,7 @@ fun UserAvatarRow(
     horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(8.px),
     color: Kutint<*> = Color.primary,
     assignedUsers: List<UserSummaryModel>,
+    dueDates: Map<Uuid, Instant?> = emptyMap(),
     canEdit: Boolean = false,
     onAddClick: () -> Unit = {},
     onUserClick: (Uuid) -> Unit = {},
@@ -66,7 +69,10 @@ fun UserAvatarRow(
                         },
                 )
             }
-            Tooltip(ElementTarget.PreviousSibling, user.username)
+            Tooltip(
+                ElementTarget.PreviousSibling,
+                user.username + (dueDates[user.id]?.let { " - Due: ${it.toPrettyDate()}" } ?: ""),
+            )
         }
         if (canEdit) {
             Button(

@@ -29,6 +29,7 @@ import com.varabyte.kobweb.compose.ui.modifiers.color
 import com.varabyte.kobweb.compose.ui.modifiers.draggable
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
+import com.varabyte.kobweb.compose.ui.modifiers.fontSize
 import com.varabyte.kobweb.compose.ui.modifiers.margin
 import com.varabyte.kobweb.compose.ui.modifiers.onDragStart
 import com.varabyte.kobweb.compose.ui.modifiers.overflowWrap
@@ -50,6 +51,8 @@ import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.StickyNoteModel
 import xyz.malefic.kanman.shared.data.model.UserSummaryModel
+import xyz.malefic.kanman.shared.util.isOverdue
+import xyz.malefic.kanman.shared.util.toPrettyDate
 import xyz.malefic.kutint.Kutint
 import kotlin.uuid.Uuid
 
@@ -69,6 +72,8 @@ fun StickyNote(
         stickyNote.assignedUsers.mapNotNull { assigned ->
             members.find { it.id == assigned.userId }
         }
+    val dueDates = stickyNote.assignedUsers.associate { it.userId to it.due }
+    val earliestDue = stickyNote.assignedUsers.mapNotNull { it.due }.minOrNull()
     val foldSize = 10.percent
 
     var modifier =
@@ -129,6 +134,18 @@ fun StickyNote(
                 ) {
                     Text(stickyNote.content)
                 }
+                earliestDue?.let { due ->
+                    P(
+                        Modifier
+                            .fillMaxWidth()
+                            .color(if (due.isOverdue()) Color.error else Color.onTertiary)
+                            .fontSize(12.px)
+                            .margin(top = 8.px)
+                            .toAttrs(),
+                    ) {
+                        Text("Due: ${due.toPrettyDate()}")
+                    }
+                }
             }
 
             if (canEdit) {
@@ -140,6 +157,7 @@ fun StickyNote(
                     UserAvatarRow(
                         color = Color.onTertiary,
                         assignedUsers = assignedUsers,
+                        dueDates = dueDates,
                         canEdit = canEdit,
                         onAddClick = { showAssignPopup = true },
                         onUserClick = { onUnassignUser(it) },
@@ -161,7 +179,11 @@ fun StickyNote(
                 Row(
                     Modifier.align(Alignment.BottomEnd).backgroundColor(Colors.Transparent).padding(0.px),
                 ) {
-                    UserAvatarRow(color = Color.onTertiary, assignedUsers = assignedUsers)
+                    UserAvatarRow(
+                        color = Color.onTertiary,
+                        assignedUsers = assignedUsers,
+                        dueDates = dueDates,
+                    )
                 }
             }
         }
