@@ -16,13 +16,11 @@ import com.varabyte.kobweb.compose.css.TextWrap
 import com.varabyte.kobweb.compose.css.WhiteSpace
 import com.varabyte.kobweb.compose.css.functions.linearGradient
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
-import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.foundation.layout.Row
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Colors
-import com.varabyte.kobweb.compose.ui.modifiers.aspectRatio
 import com.varabyte.kobweb.compose.ui.modifiers.background
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.color
@@ -31,6 +29,7 @@ import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
 import com.varabyte.kobweb.compose.ui.modifiers.fontSize
 import com.varabyte.kobweb.compose.ui.modifiers.margin
+import com.varabyte.kobweb.compose.ui.modifiers.minHeight
 import com.varabyte.kobweb.compose.ui.modifiers.onDragStart
 import com.varabyte.kobweb.compose.ui.modifiers.overflowWrap
 import com.varabyte.kobweb.compose.ui.modifiers.padding
@@ -45,6 +44,7 @@ import org.jetbrains.compose.web.css.deg
 import org.jetbrains.compose.web.css.div
 import org.jetbrains.compose.web.css.percent
 import org.jetbrains.compose.web.css.px
+import org.jetbrains.compose.web.css.vw
 import org.jetbrains.compose.web.dom.H3
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
@@ -74,12 +74,12 @@ fun StickyNote(
         }
     val dueDates = stickyNote.assignedUsers.associate { it.userId to it.due }
     val earliestDue = stickyNote.assignedUsers.mapNotNull { it.due }.minOrNull()
-    val foldSize = 10.percent
+    val foldSize = 24.px
 
     var modifier =
         Modifier
             .fillMaxWidth()
-            .aspectRatio(1)
+            .minHeight(20.vw)
             .background(
                 Background.of(
                     BackgroundImage.of(
@@ -112,7 +112,7 @@ fun StickyNote(
     }
 
     Surface(modifier.padding(18.px).margin(topBottom = 12.px)) {
-        Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize(), Arrangement.SpaceBetween) {
             Column(Modifier.fillMaxWidth()) {
                 H3(
                     Modifier
@@ -148,12 +148,12 @@ fun StickyNote(
                 }
             }
 
-            if (canEdit) {
-                Row(
-                    Modifier.align(Alignment.BottomEnd).backgroundColor(Colors.Transparent).padding(0.px),
-                    Arrangement.spacedBy(8.px),
-                    Alignment.CenterVertically,
-                ) {
+            Row(
+                Modifier.fillMaxWidth().backgroundColor(Colors.Transparent).padding(0.px),
+                Arrangement.End,
+                Alignment.CenterVertically,
+            ) {
+                if (canEdit) {
                     UserAvatarRow(
                         color = Color.onTertiary,
                         assignedUsers = assignedUsers,
@@ -174,11 +174,7 @@ fun StickyNote(
                     ) {
                         MsDelete(Modifier.color(Color.onTertiary))
                     }
-                }
-            } else {
-                Row(
-                    Modifier.align(Alignment.BottomEnd).backgroundColor(Colors.Transparent).padding(0.px),
-                ) {
+                } else {
                     UserAvatarRow(
                         color = Color.onTertiary,
                         assignedUsers = assignedUsers,
