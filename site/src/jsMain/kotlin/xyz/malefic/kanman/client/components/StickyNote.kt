@@ -1,6 +1,10 @@
 package xyz.malefic.kanman.client.components
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.varabyte.kobweb.compose.css.Background
 import com.varabyte.kobweb.compose.css.BackgroundImage
 import com.varabyte.kobweb.compose.css.BackgroundPosition
@@ -45,16 +49,26 @@ import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.StickyNoteModel
+import xyz.malefic.kanman.shared.data.model.UserSummaryModel
 import xyz.malefic.kutint.Kutint
+import kotlin.uuid.Uuid
 
 @Composable
 fun StickyNote(
     color: Kutint<*>,
     stickyNote: StickyNoteModel,
+    members: List<UserSummaryModel>,
     canEdit: Boolean = false,
     onEdit: () -> Unit = {},
     onDelete: () -> Unit = {},
+    onAssignUser: (Uuid) -> Unit = {},
+    onUnassignUser: (Uuid) -> Unit = {},
 ) {
+    var showAssignPopup by remember { mutableStateOf(false) }
+    val assignedUsers =
+        stickyNote.assignedUsers.mapNotNull { assigned ->
+            members.find { it.id == assigned.userId }
+        }
     val foldSize = 10.percent
 
     var modifier =
@@ -123,6 +137,13 @@ fun StickyNote(
                     Arrangement.spacedBy(8.px),
                     Alignment.CenterVertically,
                 ) {
+                    UserAvatarRow(
+                        color = Color.onTertiary,
+                        assignedUsers = assignedUsers,
+                        canEdit = canEdit,
+                        onAddClick = { showAssignPopup = true },
+                        onUserClick = { onUnassignUser(it) },
+                    )
                     Button(
                         { onEdit() },
                         Modifier.backgroundColor(Colors.Transparent).padding(0.px),
@@ -136,7 +157,22 @@ fun StickyNote(
                         MsDelete(Modifier.color(Color.onTertiary))
                     }
                 }
+            } else {
+                Row(
+                    Modifier.align(Alignment.BottomEnd).backgroundColor(Colors.Transparent).padding(0.px),
+                ) {
+                    UserAvatarRow(color = Color.onTertiary, assignedUsers = assignedUsers)
+                }
             }
         }
+    }
+
+    if (showAssignPopup) {
+        BoardMemberSearchOverlay(
+            members = members,
+            alreadyAssigned = stickyNote.assignedUsers.map { it.userId },
+            onClose = { showAssignPopup = false },
+            onSubmit = { onAssignUser(it) },
+        )
     }
 }

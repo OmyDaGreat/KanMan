@@ -72,6 +72,8 @@ fun Board(ctx: PageContext) {
                                 board = event.board
                             }
 
+                            // TODO: Use arrow optics instead of copy
+
                             is StickyMoved -> {
                                 board =
                                     board?.let { b ->
@@ -105,19 +107,50 @@ fun Board(ctx: PageContext) {
                             }
 
                             is WsEvent.AssignedUser -> {
-                                TODO()
+                                board =
+                                    board?.let { b ->
+                                        b.copy(
+                                            stickies =
+                                                b.stickies.map { s ->
+                                                    if (s.id == event.stickyId) {
+                                                        s.copy(
+                                                            assignedUsers =
+                                                                s.assignedUsers.filter { it.userId != event.target.id } +
+                                                                    xyz.malefic.kanman.shared.data.model.AssignedUserModel(
+                                                                        event.target.id,
+                                                                        event.due,
+                                                                    ),
+                                                        )
+                                                    } else {
+                                                        s
+                                                    }
+                                                },
+                                        )
+                                    }
                             }
 
                             is WsEvent.UnassignedUser -> {
-                                TODO()
+                                board =
+                                    board?.let { b ->
+                                        b.copy(
+                                            stickies =
+                                                b.stickies.map { s ->
+                                                    if (s.id == event.stickyId) {
+                                                        s.copy(assignedUsers = s.assignedUsers.filter { it.userId != event.target.id })
+                                                    } else {
+                                                        s
+                                                    }
+                                                },
+                                        )
+                                    }
                             }
 
                             is WsEvent.UserJoin -> {
-                                TODO()
+                                // No-op
                             }
 
                             is WsEvent.UserLeave -> {
-                                TODO()
+                                // No-op
                             }
                         }
                     },
@@ -129,6 +162,7 @@ fun Board(ctx: PageContext) {
     }
 
     val currentBoard = board ?: return Spinner()
+    val members = currentBoard.memberships.map { it.user }
 
     Column(Modifier.fillMaxSize()) {
         Request(request = { getUser() }) { user ->
@@ -164,6 +198,7 @@ fun Board(ctx: PageContext) {
                         KanColumn(
                             col,
                             currentBoard.stickies.filter { it.column == col },
+                            members,
                             canEdit,
                             onAddSticky = { addingToColumn = col },
                             onEditSticky = { editingSticky = it },
@@ -173,6 +208,12 @@ fun Board(ctx: PageContext) {
                             onDeleteSticky = { stickyId ->
                                 websocket?.send(WsAction.StickyDelete(stickyId))
                             },
+                            onAssignUser = { stickyId, userId ->
+                                websocket?.send(WsAction.AssignUser(stickyId, userId))
+                            },
+                            onUnassignUser = { stickyId, userId ->
+                                websocket?.send(WsAction.UnassignUser(stickyId, userId))
+                            },
                         )
                     }
                 }
@@ -180,6 +221,7 @@ fun Board(ctx: PageContext) {
 
             addingToColumn?.let { col ->
                 StickyOverlay(
+                    members = members,
                     onClose = { addingToColumn = null },
                     onConfirm = { title, content, users ->
                         websocket?.send(WsAction.StickyCreate(title, content, col, users))
@@ -190,6 +232,7 @@ fun Board(ctx: PageContext) {
             editingSticky?.let { sticky ->
                 StickyOverlay(
                     sticky = sticky,
+                    members = members,
                     onClose = { editingSticky = null },
                     onConfirm = { title, content, users ->
                         websocket?.send(WsAction.StickyUpdate(sticky.id, title, content, users))

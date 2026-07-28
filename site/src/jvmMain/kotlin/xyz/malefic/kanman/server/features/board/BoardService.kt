@@ -180,7 +180,8 @@ fun UserResponseModel.getHistory(
 }
 
 context(_: Raise<Issue>)
-infix fun UserResponseModel.getUsers(id: Uuid) = data { getAccessibleBoard(id, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
+infix fun UserResponseModel.getUsers(boardId: Uuid) =
+    data { getAccessibleBoard(boardId, VIEW_BOARD).memberships.map { it.user.toSummaryModel() } }
 
 infix fun UserResponseModel.kick(targetId: Uuid) = KickBuilder(this, targetId)
 

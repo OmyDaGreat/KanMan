@@ -27,6 +27,7 @@ import org.jetbrains.compose.web.dom.H2
 import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.StickyNoteModel
+import xyz.malefic.kanman.shared.data.model.UserSummaryModel
 import kotlin.uuid.Uuid
 import xyz.malefic.kanman.shared.data.model.Column as BoardColumn
 
@@ -34,11 +35,14 @@ import xyz.malefic.kanman.shared.data.model.Column as BoardColumn
 fun KanColumn(
     column: BoardColumn,
     stickies: List<StickyNoteModel>,
+    members: List<UserSummaryModel>,
     canEdit: Boolean = false,
     onAddSticky: () -> Unit = {},
     onEditSticky: (StickyNoteModel) -> Unit = {},
     onMoveSticky: (Uuid) -> Unit = {},
     onDeleteSticky: (Uuid) -> Unit = {},
+    onAssignUser: (Uuid, Uuid) -> Unit = { _, _ -> },
+    onUnassignUser: (Uuid, Uuid) -> Unit = { _, _ -> },
 ) = Column(
     Modifier
         .fillMaxHeight()
@@ -81,9 +85,12 @@ fun KanColumn(
         StickyNote(
             stickyColors.random(),
             stickyNote,
+            members,
             canEdit,
             onEdit = { onEditSticky(stickyNote) },
             onDelete = { onDeleteSticky(stickyNote.id) },
+            onAssignUser = { onAssignUser(stickyNote.id, it) },
+            onUnassignUser = { onUnassignUser(stickyNote.id, it) },
         )
     }
 }

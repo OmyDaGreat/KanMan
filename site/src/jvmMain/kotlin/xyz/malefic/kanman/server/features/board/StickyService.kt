@@ -20,13 +20,23 @@ fun UserResponseModel.createSticky(
 ) = data {
     val board = getAccessibleBoard(boardId, EDIT_STICKY)
 
-    StickyNoteEntity
-        .new {
-            title = event.title
-            content = event.content ?: ""
-            column = event.column
-            this.board = board
-        }.toModel()
+    val sticky =
+        StickyNoteEntity
+            .new {
+                title = event.title
+                content = event.content ?: ""
+                column = event.column
+                this.board = board
+            }
+
+    event.assignedUsers.forEach { assignedUserModel ->
+        val user = UserEntity.findById(assignedUserModel.userId) ?: return@forEach
+        if (board.memberships.any { it.user == user }) {
+            AssignedUserEntity.new(sticky, user, assignedUserModel.due)
+        }
+    }
+
+    sticky.toModel()
 }
 
 context(_: Raise<Issue>)
@@ -52,12 +62,37 @@ fun UserResponseModel.updateSticky(
     event: WsAction.StickyUpdate,
     boardId: Uuid,
 ) = data {
-    ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == getAccessibleBoard(boardId, EDIT_STICKY) }) {
-        Issue.Board.NotFound()
-    }.apply {
-        title = event.title
-        content = event.content ?: ""
-    }.toModel()
+    val board = getAccessibleBoard(boardId, EDIT_STICKY)
+    val sticky =
+        ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) {
+            Issue.Board.NotFound()
+        }.apply {
+            title = event.title
+            content = event.content ?: ""
+        }
+
+    val currentAssignments = sticky.assignedUsers.toList()
+    val newAssignments = event.assignedUsers
+
+    currentAssignments.forEach { old ->
+        if (newAssignments.none { it.userId == old.user.id.value }) {
+            old.delete()
+        }
+    }
+
+    newAssignments.forEach { new ->
+        val user = UserEntity.findById(new.userId) ?: return@forEach
+        if (board.memberships.any { it.user == user }) {
+            val existing = AssignedUserEntity.findById(sticky.id.value, user.id.value)
+            if (existing != null) {
+                existing.due = new.due
+            } else {
+                AssignedUserEntity.new(sticky, user, new.due)
+            }
+        }
+    }
+
+    sticky.toModel()
 }
 
 context(_: Raise<Issue>)
@@ -81,5 +116,5 @@ fun UserResponseModel.unassignUser(
     val board = getAccessibleBoard(boardId, EDIT_STICKY)
     val sticky = ensureNotNull(StickyNoteEntity.findById(event.stickyId)?.takeIf { it.board == board }) { Issue.Board.NotFound() }
     val user = ensureNotNull(UserEntity.findById(event.userId)) { Issue.User.NotFound() }
-    AssignedUserEntity.findById(sticky.id.value, user.id.value)?.delete() ?: raise(Issue.Board.NotFound())
+    AssignedUserEntity.findById(sticky.id.value, user.id.value)?.delete() ?: raise(Issue.User.NotFound())
 }
