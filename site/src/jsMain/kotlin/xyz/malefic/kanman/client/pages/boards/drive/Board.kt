@@ -187,7 +187,7 @@ fun Board(ctx: PageContext) {
             }
 
             if (isSettingsView) {
-                BoardSettings(currentBoard) { isSettingsView = false }
+                BoardSettings(currentBoard, role ?: Role.GUEST) { isSettingsView = false }
             } else {
                 Row(
                     Modifier.fillMaxSize().padding(12.px).gap(12.px),

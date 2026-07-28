@@ -29,7 +29,7 @@ fun UserResponseModel.createSticky(
                 this.board = board
             }
 
-    event.assignedUsers.forEach { assignedUserModel ->
+    event.assignedUsers.distinctBy { it.userId }.forEach { assignedUserModel ->
         val user = UserEntity.findById(assignedUserModel.userId) ?: return@forEach
         if (board.memberships.any { it.user == user }) {
             AssignedUserEntity.new(sticky, user, assignedUserModel.due)
@@ -72,7 +72,7 @@ fun UserResponseModel.updateSticky(
         }
 
     val currentAssignments = sticky.assignedUsers.toList()
-    val newAssignments = event.assignedUsers
+    val newAssignments = event.assignedUsers.distinctBy { it.userId }
 
     currentAssignments.forEach { old ->
         if (newAssignments.none { it.userId == old.user.id.value }) {

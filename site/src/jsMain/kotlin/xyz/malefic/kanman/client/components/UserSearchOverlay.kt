@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import arrow.core.Either
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.foundation.layout.Row
@@ -32,15 +33,19 @@ import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.api.getUser
 import xyz.malefic.kanman.client.api.util.ApiState
 import xyz.malefic.kanman.client.styles.Color
+import xyz.malefic.kanman.shared.data.model.Issue
+import xyz.malefic.kanman.shared.data.model.Role
 import kotlin.uuid.Uuid
 
 @Composable
 fun UserSearchOverlay(
     onClose: () -> Unit,
-    onSubmit: (Uuid) -> Unit,
+    onSubmit: suspend (Uuid, Role) -> Either<Issue, Unit>,
 ) {
     var username by remember { mutableStateOf("") }
+    var role by remember { mutableStateOf(Role.MEMBER) }
     var state by remember { mutableStateOf<ApiState<Unit>?>(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     Overlay(
@@ -56,7 +61,7 @@ fun UserSearchOverlay(
                 .width(400.px),
             Arrangement.spacedBy(24.px),
         ) {
-            H2 { Text("Find User") }
+            H2 { Text("Invite User") }
 
             Column(Modifier.fillMaxWidth().padding(bottom = 8.px), Arrangement.spacedBy(8.px)) {
                 P(Modifier.padding(0.px).toAttrs()) { Text("Username") }
@@ -66,6 +71,20 @@ fun UserSearchOverlay(
                     Modifier.fillMaxWidth(),
                     placeholder = "Username",
                 )
+            }
+
+            Column(Modifier.fillMaxWidth().padding(bottom = 8.px), Arrangement.spacedBy(8.px)) {
+                P(Modifier.padding(0.px).toAttrs()) { Text("Role") }
+                Dropdown(
+                    selected = role.name,
+                    options = Role.entries.filter { it != Role.OWNER }.map { it.name },
+                    modifier = Modifier.fillMaxWidth(),
+                    onOptionSelected = { role = Role.valueOf(it) },
+                )
+            }
+
+            errorMessage?.let {
+                P(Modifier.color(Color.error).toAttrs()) { Text(it) }
             }
 
             if (state is ApiState.Error) {
@@ -83,19 +102,30 @@ fun UserSearchOverlay(
                     {
                         scope.launch {
                             state = ApiState.Loading
+                            errorMessage = null
 
-                            handle(getUser(username)) {
-                                state = ApiState.Success(Unit)
-                                onSubmit(it.id)
-                            }
-                            onClose()
-
-                            if (state is ApiState.Loading) state = null
+                            getUser(username).fold(
+                                {
+                                    state = ApiState.Error(it)
+                                },
+                                { user ->
+                                    onSubmit(user.id, role).fold(
+                                        { issue ->
+                                            errorMessage = issue.message
+                                            state = null
+                                        },
+                                        {
+                                            state = ApiState.Success(Unit)
+                                            onClose()
+                                        },
+                                    )
+                                },
+                            )
                         }
                     },
                     enabled = username.isNotBlank() && state !is ApiState.Loading,
                 ) {
-                    Text(if (state is ApiState.Loading) "Searching..." else "Search")
+                    Text(if (state is ApiState.Loading) "Inviting..." else "Invite")
                 }
             }
         }

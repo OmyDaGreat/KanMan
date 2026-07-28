@@ -12,7 +12,7 @@ sealed class Issue : Error() {
     sealed class Auth : Issue() {
         @Serializable
         data class InvalidCredentials(
-            override val message: String = "Invalid username or password",
+            override val message: String = "Invalid credentials",
         ) : Auth()
 
         @Serializable

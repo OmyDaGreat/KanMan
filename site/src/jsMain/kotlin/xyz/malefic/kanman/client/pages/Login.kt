@@ -192,7 +192,7 @@ fun Login(ctx: PageContext) =
                 val issue = (loginStatus as ApiState.Error).issue
                 if (issue is Issue.User.InvalidUser) {
                     P(Modifier.color(Color.error).toAttrs()) {
-                        Text("Invalid username or password")
+                        Text("Invalid credentials")
                     }
                     issue.usernameIssues.plus(issue.passwordIssues).forEach {
                         P(Modifier.color(Color.error).toAttrs()) {

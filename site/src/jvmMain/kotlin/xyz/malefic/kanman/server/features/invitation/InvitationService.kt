@@ -3,6 +3,7 @@ package xyz.malefic.kanman.server.features.invitation
 import arrow.core.raise.Raise
 import arrow.core.raise.context.ensure
 import arrow.core.raise.context.ensureNotNull
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import xyz.malefic.kanman.server.data.BoardUserEntity
 import xyz.malefic.kanman.server.data.InvitationEntity
@@ -15,6 +16,7 @@ import xyz.malefic.kanman.shared.data.model.BoardAction.INVITE_USER
 import xyz.malefic.kanman.shared.data.model.InviteRequest
 import xyz.malefic.kanman.shared.data.model.Issue
 import xyz.malefic.kanman.shared.data.model.Issue.Board.AccessDenied
+import xyz.malefic.kanman.shared.data.model.Issue.Server.Conflict
 import xyz.malefic.kanman.shared.data.model.Role
 import xyz.malefic.kanman.shared.data.model.UserResponseModel
 import kotlin.uuid.Uuid
@@ -28,15 +30,33 @@ infix fun UserResponseModel.invite(inviteRequest: InviteRequest) =
         ensure(inviteRequest.role != Role.OWNER) { AccessDenied("A board owner cannot be invited") }
 
         val board = getAccessibleBoard(inviteRequest.boardId, INVITE_USER)
+        ensure(board.memberships.none { it.user.id.value == inviteRequest.userId }) {
+            Conflict("User is already a member of this board")
+        }
+
         val addUser = ensureNotNull(UserEntity.findById(inviteRequest.userId)) { Issue.User.NotFound() }
 
-        InvitationEntity.new {
-            this.board = board
-            sender = entity
-            receiver = addUser
-            role = inviteRequest.role
+        val existing =
+            InvitationEntity
+                .find {
+                    (Invitations.board eq inviteRequest.boardId) and
+                        (Invitations.sender eq id) and
+                        (Invitations.receiver eq inviteRequest.userId)
+                }.firstOrNull()
+
+        if (existing != null) {
+            existing.role = inviteRequest.role
+            existing.toModel()
+        } else {
+            InvitationEntity
+                .new {
+                    this.board = board
+                    sender = entity
+                    receiver = addUser
+                    role = inviteRequest.role
+                }.toModel()
         }
-    }.toModel()
+    }
 
 context(_: Raise<Issue>)
 infix fun UserResponseModel.accept(inviteId: Uuid) =
@@ -45,7 +65,10 @@ infix fun UserResponseModel.accept(inviteId: Uuid) =
 
         ensure(invite.receiver.id.value == id) { AccessDenied("You are not invited to this board") }
 
-        BoardUserEntity.new(invite)
+        if (BoardUserEntity.findById(invite.board.id.value, id) == null) {
+            BoardUserEntity.new(invite)
+        }
+
         val result = (invite.board.memberships.map { it.user } + invite.receiver).map { it.toSummaryModel() }.distinct()
         invite.delete()
         result
