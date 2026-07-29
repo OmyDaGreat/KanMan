@@ -1,0 +1,35 @@
+= KanMan
+
+image::images/home-screenshot.png[Dashboard Screenshot]
+
+image::images/board-screenshot.png[Board Screenshot]
+
+An open-source collaborative kanban task management tool with a clean layout.
+
+image:https://img.shields.io/github/license/OmyDaGreat/KanMan?style=for-the-badge&logo=kotlin&logoColor=white["License", link=LICENSE]
+image:https://img.shields.io/badge/kotlin-%237F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white[Kotlin]
+image:https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white[Docker]
+
+== Features
+* Fully built user authentication system
+* Personal dashboard with inbox, board activity, and upcoming tasks
+* Websocket-based real-time board collaboration
+* Board invitation and role management system
+* Public and private board support
+
+== Access
+
+=== Development Site
+* Owned by https://github.com/OmyDaGreat/[OmyDaGreat] and completely usable, though a development instance and thus subject to changes and data deletion
+** Recommended only to try out the tool
+* https://kanman.malefic.xyz
+
+=== Host Your Own
+==== Docker
+* Use the provided `docker-compose.yml` as a base through GitHub and/or use
+the https://hub.docker.com/repository/docker/maleficmarauder/guptarealty[maleficmarauder/kanman] image from Docker Hub
+* Much simpler setup, though with a lot less options for configuration
+
+==== Git
+* Clone the repo and open in IntelliJ IDEA or Android Studio
+* Provides more control than the Docker setup, such as the ability to edit Kobweb site settings
