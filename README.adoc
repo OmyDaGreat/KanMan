@@ -33,3 +33,7 @@ the https://hub.docker.com/repository/docker/maleficmarauder/guptarealty[malefic
 ==== Git
 * Clone the repo and open in IntelliJ IDEA or Android Studio
 * Provides more control than the Docker setup, such as the ability to edit Kobweb site settings
+
+== Declarations
+
+* This project has minimal AI usage, though mostly just for tedious tasks and refactoring. All AI-generated code is reviewed and edited by me, so it should be up to reasonable standards.
