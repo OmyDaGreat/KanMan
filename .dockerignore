@@ -13,6 +13,4 @@ README.md
 README.adoc
 Dockerfile
 docker-compose.yml
-gradlew
 gradlew.bat
-gradle/
