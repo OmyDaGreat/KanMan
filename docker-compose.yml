@@ -5,7 +5,7 @@ services:
       - "6320:6320"
     environment:
       - JAVA_OPTS=-Xmx512m
-      - PORT=8080
+      - PORT=6320
       - SECRET=${SECRET:-} # Use "openssl rand -hex 32" to generate a random secret key
       - DB_PATH=/data/kanban.db
     volumes:

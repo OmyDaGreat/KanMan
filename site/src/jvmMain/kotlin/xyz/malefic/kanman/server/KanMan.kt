@@ -43,7 +43,8 @@ fun main() {
             ),
         )
 
-    val server = poly(http, boardWs).debug().asServer(Undertow(6320)).start()
+    val port = System.getenv("PORT")?.toIntOrNull() ?: 6320
+    val server = poly(http, boardWs).debug().asServer(Undertow(port)).start()
     Logger.d("Server started on port ${server.port()}!")
 
     @OptIn(DelicateCoroutinesApi::class)
