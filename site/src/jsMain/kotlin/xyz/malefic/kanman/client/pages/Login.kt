@@ -8,12 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.varabyte.kobweb.compose.css.Cursor
 import com.varabyte.kobweb.compose.css.TextWrap
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
 import com.varabyte.kobweb.compose.foundation.layout.Column
-import com.varabyte.kobweb.compose.foundation.layout.Row
 import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Colors
@@ -21,11 +19,9 @@ import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.border
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
 import com.varabyte.kobweb.compose.ui.modifiers.color
-import com.varabyte.kobweb.compose.ui.modifiers.cursor
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxSize
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
 import com.varabyte.kobweb.compose.ui.modifiers.height
-import com.varabyte.kobweb.compose.ui.modifiers.onClick
 import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.modifiers.textWrap
 import com.varabyte.kobweb.compose.ui.modifiers.width
@@ -33,7 +29,6 @@ import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.Page
 import com.varabyte.kobweb.core.PageContext
 import com.varabyte.kobweb.silk.components.forms.Button
-import com.varabyte.kobweb.silk.components.forms.Switch
 import com.varabyte.kobweb.silk.components.forms.TextInput
 import com.varabyte.kobweb.silk.components.layout.SimpleGrid
 import com.varabyte.kobweb.silk.components.layout.numColumns
@@ -53,6 +48,7 @@ import xyz.malefic.kanman.client.api.util.ApiState
 import xyz.malefic.kanman.client.api.util.AuthSession
 import xyz.malefic.kanman.client.api.util.GlobalErrorState
 import xyz.malefic.kanman.client.api.util.Request
+import xyz.malefic.kanman.client.components.Switch
 import xyz.malefic.kanman.client.styles.Color
 import xyz.malefic.kanman.shared.data.model.Issue
 import kotlin.time.Duration.Companion.milliseconds
@@ -223,22 +219,12 @@ fun Login(ctx: PageContext) =
                 Text(if (loginStatus is ApiState.Loading) "Loading..." else "Submit")
             }
 
-            Row(
-                Modifier
-                    .cursor(Cursor.Pointer)
-                    .onClick {
-                        loginMode = if (loginMode == Login.LOGIN) Login.SIGNUP else Login.LOGIN
-                    }.padding(leftRight = 8.px),
-                Arrangement.spacedBy(8.px),
-                Alignment.CenterVertically,
+            Switch(
+                loginMode == Login.LOGIN,
+                { loginMode = if (it) Login.SIGNUP else Login.LOGIN },
+                Modifier.padding(right = 8.px),
             ) {
-                Switch(
-                    loginMode == Login.SIGNUP,
-                    { loginMode = if (it) Login.SIGNUP else Login.LOGIN },
-                )
-                P(Modifier.padding(0.px).toAttrs()) {
-                    Text("Switch to ${if (loginMode == Login.LOGIN) "Sign Up" else "Login"}")
-                }
+                Text("Switch to ${if (loginMode == Login.LOGIN) "Sign Up" else "Login"}")
             }
         }
     }

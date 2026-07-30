@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.varabyte.kobweb.compose.css.Cursor
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Column
 import com.varabyte.kobweb.compose.foundation.layout.Row
@@ -15,16 +14,13 @@ import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
 import com.varabyte.kobweb.compose.ui.modifiers.border
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
-import com.varabyte.kobweb.compose.ui.modifiers.cursor
 import com.varabyte.kobweb.compose.ui.modifiers.fillMaxWidth
 import com.varabyte.kobweb.compose.ui.modifiers.margin
-import com.varabyte.kobweb.compose.ui.modifiers.onClick
 import com.varabyte.kobweb.compose.ui.modifiers.padding
 import com.varabyte.kobweb.compose.ui.modifiers.width
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.rememberPageContext
 import com.varabyte.kobweb.silk.components.forms.Button
-import com.varabyte.kobweb.silk.components.forms.Switch
 import com.varabyte.kobweb.silk.components.forms.TextInput
 import com.varabyte.kobweb.silk.components.overlay.Overlay
 import kotlinx.coroutines.launch
@@ -83,21 +79,12 @@ fun BoardCreationOverlay(onClose: () -> Unit) {
                 )
             }
 
-            Row(
-                Modifier
-                    .cursor(Cursor.Pointer)
-                    .onClick { visibility = if (visibility == Visibility.PUBLIC) Visibility.PRIVATE else Visibility.PUBLIC }
-                    .padding(leftRight = 8.px),
-                Arrangement.spacedBy(12.px),
-                Alignment.CenterVertically,
+            Switch(
+                visibility == Visibility.PUBLIC,
+                { visibility = if (it) Visibility.PUBLIC else Visibility.PRIVATE },
+                Modifier.padding(right = 8.px),
             ) {
-                Switch(
-                    visibility == Visibility.PUBLIC,
-                    { visibility = if (it) Visibility.PUBLIC else Visibility.PRIVATE },
-                )
-                P(Modifier.padding(0.px).toAttrs()) {
-                    Text("Public Visibility")
-                }
+                Text("Public Visibility")
             }
 
             Row(Modifier.fillMaxWidth(), Arrangement.End, Alignment.CenterVertically) {

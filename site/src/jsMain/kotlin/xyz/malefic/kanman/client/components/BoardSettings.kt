@@ -31,7 +31,6 @@ import com.varabyte.kobweb.compose.ui.modifiers.width
 import com.varabyte.kobweb.compose.ui.toAttrs
 import com.varabyte.kobweb.core.rememberPageContext
 import com.varabyte.kobweb.silk.components.forms.Button
-import com.varabyte.kobweb.silk.components.forms.Switch
 import com.varabyte.kobweb.silk.components.forms.TextInput
 import com.varabyte.kobweb.silk.components.graphics.Image
 import com.varabyte.kobweb.silk.components.icons.ms.MsPersonAdd
@@ -115,21 +114,12 @@ fun BoardSettings(
                 )
             }
 
-            Row(
-                Modifier
-                    .cursor(Cursor.Pointer)
-                    .onClick { visibility = if (visibility == Visibility.PUBLIC) Visibility.PRIVATE else Visibility.PUBLIC }
-                    .padding(leftRight = 8.px),
-                Arrangement.spacedBy(12.px),
-                Alignment.CenterVertically,
+            Switch(
+                visibility == Visibility.PUBLIC,
+                { visibility = if (it) Visibility.PUBLIC else Visibility.PRIVATE },
+                Modifier.padding(right = 8.px),
             ) {
-                Switch(
-                    visibility == Visibility.PUBLIC,
-                    { visibility = if (it) Visibility.PUBLIC else Visibility.PRIVATE },
-                )
-                P(Modifier.padding(0.px).toAttrs()) {
-                    Text("Public Visibility")
-                }
+                Text("Public Visibility")
             }
 
             Hr(Modifier.fillMaxWidth().border(1.px, LineStyle.Solid, Color.outlineVariant).toAttrs())
