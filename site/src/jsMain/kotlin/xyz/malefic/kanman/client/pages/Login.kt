@@ -226,12 +226,16 @@ fun Login(ctx: PageContext) =
             Row(
                 Modifier
                     .cursor(Cursor.Pointer)
-                    .onClick { loginMode = if (loginMode == Login.LOGIN) Login.SIGNUP else Login.LOGIN }
-                    .padding(leftRight = 8.px),
-                horizontalArrangement = Arrangement.spacedBy(8.px),
-                verticalAlignment = Alignment.CenterVertically,
+                    .onClick {
+                        loginMode = if (loginMode == Login.LOGIN) Login.SIGNUP else Login.LOGIN
+                    }.padding(leftRight = 8.px),
+                Arrangement.spacedBy(8.px),
+                Alignment.CenterVertically,
             ) {
-                Switch(loginMode == Login.SIGNUP, { /* Handled by Row onClick */ })
+                Switch(
+                    loginMode == Login.SIGNUP,
+                    { loginMode = if (it) Login.SIGNUP else Login.LOGIN },
+                )
                 P(Modifier.padding(0.px).toAttrs()) {
                     Text("Switch to ${if (loginMode == Login.LOGIN) "Sign Up" else "Login"}")
                 }

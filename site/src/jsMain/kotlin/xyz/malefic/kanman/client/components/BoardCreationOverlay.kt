@@ -91,7 +91,10 @@ fun BoardCreationOverlay(onClose: () -> Unit) {
                 Arrangement.spacedBy(12.px),
                 Alignment.CenterVertically,
             ) {
-                Switch(visibility == Visibility.PUBLIC, { /* Handled by Row onClick */ })
+                Switch(
+                    visibility == Visibility.PUBLIC,
+                    { visibility = if (it) Visibility.PUBLIC else Visibility.PRIVATE },
+                )
                 P(Modifier.padding(0.px).toAttrs()) {
                     Text("Public Visibility")
                 }
