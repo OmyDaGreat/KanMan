@@ -14,6 +14,13 @@ RUN chmod +x ./gradlew
 # Copy build configuration for dependency caching
 COPY build.gradle.kts settings.gradle.kts gradle.properties ./
 COPY site/build.gradle.kts ./site/
+COPY site/.kobweb ./site/.kobweb
+
+# Create empty source directories to satisfy Kobweb plugin configuration
+RUN mkdir -p site/src/commonMain/kotlin \
+             site/src/jsMain/kotlin \
+             site/src/jsMain/resources \
+             site/src/jvmMain/kotlin
 
 # Prefetch dependencies
 RUN ./gradlew :site:dependencies --no-daemon || true
@@ -30,6 +37,7 @@ RUN ./gradlew :site:dockerRuntime --no-daemon
 # Runtime Stage
 FROM eclipse-temurin:26-jre
 
+ARG BUILD_SHA
 LABEL org.opencontainers.image.revision=$BUILD_SHA
 
 WORKDIR /app
