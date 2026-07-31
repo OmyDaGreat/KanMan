@@ -32,13 +32,13 @@ import com.varabyte.kobweb.core.layout.Layout
 import com.varabyte.kobweb.silk.components.graphics.Image
 import com.varabyte.kobweb.silk.components.layout.Surface
 import com.varabyte.kobweb.silk.components.navigation.Link
+import com.varabyte.kobweb.silk.components.text.SpanText
 import com.varabyte.kobweb.silk.style.common.DisabledStyle
-import com.varabyte.kobweb.silk.style.toAttrs
+import com.varabyte.kobweb.silk.style.toModifier
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.css.vh
 import org.jetbrains.compose.web.dom.H1
 import org.jetbrains.compose.web.dom.P
-import org.jetbrains.compose.web.dom.Span
 import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.api.getUser
 import xyz.malefic.kanman.client.api.util.AuthSession
@@ -64,7 +64,7 @@ fun NavBarLayout(
                 Column(verticalArrangement = Arrangement.spacedBy(24.px), horizontalAlignment = Alignment.CenterHorizontally) {
                     Pages.entries.forEach { page ->
                         if (page.hasRoute(currentRoute)) {
-                            Span(DisabledStyle.toAttrs()) { Text(page.value) }
+                            SpanText(page.value, DisabledStyle.toModifier())
                         } else {
                             Link(page.route) { Text(page.value) }
                         }
