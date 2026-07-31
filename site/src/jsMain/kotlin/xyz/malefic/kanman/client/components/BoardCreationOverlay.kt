@@ -82,7 +82,6 @@ fun BoardCreationOverlay(onClose: () -> Unit) {
             Switch(
                 visibility == Visibility.PUBLIC,
                 { visibility = if (it) Visibility.PUBLIC else Visibility.PRIVATE },
-                Modifier.padding(right = 8.px),
             ) {
                 Text("Public Visibility")
             }

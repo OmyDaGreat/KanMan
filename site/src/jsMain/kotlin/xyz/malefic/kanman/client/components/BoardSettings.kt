@@ -15,7 +15,6 @@ import com.varabyte.kobweb.compose.ui.Alignment
 import com.varabyte.kobweb.compose.ui.Modifier
 import com.varabyte.kobweb.compose.ui.graphics.Colors
 import com.varabyte.kobweb.compose.ui.modifiers.backgroundColor
-import com.varabyte.kobweb.compose.ui.modifiers.border
 import com.varabyte.kobweb.compose.ui.modifiers.borderRadius
 import com.varabyte.kobweb.compose.ui.modifiers.color
 import com.varabyte.kobweb.compose.ui.modifiers.cursor
@@ -35,15 +34,14 @@ import com.varabyte.kobweb.silk.components.forms.TextInput
 import com.varabyte.kobweb.silk.components.graphics.Image
 import com.varabyte.kobweb.silk.components.icons.ms.MsPersonAdd
 import com.varabyte.kobweb.silk.components.icons.ms.MsPersonRemove
+import com.varabyte.kobweb.silk.components.layout.HorizontalDivider
 import com.varabyte.kobweb.silk.theme.shapes.Circle
 import com.varabyte.kobweb.silk.theme.shapes.clip
 import kotlinx.browser.window
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.web.css.LineStyle
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.dom.H2
 import org.jetbrains.compose.web.dom.H3
-import org.jetbrains.compose.web.dom.Hr
 import org.jetbrains.compose.web.dom.P
 import org.jetbrains.compose.web.dom.Text
 import xyz.malefic.kanman.client.api.declineInvitation
@@ -117,12 +115,11 @@ fun BoardSettings(
             Switch(
                 visibility == Visibility.PUBLIC,
                 { visibility = if (it) Visibility.PUBLIC else Visibility.PRIVATE },
-                Modifier.padding(right = 8.px),
             ) {
                 Text("Public Visibility")
             }
 
-            Hr(Modifier.fillMaxWidth().border(1.px, LineStyle.Solid, Color.outlineVariant).toAttrs())
+            HorizontalDivider(Modifier.fillMaxWidth())
 
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 H3 { Text("Members") }
@@ -199,7 +196,7 @@ fun BoardSettings(
             if (currentRole == Role.OWNER || currentRole == Role.ADMIN) {
                 Request(board.id, request = { getBoardInvitations(board.id) }) { invitations ->
                     if (invitations.isNotEmpty()) {
-                        Hr(Modifier.fillMaxWidth().border(1.px, LineStyle.Solid, Color.outlineVariant).toAttrs())
+                        HorizontalDivider(Modifier.fillMaxWidth())
                         H3 { Text("Pending Invitations") }
                         Column(Modifier.fillMaxWidth().gap(12.px)) {
                             invitations.forEach { invitation ->
@@ -247,7 +244,7 @@ fun BoardSettings(
             }
 
             if (currentRole == Role.OWNER) {
-                Hr(Modifier.fillMaxWidth().border(1.px, LineStyle.Solid, Color.outlineVariant).toAttrs())
+                HorizontalDivider(Modifier.fillMaxWidth())
 
                 Column(Modifier.fillMaxWidth().gap(12.px)) {
                     H3 { Text("Transfer Ownership") }
@@ -261,7 +258,7 @@ fun BoardSettings(
                 }
             }
 
-            Hr(Modifier.fillMaxWidth().border(1.px, LineStyle.Solid, Color.outlineVariant).toAttrs())
+            HorizontalDivider(Modifier.fillMaxWidth())
 
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 if (currentRole == Role.OWNER) {

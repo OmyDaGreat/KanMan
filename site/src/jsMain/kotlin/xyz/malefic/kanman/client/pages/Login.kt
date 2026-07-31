@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import co.touchlab.kermit.Logger
 import com.varabyte.kobweb.compose.css.TextWrap
 import com.varabyte.kobweb.compose.foundation.layout.Arrangement
 import com.varabyte.kobweb.compose.foundation.layout.Box
@@ -221,9 +222,11 @@ fun Login(ctx: PageContext) =
 
             Switch(
                 loginMode == Login.LOGIN,
-                { loginMode = if (it) Login.SIGNUP else Login.LOGIN },
-                Modifier.padding(right = 8.px),
-                true,
+                {
+                    loginMode = if (it) Login.LOGIN else Login.SIGNUP
+                    Logger.d { "Switched" }
+                },
+                isSwitch = true,
             ) {
                 Text("Switch to ${if (loginMode == Login.LOGIN) "Sign Up" else "Login"}")
             }
