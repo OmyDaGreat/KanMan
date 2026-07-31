@@ -9,6 +9,8 @@ import com.varabyte.kobweb.compose.ui.modifiers.color
 import com.varabyte.kobweb.compose.ui.modifiers.cursor
 import com.varabyte.kobweb.compose.ui.modifiers.gap
 import com.varabyte.kobweb.compose.ui.modifiers.onClick
+import com.varabyte.kobweb.silk.components.icons.ms.MsCheckBox
+import com.varabyte.kobweb.silk.components.icons.ms.MsCheckBoxOutlineBlank
 import com.varabyte.kobweb.silk.components.icons.ms.MsSwitchLeft
 import com.varabyte.kobweb.silk.components.icons.ms.MsSwitchRight
 import org.jetbrains.compose.web.css.px
@@ -19,6 +21,7 @@ fun Switch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    isSwitch: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     Row(
@@ -29,9 +32,17 @@ fun Switch(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (checked) {
-            MsSwitchRight(Modifier.color(Color.outline))
+            if (isSwitch) {
+                MsSwitchRight(Modifier.color(Color.outline))
+            } else {
+                MsCheckBox(Modifier.color(Color.outline))
+            }
         } else {
-            MsSwitchLeft(Modifier.color(Color.outline))
+            if (isSwitch) {
+                MsSwitchLeft(Modifier.color(Color.outline))
+            } else {
+                MsCheckBoxOutlineBlank(Modifier.color(Color.outline))
+            }
         }
         content()
     }

@@ -223,6 +223,7 @@ fun Login(ctx: PageContext) =
                 loginMode == Login.LOGIN,
                 { loginMode = if (it) Login.SIGNUP else Login.LOGIN },
                 Modifier.padding(right = 8.px),
+                true,
             ) {
                 Text("Switch to ${if (loginMode == Login.LOGIN) "Sign Up" else "Login"}")
             }
