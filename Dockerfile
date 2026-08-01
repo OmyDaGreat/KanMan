@@ -6,33 +6,16 @@ FROM eclipse-temurin:26-jdk AS builder
 
 WORKDIR /app
 
-# Copy gradle executable and wrapper
 COPY gradlew ./
 COPY gradle ./gradle
 RUN chmod +x ./gradlew
 
-# Copy build configuration for dependency caching
-COPY build.gradle.kts settings.gradle.kts gradle.properties ./
-COPY site/build.gradle.kts ./site/
-COPY site/.kobweb ./site/.kobweb
-
-# Create empty source directories to satisfy Kobweb plugin configuration
-RUN mkdir -p site/src/commonMain/kotlin \
-             site/src/jsMain/kotlin \
-             site/src/jsMain/resources \
-             site/src/jvmMain/kotlin
-
-# Prefetch dependencies
-RUN ./gradlew :site:dependencies --no-daemon || true
-
-# Accept BUILD_SHA to bust cache for source code changes
 ARG BUILD_SHA
 ENV BUILD_SHA=$BUILD_SHA
 
-# Copy the rest of the source code
 COPY . .
 
-RUN ./gradlew :site:dockerRuntime --no-daemon
+RUN ./gradlew :site:dockerRuntime --no-daemon --no-build-cache --no-configuration-cache
 
 # Runtime Stage
 FROM eclipse-temurin:26-jre
