@@ -15,7 +15,7 @@ arrow = "2.2.3"
 datetime = "0.8.0"
 konform = "0.11.1"
 nbvcxz = "1.5.1"
-slf4j = "2.0.18"
+slf4j = "2.0.19"
 
 [libraries]
 http4k-bom = { group = "org.http4k", name = "http4k-bom", version.ref = "http4k" }
