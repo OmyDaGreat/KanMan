@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 http4k = "6.57.2.0"
 coroutines = "1.11.0"
 sqlite = "3.53.2.1"
