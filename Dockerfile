@@ -2,7 +2,7 @@ ARG TARGETARCH
 ARG BUILD_SHA=unknown
 
 # Build Stage
-FROM eclipse-temurin:26-jdk AS builder
+FROM eclipse-temurin:27-jdk AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ COPY . .
 RUN ./gradlew :site:dockerRuntime --no-daemon --no-build-cache --no-configuration-cache
 
 # Runtime Stage
-FROM eclipse-temurin:26-jre
+FROM eclipse-temurin:27-jre
 
 ARG BUILD_SHA
 LABEL org.opencontainers.image.revision=$BUILD_SHA
